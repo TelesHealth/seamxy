@@ -46,6 +46,9 @@ export const measurements = pgTable("measurements", {
   inseam: decimal("inseam", { precision: 5, scale: 2 }),
   outseam: decimal("outseam", { precision: 5, scale: 2 }),
   thigh: decimal("thigh", { precision: 5, scale: 2 }),
+  // Footwear
+  shoeSize: decimal("shoe_size", { precision: 4, scale: 1 }), // US size (e.g., 10.5)
+  shoeWidth: text("shoe_width"), // "N" (narrow), "M" (medium), "W" (wide)
   // General
   height: decimal("height", { precision: 5, scale: 2 }),
   weight: decimal("weight", { precision: 5, scale: 2 }),
