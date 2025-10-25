@@ -39,7 +39,7 @@ export default function Onboarding() {
       if (!demographic) {
         throw new Error("Please select a demographic");
       }
-      const user = await apiRequest("/api/v1/users", "POST", {
+      const res = await apiRequest("POST", "/api/v1/users", {
         email: `user_${Date.now()}@perfectfit.com`,
         password: "temporary",
         name: "New User",
@@ -48,7 +48,7 @@ export default function Onboarding() {
         budgetMax: budgetRange[1],
         budgetTier: budgetTier || "mid_range"
       });
-      return user;
+      return res.json();
     },
     onSuccess: (user: any) => {
       setUserId(user.id);
@@ -59,16 +59,17 @@ export default function Onboarding() {
   const saveMeasurementsMutation = useMutation({
     mutationFn: async () => {
       if (!userId) return;
-      return apiRequest("/api/v1/measurements", "POST", {
+      const res = await apiRequest("POST", "/api/v1/measurements", {
         userId,
-        chest: measurements.chest ? parseFloat(measurements.chest) : null,
-        waist: measurements.waist ? parseFloat(measurements.waist) : null,
-        hips: measurements.hips ? parseFloat(measurements.hips) : null,
-        sleeve: measurements.sleeve ? parseFloat(measurements.sleeve) : null,
-        inseam: measurements.inseam ? parseFloat(measurements.inseam) : null,
-        height: measurements.height ? parseFloat(measurements.height) : null,
+        chest: measurements.chest || null,
+        waist: measurements.waist || null,
+        hips: measurements.hips || null,
+        sleeve: measurements.sleeve || null,
+        inseam: measurements.inseam || null,
+        height: measurements.height || null,
         unit: "inches"
       });
+      return res.json();
     }
   });
 
@@ -76,9 +77,10 @@ export default function Onboarding() {
   const analyzeStyleMutation = useMutation({
     mutationFn: async () => {
       if (!userId) return;
-      return apiRequest(`/api/v1/users/${userId}/analyze-style`, "POST", {
+      const res = await apiRequest("POST", `/api/v1/users/${userId}/analyze-style`, {
         description: styleText
       });
+      return res.json();
     },
     onSuccess: () => {
       toast({
@@ -92,11 +94,12 @@ export default function Onboarding() {
   const updateBudgetMutation = useMutation({
     mutationFn: async () => {
       if (!userId) return;
-      return apiRequest(`/api/v1/users/${userId}`, "PATCH", {
+      const res = await apiRequest("PATCH", `/api/v1/users/${userId}`, {
         budgetMin: budgetRange[0],
         budgetMax: budgetRange[1],
         budgetTier: budgetTier || "mid_range"
       });
+      return res.json();
     }
   });
 

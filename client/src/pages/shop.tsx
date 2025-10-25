@@ -18,10 +18,22 @@ export default function Shop() {
 
   const userId = typeof window !== 'undefined' ? localStorage.getItem('perfectfit_user_id') : null;
 
+  // Build query string for products API
+  const buildProductsUrl = () => {
+    const params = new URLSearchParams();
+    if (demographic && demographic !== "all") params.append("demographic", demographic);
+    if (category && category !== "all") params.append("category", category);
+    if (priceRange[0] > 0) params.append("minPrice", priceRange[0].toString());
+    if (priceRange[1] < 500) params.append("maxPrice", priceRange[1].toString());
+    if (userId) params.append("userId", userId);
+    
+    const queryString = params.toString();
+    return queryString ? `/api/v1/products?${queryString}` : "/api/v1/products";
+  };
+
   // Fetch products from API
   const { data: products = [], isLoading } = useQuery({
-    queryKey: ["/api/v1/products", { demographic, category, minPrice: priceRange[0], maxPrice: priceRange[1], userId }],
-    enabled: !!demographic || category !== "all",
+    queryKey: [buildProductsUrl()],
   });
 
   const filteredProducts = products

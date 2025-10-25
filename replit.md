@@ -1,6 +1,7 @@
 # PerfectFit - AI-Powered Universal Clothing Marketplace
 
 **Last Updated**: October 25, 2025
+**Status**: Core MVP Complete - Full-Stack Integrated
 
 ## Project Overview
 
@@ -177,9 +178,27 @@ npm run db:push   # Sync database schema
 4. Adjust monetization settings
 5. Monitor transactions and audit logs
 
-## Notes
+## Integration Status
 
-- Authentication currently uses simple header-based IDs (`x-user-id`, `x-admin-id`)
-- In production: Implement JWT tokens, password hashing (bcrypt), OAuth
-- Stripe integration stubbed - requires Stripe account setup
-- Video generation in AI stylist is optional/future feature
+### ✅ Complete & Tested
+- **Onboarding Flow**: User creation, measurements (decimal/string handling), GPT-5 style analysis, budget persistence all verified end-to-end
+- **Shop Page**: Product fetching with proper query string construction, AI scoring when userId present
+- **AI Stylist**: GPT-5 chat integration with user context (personas, sessions, messages)
+- **Database**: Full schema with seeded data, all CRUD operations working
+- **API Layer**: All marketplace endpoints functional with TanStack Query integration
+
+### 🚧 Future Enhancements
+- **Authentication**: Upgrade from localStorage to JWT + sessions
+- **Admin Panel**: Connect dashboard, analytics, maker approval to live data
+- **Makers**: Wire up custom requests, quotes, RFQ system
+- **Payments**: Integrate Stripe for subscriptions and bespoke orders
+- **Video Avatars**: Synthesia/HeyGen for AI stylist video responses
+- **Mobile**: React Native apps
+
+## Technical Notes
+
+- **Decimal Columns**: Drizzle-ORM decimal type expects strings in TypeScript (precision preservation)
+- **API Requests**: Use `apiRequest(method, url, data)` parameter order consistently
+- **Query Strings**: Build URLSearchParams manually for complex GET requests
+- **localStorage**: Used for userId persistence (`perfectfit_user_id` key)
+- **GPT-5 Timeouts**: Style analysis and chat may take 5-15 seconds

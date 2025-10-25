@@ -69,13 +69,13 @@ export default function AiStylist() {
   const createSessionMutation = useMutation({
     mutationFn: async (personaId: string) => {
       if (!userId) return null;
-      const session = await apiRequest("/api/v1/ai-sessions", "POST", {
+      const res = await apiRequest("POST", "/api/v1/ai-sessions", {
         userId,
         personaId,
         messages: [],
         userContext: {}
       });
-      return session;
+      return res.json();
     },
     onSuccess: (session: any) => {
       if (session) {
@@ -88,11 +88,11 @@ export default function AiStylist() {
   const sendMessageMutation = useMutation({
     mutationFn: async (message: string) => {
       if (!sessionId || !userId) return null;
-      const response = await apiRequest(`/api/v1/ai-sessions/${sessionId}/messages`, "POST", {
+      const res = await apiRequest("POST", `/api/v1/ai-sessions/${sessionId}/messages`, {
         message,
         userId
       });
-      return response;
+      return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/v1/ai-sessions", sessionId] });
