@@ -1,0 +1,239 @@
+PERFECTFIT ADMIN PANEL — SPECIFICATION
+1. 🏗️ Overview
+
+The Admin Panel is a secure web-based dashboard that allows internal staff to:
+
+Manage users (shoppers and custom makers)
+
+Monitor and edit monetization settings (commissions, subscriptions, pricing)
+
+View transactions and performance metrics
+
+Approve/verify makers
+
+Oversee affiliate links and brand partnerships
+
+Generate analytics and reports
+
+2. 🖥️ Tech Stack Recommendation
+Layer	Technology
+Frontend	React or Flutter Web (if keeping same ecosystem)
+Backend	Flask Admin (built-in) or React dashboard connected via REST APIs
+Database	PostgreSQL (shared with main app)
+Auth	Admin JWT + Role-Based Access Control (RBAC)
+Hosting	AWS (EC2 or Amplify), Replit-compatible for dev testing
+3. ⚙️ Core Features by Module
+🔐 A. Authentication & Roles
+
+Secure Admin login
+
+Role-based permissions:
+
+Super Admin — full control
+
+Monetization Manager — pricing, fees, affiliate setup
+
+Support Admin — user management & verification only
+
+👥 B. User Management (B2C & B2B)
+
+B2C (Shoppers):
+
+View all registered shoppers
+
+Filter by:
+
+Active / inactive
+
+Premium subscribers
+
+Purchase history (retail & bespoke)
+
+Manually edit:
+
+Profile data
+
+Measurements
+
+Style preferences
+
+Subscription status
+
+B2B (Makers/Custom Clothiers):
+
+View all registered makers
+
+Edit:
+
+Business name, rating, subscription plan
+
+Commission rates (if custom)
+
+Payment info (Stripe Connect)
+
+Portfolio / catalog
+
+Approve or suspend accounts
+
+Track RFQ (Request for Quote) activity and conversions
+
+💵 C. Monetization & Pricing Management
+
+This section centralizes PerfectFit’s entire business model:
+
+Category	Admin Controls
+Retail Commissions	Set global affiliate percentage (e.g., 6%), add/edit affiliate APIs (Amazon, Shopify, etc.)
+Custom Orders	Set bespoke order platform fee (default: 10%), define tiered maker commission rates
+Maker Subscriptions	Add/edit plans (Basic, Pro, Elite) with pricing and benefits
+Premium User Tier	Set monthly/yearly fees, control free-trial availability
+Sponsored Listings	Create and price ad packages (featured placements, homepage banners, “style pick” spots)
+Payment Settings	Configure Stripe keys, payout schedules, and fee splits
+Discounts/Promotions	Create promo codes or temporary discounts for subscriptions or Quick Buys
+📊 D. Analytics Dashboard
+
+Overview Page:
+
+Daily/weekly/monthly revenue
+
+Number of new users (B2C + B2B)
+
+Conversion rate per channel
+
+Active subscriptions
+
+Bespoke vs. retail order ratios
+
+Reports:
+
+Commission revenue by source
+
+Top-performing makers and brands
+
+Top style categories (based on purchases)
+
+Region-wise sales and user demographics
+
+AI style recommendation performance
+
+Visualizations:
+
+Line charts for revenue growth
+
+Pie charts for commission distribution
+
+Bar graphs for category performance
+
+💬 E. Content Management (CMS)
+
+Manage front-facing and marketing content:
+
+Edit featured products, brands, and custom makers.
+
+Manage homepage banners, campaign highlights, and app store description text.
+
+Push new seasonal style collections.
+
+🧾 F. Transaction & Order Management
+
+View all retail and custom transactions.
+
+Track payment and refund status.
+
+Filter by:
+
+Retail (affiliate)
+
+Bespoke (custom)
+
+Subscription payments
+
+Export data to CSV/Excel for accounting.
+
+🧠 G. AI and Style Recommendation Control
+
+Adjust AI parameters:
+
+Weight of Fit/Style/Budget scores
+
+Keywords for trending styles (import seasonal datasets)
+
+Enable/disable custom AI parsing models.
+
+Upload fashion taxonomy JSON (for categories and style tags).
+
+⚙️ H. Settings & Integrations
+
+Manage API keys (OpenAI, Stripe, Affiliate Networks)
+
+Toggle partner integrations (e.g., Shopify, Amazon, Etsy)
+
+Manage email templates for RFQs, orders, and subscriptions.
+
+Set app-wide parameters (currency, timezone, notifications).
+
+4. 🧱 Architecture Diagram
+      ┌───────────────────────────┐
+      │      PerfectFit App       │
+      │ (User + Maker Frontends)  │
+      └─────────────┬─────────────┘
+                    │
+              Shared Backend (Flask API)
+                    │
+                    ▼
+      ┌───────────────────────────┐
+      │     Admin Panel (Web)     │
+      │ React / Flutter Web App   │
+      │ Role-based Access Control │
+      └─────────────┬─────────────┘
+                    │
+                    ▼
+           PostgreSQL + Stripe + OpenAI
+
+5. 🛡️ Security and Compliance
+
+Role-based Access Control (RBAC)
+
+Two-factor authentication for admin login
+
+Encrypted API tokens (OpenAI, Stripe)
+
+Activity logs for all admin changes
+
+Export audit trails
+
+GDPR/CCPA compliance (data deletion requests)
+
+6. 📦 Deliverables for Admin Panel MVP
+Deliverable	Description
+Admin Frontend	Web dashboard built in React or Flutter Web
+Admin API	Flask endpoints for user, pricing, analytics management
+RBAC Middleware	JWT-based role system
+Database Tables	admins, subscriptions, affiliate_settings, pricing, maker_plans
+Analytics Engine	Revenue + activity summaries
+Docs	/docs/admin_panel.md with feature list and setup
+README Updates	Add instructions for admin panel startup
+7. 🧩 Future Enhancements
+
+AI-generated business insights (“Your top maker this month is X…”)
+
+Automated commission disbursement
+
+Multi-admin hierarchy with departmental roles
+
+Export to QuickBooks or Xero for accounting
+
+Push notifications for revenue milestones or system alerts
+
+8. Example Admin Workflow
+
+Login as “Super Admin.”
+
+Check Revenue Dashboard — see daily commissions.
+
+Add a new Maker Plan ($59/month “Gold” tier).
+
+Approve 2 new bespoke makers.
+
+Adjust Affiliate Rate from 6% → 8% for the holiday season.
+
+Add a new Sponsored Listing Campaign for Levi’s.
