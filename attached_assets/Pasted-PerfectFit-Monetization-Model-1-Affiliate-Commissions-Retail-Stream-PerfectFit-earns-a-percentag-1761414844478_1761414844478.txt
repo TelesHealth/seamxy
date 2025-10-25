@@ -1,0 +1,98 @@
+PerfectFit Monetization Model
+1. Affiliate Commissions (Retail Stream)
+
+PerfectFit earns a percentage from every “Quick Buy” sale completed through affiliate links (Amazon, ASOS, Shopify, etc.).
+
+Each product in recommendations includes a unique affiliate tracking URL.
+
+Typical affiliate rates range from 4–10% per transaction.
+
+Example:
+
+A user buys a $120 pair of chinos from Amazon → PerfectFit earns ~$6.
+
+2. Bespoke Commissions (Custom Orders)
+
+When a user selects a custom maker and places a deposit, PerfectFit charges a platform fee.
+
+Recommended structure:
+
+10% commission on every successful custom order (deposit and/or balance).
+
+Optionally, the platform can collect payments via Stripe Connect to automatically split the funds between tailor and PerfectFit.
+
+3. Maker Subscriptions (Recurring Revenue)
+
+Tailors and custom clothiers can upgrade their visibility via subscription plans:
+
+Basic ($0/month) — listed and can receive RFQs (requests for quote).
+
+Pro ($29/month) — higher ranking, access to user insights, and early RFQ notifications.
+
+Elite ($99/month) — featured placement in search, promoted brand page, and verified badge.
+
+4. Sponsored Listings
+
+Retailers and makers can pay for featured placement in search results or “Editor’s Choice” slots.
+
+Sponsored posts can appear in:
+
+“Recommended for You” feed
+
+“Featured Makers” carousel
+
+“Seasonal Trends” showcase
+
+This creates non-intrusive ad revenue without cluttering user experience.
+
+5. Premium User Tier (Optional Future Phase)
+
+Users can upgrade to a Premium subscription for added AI styling features:
+
+Personalized “Capsule Wardrobe” generation.
+
+Monthly outfit recommendations.
+
+Exclusive discounts from partner brands.
+
+Suggested pricing: $5.99/month or $49/year.
+
+6. Data Insights & Analytics (B2B)
+
+PerfectFit’s anonymized data can provide insights to:
+
+Fashion brands (trend detection)
+
+Fabric suppliers (demand forecasting)
+
+Tailoring franchises (market demand by region)
+
+Offer as subscription analytics dashboards or reports.
+
+7. Transaction Fees (Operational Revenue)
+
+For every in-app Stripe transaction (retail or bespoke):
+
+Maker absorbs Stripe processing fee (typically 2.9% + 30¢)
+
+PerfectFit takes commission net of Stripe fee.
+
+8. Future Expansion: White-Label SaaS
+
+Offer PerfectFit’s engine as a white-label platform for:
+
+Independent tailors or boutiques.
+
+Corporate uniform programs.
+
+Custom fashion startups.
+
+Licensing model: Setup fee + monthly SaaS fee.
+
+💼 Example Revenue Scenario (Year 1)
+Revenue Stream	Volume	Fee/Rate	Est. Annual Revenue
+Retail Affiliate	5,000 orders @ avg $80	6%	$24,000
+Bespoke Orders	1,000 custom orders @ avg $600	10%	$60,000
+Maker Subscriptions	100 makers (avg $30/mo)	—	$36,000
+Sponsored Listings	20 campaigns	$500	$10,000
+Total	—	—	≈ $130,000/year (MVP stage)
