@@ -28,6 +28,7 @@ export default function Onboarding() {
     sleeve: "",
     inseam: "",
     height: "",
+    shoeSize: "",
   });
   const [styleText, setStyleText] = useState("");
   const [budgetRange, setBudgetRange] = useState([50, 200]);
@@ -67,6 +68,7 @@ export default function Onboarding() {
         sleeve: measurements.sleeve || null,
         inseam: measurements.inseam || null,
         height: measurements.height || null,
+        shoeSize: measurements.shoeSize || null,
         unit: "inches"
       });
       return res.json();
@@ -232,13 +234,17 @@ export default function Onboarding() {
                     { key: "hips", label: "Hips", placeholder: "38" },
                     { key: "sleeve", label: "Sleeve", placeholder: "33" },
                     { key: "inseam", label: "Inseam", placeholder: "30" },
-                    { key: "height", label: "Height", placeholder: "5'10\"" },
+                    { key: "height", label: "Height", placeholder: "70" },
+                    { key: "shoeSize", label: "Shoe Size (US)", placeholder: "10" },
                   ].map((field) => (
                     <div key={field.key} className="space-y-2">
-                      <Label htmlFor={field.key}>{field.label} (inches)</Label>
+                      <Label htmlFor={field.key}>
+                        {field.label} {field.key !== "shoeSize" && "(inches)"}
+                      </Label>
                       <Input
                         id={field.key}
                         type="number"
+                        step={field.key === "shoeSize" ? "0.5" : "1"}
                         placeholder={field.placeholder}
                         value={measurements[field.key as keyof typeof measurements]}
                         onChange={(e) => setMeasurements({ ...measurements, [field.key]: e.target.value })}
