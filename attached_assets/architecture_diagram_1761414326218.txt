@@ -1,0 +1,7 @@
+
+PerfectFit Architecture (MVP)
+- Flutter frontend (users + makers web)
+- Flask backend with modular controllers/services
+- Mock data sources for products and makers
+- Quick Buy via affiliate-style checkout URLs
+- Bespoke RFQ flow: match_makers -> quotes (stub) -> (next: deposit)

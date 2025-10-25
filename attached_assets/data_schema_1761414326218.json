@@ -1,0 +1,59 @@
+{
+  "user": {
+    "id": "uuid",
+    "age": 32,
+    "lifestyle": "professional",
+    "hobbies": [
+      "golf",
+      "travel"
+    ],
+    "budget_range": [
+      50,
+      150
+    ],
+    "style_tags": [
+      "minimalist",
+      "smart-casual"
+    ],
+    "measurements": {
+      "chest": 40,
+      "waist": 32,
+      "inseam": 30
+    }
+  },
+  "product": {
+    "id": "P1",
+    "brand": "Levi's",
+    "name": "Slim Fit Chino",
+    "price": 89.0,
+    "fit_score": 0.93,
+    "style_match": 0.85,
+    "budget_match": 1.0,
+    "checkout_url": "https://example.com/checkout?aff=DEMO&pid=P1"
+  },
+  "maker": {
+    "id": "M1",
+    "name": "Savile Modern Tailors",
+    "specialties": [
+      "Suits",
+      "Shirts"
+    ],
+    "style_tags": [
+      "classic",
+      "elegant"
+    ],
+    "budget_min": 600,
+    "budget_max": 2500,
+    "lead_time_days": 14
+  },
+  "custom_request": {
+    "user_id": "U123",
+    "item_type": "custom suit",
+    "budget_min": 500,
+    "budget_max": 900,
+    "style_tags": [
+      "modern",
+      "slim"
+    ]
+  }
+}
