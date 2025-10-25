@@ -9,6 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Sparkles, Video, Crown } from "lucide-react";
 
+import aidenPortrait from "@assets/generated_images/Aiden_minimalist_professional_stylist_568ee488.png";
+import lucaPortrait from "@assets/generated_images/Luca_trendy_streetwear_expert_b5c705d3.png";
+import evelynPortrait from "@assets/generated_images/Evelyn_luxury_fashion_consultant_15d7a89e.png";
+import kaiPortrait from "@assets/generated_images/Kai_budget-conscious_style_coach_f50d0d31.png";
+
 const personas = [
   {
     id: "aiden",
@@ -16,7 +21,7 @@ const personas = [
     description: "Modern minimalist stylist for professionals",
     tone: "Confident, calm, and polished",
     specialty: "Smart-casual & Business",
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Aiden",
+    avatarUrl: aidenPortrait,
   },
   {
     id: "luca",
@@ -24,7 +29,7 @@ const personas = [
     description: "Trendy streetwear expert",
     tone: "Energetic, witty, urban",
     specialty: "Streetwear & Sneakers",
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Luca",
+    avatarUrl: lucaPortrait,
   },
   {
     id: "evelyn",
@@ -32,7 +37,7 @@ const personas = [
     description: "Luxury fashion guide",
     tone: "Elegant, warm, sophisticated",
     specialty: "Luxury & Formal",
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Evelyn",
+    avatarUrl: evelynPortrait,
   },
   {
     id: "kai",
@@ -40,7 +45,7 @@ const personas = [
     description: "Budget-conscious style coach",
     tone: "Friendly, practical, down-to-earth",
     specialty: "Budget & Everyday",
-    avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Kai",
+    avatarUrl: kaiPortrait,
   },
 ];
 
@@ -62,8 +67,16 @@ export default function AiStylist() {
     queryKey: ["/api/v1/ai-personas"],
   });
 
-  // Use API personas if available, fallback to hardcoded
-  const availablePersonas = apiPersonas.length > 0 ? apiPersonas : personas;
+  // Merge API personas with local AI-generated avatars
+  const availablePersonas = apiPersonas.length > 0 
+    ? apiPersonas.map((apiPersona: any) => {
+        const localPersona = personas.find(p => p.id === apiPersona.id);
+        return {
+          ...apiPersona,
+          avatarUrl: localPersona?.avatarUrl || apiPersona.avatarUrl
+        };
+      })
+    : personas;
 
   // Create chat session when persona is selected
   const createSessionMutation = useMutation({
