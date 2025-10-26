@@ -16,7 +16,7 @@ import kaiPortrait from "@assets/generated_images/Kai_budget-conscious_style_coa
 import meiPortrait from "@assets/generated_images/Asian_female_fashion_stylist_portrait_58c0f6e3.png";
 import marcusPortrait from "@assets/generated_images/Black_male_fashion_stylist_portrait_7ce47f5b.png";
 import sofiaPortrait from "@assets/generated_images/Hispanic_female_fashion_stylist_portrait_219a5f62.png";
-import richardPortrait from "@assets/generated_images/Distinguished_older_gentleman_stylist_portrait_884c1bce.png";
+import eduardoPortrait from "@assets/generated_images/Distinguished_Hispanic_older_gentleman_stylist_95ce41f9.png";
 
 const personas = [
   {
@@ -76,12 +76,12 @@ const personas = [
     avatarUrl: sofiaPortrait,
   },
   {
-    id: "richard",
-    name: "Richard Sterling",
-    description: "Distinguished classic menswear expert",
-    tone: "Refined, knowledgeable, gracious",
+    id: "eduardo",
+    name: "Eduardo Morales",
+    description: "Distinguished classic style expert",
+    tone: "Refined, warm, knowledgeable",
     specialty: "Classic & Timeless Elegance",
-    avatarUrl: richardPortrait,
+    avatarUrl: eduardoPortrait,
   },
 ];
 
