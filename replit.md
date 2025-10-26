@@ -24,13 +24,19 @@ PerfectFit is a comprehensive fashion marketplace platform combining retail shop
 - **Audit Logging**: Track all admin actions
 
 ### 3. AI Personality Stylists
-- **4 Personas**:
+- **8 Diverse Personas**:
   - **Aiden**: Modern minimalist stylist (smart-casual, professional)
   - **Luca**: Trendy streetwear expert (energetic, urban)
   - **Evelyn**: Luxury fashion guide (elegant, sophisticated)
   - **Kai**: Budget-conscious coach (friendly, practical)
+  - **Mei Chen**: East-meets-West fusion expert (thoughtful, cultural aesthetics)
+  - **Marcus Thompson**: Bold contemporary innovator (pattern mixing, cultural expression)
+  - **Sofia Rodriguez**: Vibrant Latin fashion specialist (colorful, passionate)
+  - **Eduardo Morales**: Distinguished classic style expert (refined, timeless elegance)
+- **Diversity Representation**: Asian, Black, Hispanic, and multiple age ranges
 - **Context-Aware Chat**: Uses user measurements, style tags, budget in conversations
 - **GPT-5 Powered**: Natural language fashion advice
+- **Professional AI Portraits**: Photorealistic generated images for all personas
 - **Subscription Model**: Free text chat, $9.99/mo Pro (video/voice - future)
 
 ## Technical Architecture
@@ -126,10 +132,10 @@ Total Score = (Fit × 0.5) + (Style × 0.3) + (Budget × 0.2)
 ## Seeded Data
 
 Database automatically seeds on startup:
-- 4 AI personas (Aiden, Luca, Evelyn, Kai)
+- 8 AI personas (Aiden, Luca, Evelyn, Kai, Mei Chen, Marcus Thompson, Sofia Rodriguez, Eduardo Morales)
 - 4 subscription plans (3 maker tiers + AI Stylist Pro)
 - 3 pricing configs (affiliate rates, platform fees)
-- 4 sample products (chinos, shirt, blazer, jacket)
+- 15+ sample products (clothing across categories + footwear)
 
 ## Environment Variables
 
