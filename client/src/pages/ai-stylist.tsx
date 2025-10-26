@@ -13,6 +13,10 @@ import aidenPortrait from "@assets/generated_images/Aiden_minimalist_professiona
 import lucaPortrait from "@assets/generated_images/Luca_trendy_streetwear_expert_b5c705d3.png";
 import evelynPortrait from "@assets/generated_images/Evelyn_luxury_fashion_consultant_15d7a89e.png";
 import kaiPortrait from "@assets/generated_images/Kai_budget-conscious_style_coach_f50d0d31.png";
+import meiPortrait from "@assets/generated_images/Asian_female_fashion_stylist_portrait_58c0f6e3.png";
+import marcusPortrait from "@assets/generated_images/Black_male_fashion_stylist_portrait_7ce47f5b.png";
+import sofiaPortrait from "@assets/generated_images/Hispanic_female_fashion_stylist_portrait_219a5f62.png";
+import richardPortrait from "@assets/generated_images/Distinguished_older_gentleman_stylist_portrait_884c1bce.png";
 
 const personas = [
   {
@@ -46,6 +50,38 @@ const personas = [
     tone: "Friendly, practical, down-to-earth",
     specialty: "Budget & Everyday",
     avatarUrl: kaiPortrait,
+  },
+  {
+    id: "mei",
+    name: "Mei Chen",
+    description: "East-meets-West fusion expert",
+    tone: "Thoughtful, cultured, balanced",
+    specialty: "Minimalist & Cultural Fusion",
+    avatarUrl: meiPortrait,
+  },
+  {
+    id: "marcus",
+    name: "Marcus Thompson",
+    description: "Bold contemporary fashion innovator",
+    tone: "Confident, creative, authentic",
+    specialty: "Contemporary & Pattern Mixing",
+    avatarUrl: marcusPortrait,
+  },
+  {
+    id: "sofia",
+    name: "Sofia Rodriguez",
+    description: "Vibrant Latin fashion specialist",
+    tone: "Warm, energetic, passionate",
+    specialty: "Color & Latin Fashion",
+    avatarUrl: sofiaPortrait,
+  },
+  {
+    id: "richard",
+    name: "Richard Sterling",
+    description: "Distinguished classic menswear expert",
+    tone: "Refined, knowledgeable, gracious",
+    specialty: "Classic & Timeless Elegance",
+    avatarUrl: richardPortrait,
   },
 ];
 
