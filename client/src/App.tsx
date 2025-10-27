@@ -11,6 +11,9 @@ import Onboarding from "@/pages/onboarding";
 import Shop from "@/pages/shop";
 import Makers from "@/pages/makers";
 import AiStylist from "@/pages/ai-stylist";
+import CustomRequest from "@/pages/custom-request";
+import MyRequests from "@/pages/my-requests";
+import MakerDashboard from "@/pages/maker-dashboard";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import NotFound from "@/pages/not-found";
@@ -22,6 +25,9 @@ function Router() {
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/shop" component={Shop} />
       <Route path="/makers" component={Makers} />
+      <Route path="/custom-request" component={CustomRequest} />
+      <Route path="/my-requests" component={MyRequests} />
+      <Route path="/maker-dashboard" component={MakerDashboard} />
       <Route path="/ai-stylist" component={AiStylist} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />

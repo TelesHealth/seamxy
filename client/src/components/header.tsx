@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, User, Sparkles, Shield } from "lucide-react";
+import { ShoppingBag, User, Sparkles, Shield, Scissors, Package } from "lucide-react";
 
 export function Header() {
   const [location] = useLocation();
@@ -8,7 +8,8 @@ export function Header() {
   const navItems = [
     { href: "/", label: "Home", icon: null },
     { href: "/shop", label: "Shop", icon: <ShoppingBag className="w-4 h-4 mr-2" /> },
-    { href: "/makers", label: "Makers", icon: null },
+    { href: "/makers", label: "Makers", icon: <Scissors className="w-4 h-4 mr-2" /> },
+    { href: "/my-requests", label: "My Requests", icon: <Package className="w-4 h-4 mr-2" /> },
     { href: "/ai-stylist", label: "AI Stylist", icon: <Sparkles className="w-4 h-4 mr-2" /> },
   ];
 
