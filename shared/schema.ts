@@ -13,6 +13,8 @@ export const requestStatusEnum = pgEnum("request_status", ["open", "quoted", "ac
 export const supplierRoleEnum = pgEnum("supplier_role", ["retailer", "tailor", "designer"]);
 export const supplierTierEnum = pgEnum("supplier_tier", ["basic", "pro", "enterprise"]);
 export const messageStatusEnum = pgEnum("message_status", ["sent", "delivered", "read"]);
+export const retailerEnum = pgEnum("retailer", ["amazon", "ebay", "rakuten", "shopify", "internal"]);
+export const priceAlertStatusEnum = pgEnum("price_alert_status", ["active", "triggered", "expired", "cancelled"]);
 
 // ============================================
 // CORE MARKETPLACE - USERS
@@ -481,6 +483,103 @@ export const analyticsSnapshots = pgTable("analytics_snapshots", {
 });
 
 // ============================================
+// PRICE COMPARISON - SMART PRICE COMPARE
+// ============================================
+
+export const retailerConfigs = pgTable("retailer_configs", {
+  id: serial("id").primaryKey(),
+  retailer: retailerEnum("retailer").notNull().unique(),
+  apiKey: text("api_key"), // Encrypted at-rest
+  apiSecret: text("api_secret"), // Encrypted at-rest
+  accessToken: text("access_token"), // Encrypted at-rest
+  partnerTag: text("partner_tag"), // Affiliate/Partner ID
+  isActive: boolean("is_active").default(true),
+  rateLimit: integer("rate_limit").default(1000), // Requests per hour
+  lastSyncAt: timestamp("last_sync_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const externalProducts = pgTable("external_products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  internalProductId: varchar("internal_product_id").references(() => products.id, { onDelete: "set null" }), // Link to our catalog
+  retailer: retailerEnum("retailer").notNull(),
+  externalId: text("external_id").notNull(), // ASIN, eBay item ID, etc.
+  title: text("title").notNull(),
+  brand: text("brand"),
+  category: text("category"),
+  currentPrice: decimal("current_price", { precision: 10, scale: 2 }).notNull(),
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
+  currency: text("currency").default("USD"),
+  imageUrl: text("image_url"),
+  productUrl: text("product_url").notNull(),
+  affiliateUrl: text("affiliate_url"), // Tracked affiliate link
+  availableSizes: text("available_sizes").array(),
+  shippingCost: decimal("shipping_cost", { precision: 10, scale: 2 }),
+  deliveryDays: integer("delivery_days"),
+  isSustainable: boolean("is_sustainable").default(false),
+  sustainabilityCertifications: text("sustainability_certifications").array(),
+  matchConfidence: decimal("match_confidence", { precision: 5, scale: 2 }), // AI confidence 0-100
+  fitConfidence: decimal("fit_confidence", { precision: 5, scale: 2 }), // Fit match score 0-100
+  lastCheckedAt: timestamp("last_checked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const priceHistory = pgTable("price_history", {
+  id: serial("id").primaryKey(),
+  externalProductId: varchar("external_product_id").notNull().references(() => externalProducts.id, { onDelete: "cascade" }),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }),
+  isAvailable: boolean("is_available").default(true),
+  checkedAt: timestamp("checked_at").defaultNow().notNull(),
+});
+
+export const priceAlerts = pgTable("price_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  internalProductId: varchar("internal_product_id").references(() => products.id, { onDelete: "cascade" }),
+  externalProductId: varchar("external_product_id").references(() => externalProducts.id, { onDelete: "cascade" }),
+  targetPrice: decimal("target_price", { precision: 10, scale: 2 }).notNull(),
+  currentPrice: decimal("current_price", { precision: 10, scale: 2 }),
+  status: priceAlertStatusEnum("status").default("active"),
+  notificationEmail: text("notification_email"),
+  triggeredAt: timestamp("triggered_at"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const affiliateClicks = pgTable("affiliate_clicks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  externalProductId: varchar("external_product_id").notNull().references(() => externalProducts.id, { onDelete: "cascade" }),
+  retailer: retailerEnum("retailer").notNull(),
+  clickedUrl: text("clicked_url").notNull(),
+  referrerPage: text("referrer_page"),
+  userAgent: text("user_agent"),
+  ipAddress: text("ip_address"),
+  clickedAt: timestamp("clicked_at").defaultNow().notNull(),
+});
+
+export const affiliateConversions = pgTable("affiliate_conversions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  clickId: varchar("click_id").references(() => affiliateClicks.id, { onDelete: "set null" }),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  externalProductId: varchar("external_product_id").references(() => externalProducts.id, { onDelete: "cascade" }),
+  retailer: retailerEnum("retailer").notNull(),
+  orderId: text("order_id"), // External retailer order ID
+  orderValue: decimal("order_value", { precision: 10, scale: 2 }).notNull(),
+  commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }), // Percentage
+  commissionAmount: decimal("commission_amount", { precision: 10, scale: 2 }),
+  currency: text("currency").default("USD"),
+  isPaid: boolean("is_paid").default(false),
+  paidAt: timestamp("paid_at"),
+  convertedAt: timestamp("converted_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ============================================
 // AI PERSONALITY - CHAT SESSIONS
 // ============================================
 
@@ -668,6 +767,65 @@ export const supplierOrdersRelations = relations(supplierOrders, ({ one }) => ({
   }),
 }));
 
+export const externalProductsRelations = relations(externalProducts, ({ one, many }) => ({
+  internalProduct: one(products, {
+    fields: [externalProducts.internalProductId],
+    references: [products.id],
+  }),
+  priceHistory: many(priceHistory),
+  priceAlerts: many(priceAlerts),
+  affiliateClicks: many(affiliateClicks),
+  affiliateConversions: many(affiliateConversions),
+}));
+
+export const priceHistoryRelations = relations(priceHistory, ({ one }) => ({
+  externalProduct: one(externalProducts, {
+    fields: [priceHistory.externalProductId],
+    references: [externalProducts.id],
+  }),
+}));
+
+export const priceAlertsRelations = relations(priceAlerts, ({ one }) => ({
+  user: one(users, {
+    fields: [priceAlerts.userId],
+    references: [users.id],
+  }),
+  internalProduct: one(products, {
+    fields: [priceAlerts.internalProductId],
+    references: [products.id],
+  }),
+  externalProduct: one(externalProducts, {
+    fields: [priceAlerts.externalProductId],
+    references: [externalProducts.id],
+  }),
+}));
+
+export const affiliateClicksRelations = relations(affiliateClicks, ({ one }) => ({
+  user: one(users, {
+    fields: [affiliateClicks.userId],
+    references: [users.id],
+  }),
+  externalProduct: one(externalProducts, {
+    fields: [affiliateClicks.externalProductId],
+    references: [externalProducts.id],
+  }),
+}));
+
+export const affiliateConversionsRelations = relations(affiliateConversions, ({ one }) => ({
+  click: one(affiliateClicks, {
+    fields: [affiliateConversions.clickId],
+    references: [affiliateClicks.id],
+  }),
+  user: one(users, {
+    fields: [affiliateConversions.userId],
+    references: [users.id],
+  }),
+  externalProduct: one(externalProducts, {
+    fields: [affiliateConversions.externalProductId],
+    references: [externalProducts.id],
+  }),
+}));
+
 // ============================================
 // INSERT SCHEMAS & TYPES
 // ============================================
@@ -808,6 +966,40 @@ export const insertAnalyticsSnapshotSchema = createInsertSchema(analyticsSnapsho
   createdAt: true,
 });
 
+// Price Comparison Insert Schemas
+export const insertRetailerConfigSchema = createInsertSchema(retailerConfigs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertExternalProductSchema = createInsertSchema(externalProducts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPriceHistorySchema = createInsertSchema(priceHistory).omit({
+  id: true,
+});
+
+export const insertPriceAlertSchema = createInsertSchema(priceAlerts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAffiliateClickSchema = createInsertSchema(affiliateClicks).omit({
+  id: true,
+  clickedAt: true,
+});
+
+export const insertAffiliateConversionSchema = createInsertSchema(affiliateConversions).omit({
+  id: true,
+  convertedAt: true,
+  createdAt: true,
+});
+
 // ============================================
 // TYPES
 // ============================================
@@ -888,3 +1080,22 @@ export type InsertIntegrationToken = z.infer<typeof insertIntegrationTokenSchema
 
 export type AnalyticsSnapshot = typeof analyticsSnapshots.$inferSelect;
 export type InsertAnalyticsSnapshot = z.infer<typeof insertAnalyticsSnapshotSchema>;
+
+// Price Comparison Types
+export type RetailerConfig = typeof retailerConfigs.$inferSelect;
+export type InsertRetailerConfig = z.infer<typeof insertRetailerConfigSchema>;
+
+export type ExternalProduct = typeof externalProducts.$inferSelect;
+export type InsertExternalProduct = z.infer<typeof insertExternalProductSchema>;
+
+export type PriceHistory = typeof priceHistory.$inferSelect;
+export type InsertPriceHistory = z.infer<typeof insertPriceHistorySchema>;
+
+export type PriceAlert = typeof priceAlerts.$inferSelect;
+export type InsertPriceAlert = z.infer<typeof insertPriceAlertSchema>;
+
+export type AffiliateClick = typeof affiliateClicks.$inferSelect;
+export type InsertAffiliateClick = z.infer<typeof insertAffiliateClickSchema>;
+
+export type AffiliateConversion = typeof affiliateConversions.$inferSelect;
+export type InsertAffiliateConversion = z.infer<typeof insertAffiliateConversionSchema>;
