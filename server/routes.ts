@@ -213,6 +213,21 @@ export function registerRoutes(app: Express) {
     res.json(requests);
   });
 
+  // Get single custom request with details
+  app.get("/api/v1/custom-requests/:id", async (req, res) => {
+    const request = await storage.getCustomRequest(req.params.id);
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+    res.json(request);
+  });
+
+  // Get all open custom requests (for makers)
+  app.get("/api/v1/custom-requests", async (req, res) => {
+    const requests = await storage.getOpenCustomRequests();
+    res.json(requests);
+  });
+
   // Get quotes for a request
   app.get("/api/v1/custom-requests/:requestId/quotes", async (req, res) => {
     const quotes = await storage.getQuotesForRequest(req.params.requestId);
@@ -225,6 +240,29 @@ export function registerRoutes(app: Express) {
       const quoteData = insertQuoteSchema.parse(req.body);
       const quote = await storage.createQuote(quoteData);
       res.json(quote);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Accept quote (user)
+  app.post("/api/v1/quotes/:id/accept", async (req, res) => {
+    try {
+      const quote = await storage.getQuote(req.params.id);
+      if (!quote) {
+        return res.status(404).json({ error: "Quote not found" });
+      }
+
+      // Accept the quote
+      const updatedQuote = await storage.acceptQuote(req.params.id);
+
+      // Update request status
+      await storage.updateCustomRequest(quote.requestId, {
+        status: 'accepted',
+        selectedQuoteId: req.params.id,
+      });
+
+      res.json(updatedQuote);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

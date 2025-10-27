@@ -47,10 +47,14 @@ export interface IStorage {
   // Custom Requests & Quotes
   getCustomRequest(id: string): Promise<CustomRequest | undefined>;
   getUserCustomRequests(userId: string): Promise<CustomRequest[]>;
+  getOpenCustomRequests(): Promise<CustomRequest[]>;
   createCustomRequest(request: InsertCustomRequest): Promise<CustomRequest>;
+  updateCustomRequest(id: string, updates: Partial<CustomRequest>): Promise<CustomRequest | undefined>;
   
   getQuotesForRequest(requestId: string): Promise<Quote[]>;
+  getQuote(id: string): Promise<Quote | undefined>;
   createQuote(quote: InsertQuote): Promise<Quote>;
+  acceptQuote(quoteId: string): Promise<Quote | undefined>;
   
   // Orders
   getOrder(id: string): Promise<Order | undefined>;
@@ -206,9 +210,23 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(customRequests.createdAt));
   }
 
+  async getOpenCustomRequests(): Promise<CustomRequest[]> {
+    return db.select().from(customRequests)
+      .where(eq(customRequests.status, 'open'))
+      .orderBy(desc(customRequests.createdAt));
+  }
+
   async createCustomRequest(request: InsertCustomRequest): Promise<CustomRequest> {
     const [created] = await db.insert(customRequests).values(request).returning();
     return created;
+  }
+
+  async updateCustomRequest(id: string, updates: Partial<CustomRequest>): Promise<CustomRequest | undefined> {
+    const [updated] = await db.update(customRequests)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(customRequests.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async getQuotesForRequest(requestId: string): Promise<Quote[]> {
@@ -217,9 +235,22 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(quotes.matchScore));
   }
 
+  async getQuote(id: string): Promise<Quote | undefined> {
+    const [quote] = await db.select().from(quotes).where(eq(quotes.id, id));
+    return quote || undefined;
+  }
+
   async createQuote(quote: InsertQuote): Promise<Quote> {
     const [created] = await db.insert(quotes).values(quote).returning();
     return created;
+  }
+
+  async acceptQuote(quoteId: string): Promise<Quote | undefined> {
+    const [updated] = await db.update(quotes)
+      .set({ isAccepted: true })
+      .where(eq(quotes.id, quoteId))
+      .returning();
+    return updated || undefined;
   }
 
   // Orders
