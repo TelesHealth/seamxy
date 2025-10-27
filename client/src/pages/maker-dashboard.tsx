@@ -43,7 +43,13 @@ export default function MakerDashboard() {
 
   const submitQuoteMutation = useMutation({
     mutationFn: async (data: QuoteFormData) => {
-      return apiRequest("POST", "/api/v1/quotes", data);
+      // Convert numbers back to strings for decimal columns
+      const quoteData = {
+        ...data,
+        price: data.price.toString(),
+        leadTimeDays: data.leadTimeDays,
+      };
+      return apiRequest("POST", "/api/v1/quotes", quoteData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/v1/custom-requests'] });
