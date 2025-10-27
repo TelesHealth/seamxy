@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag, User, Sparkles, Shield, Scissors, Package } from "lucide-react";
+import seamxyLogo from "@assets/Seamxy_1761527023424.png";
 
 export function Header() {
   const [location] = useLocation();
@@ -19,8 +20,8 @@ export function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/">
-            <span className="flex items-center gap-2 font-display text-xl font-700 hover-elevate px-3 py-2 rounded-lg cursor-pointer">
-              SeamXY
+            <span className="flex items-center hover-elevate px-3 py-2 rounded-lg cursor-pointer">
+              <img src={seamxyLogo} alt="SeamXY" className="h-8" />
             </span>
           </Link>
 
