@@ -6,10 +6,24 @@ import {
   generateAiStylistResponse 
 } from "./services/openai";
 import { requireUser, requireAdmin, requireRole, type AuthenticatedRequest } from "./middleware/auth";
+import {
+  authenticateSupplier,
+  requireRole as requireSupplierRole,
+  requireTier,
+  requireVerified,
+  requireOnboarding,
+  hashPassword,
+  verifyPassword,
+  validatePasswordStrength
+} from "./middleware/supplier-auth";
+import { encrypt, decrypt } from "./services/encryption";
 import { 
   insertUserSchema, insertMeasurementSchema, insertProductSchema,
   insertMakerSchema, insertCustomRequestSchema, insertQuoteSchema, insertOrderSchema,
-  insertAdminUserSchema, insertPricingConfigSchema, insertAiChatSessionSchema
+  insertAdminUserSchema, insertPricingConfigSchema, insertAiChatSessionSchema,
+  insertSupplierAccountSchema, insertSupplierProfileSchema, insertRetailerProductSchema,
+  insertDesignerCollectionSchema, insertPortfolioItemSchema, insertIntegrationTokenSchema,
+  insertMessageThreadSchema, insertSupplierMessageSchema, insertSupplierOrderSchema
 } from "@shared/schema";
 
 export function registerRoutes(app: Express) {
@@ -491,4 +505,418 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  // ============================================
+  // SUPPLIER PORTAL - AUTHENTICATION
+  // ============================================
+
+  // Supplier registration
+  app.post("/api/v1/supplier/register", async (req, res) => {
+    try {
+      const { password, ...accountData } = req.body;
+      
+      // Validate password strength
+      const passwordValidation = validatePasswordStrength(password);
+      if (!passwordValidation.isValid) {
+        return res.status(400).json({ error: "Weak password", details: passwordValidation.errors });
+      }
+
+      // Check if email already exists
+      const existing = await storage.getSupplierAccountByEmail(accountData.email);
+      if (existing) {
+        return res.status(409).json({ error: "Email already registered" });
+      }
+
+      // Hash password
+      const hashedPassword = await hashPassword(password);
+
+      // Create supplier account
+      const supplierData = insertSupplierAccountSchema.parse({
+        ...accountData,
+        password: hashedPassword
+      });
+      const supplier = await storage.createSupplierAccount(supplierData);
+
+      // Create initial profile
+      await storage.createSupplierProfile({
+        supplierId: supplier.id
+      });
+
+      // Create free tier subscription
+      await storage.createSupplierSubscription({
+        supplierId: supplier.id,
+        tier: supplier.tier,
+        status: 'active'
+      });
+
+      // Omit password from response
+      const { password: _, ...safeSupplier } = supplier;
+      res.json({ supplier: safeSupplier });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Supplier login
+  app.post("/api/v1/supplier/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      const supplier = await storage.getSupplierAccountByEmail(email);
+      if (!supplier) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      const isValid = await verifyPassword(password, supplier.password);
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      if (!supplier.isActive) {
+        return res.status(403).json({ error: "Account is deactivated" });
+      }
+
+      // Set session (if session middleware is configured)
+      // @ts-ignore - session type augmentation may not be picked up
+      if (req.session) {
+        req.session.supplierId = supplier.id;
+      }
+
+      // Omit password from response
+      const { password: _, ...safeSupplier } = supplier;
+      res.json({ supplier: safeSupplier });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Get current supplier
+  app.get("/api/v1/supplier/me", authenticateSupplier as any, async (req, res) => {
+    const supplier = await storage.getSupplierAccount(req.supplierId!);
+    const profile = await storage.getSupplierProfile(req.supplierId!);
+    
+    if (supplier) {
+      const { password: _, ...safeSupplier } = supplier;
+      res.json({ supplier: safeSupplier, profile });
+    } else {
+      res.status(404).json({ error: "Supplier not found" });
+    }
+  });
+
+  // ============================================
+  // SUPPLIER PORTAL - PROFILE MANAGEMENT
+  // ============================================
+
+  // Update supplier profile
+  app.patch("/api/v1/supplier/profile", authenticateSupplier as any, async (req, res) => {
+    try {
+      const profileData = insertSupplierProfileSchema.partial().parse(req.body);
+      const profile = await storage.updateSupplierProfile(req.supplierId!, profileData);
+      res.json(profile);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Complete onboarding
+  app.post("/api/v1/supplier/complete-onboarding", authenticateSupplier as any, async (req, res) => {
+    try {
+      const supplier = await storage.updateSupplierAccount(req.supplierId!, {
+        onboardingCompleted: true
+      });
+      res.json(supplier);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================
+  // SUPPLIER PORTAL - RETAILER ROUTES
+  // ============================================
+
+  // Get retailer products
+  app.get("/api/v1/supplier/retailer/products", 
+    authenticateSupplier as any,
+    requireSupplierRole('retailer') as any,
+    async (req, res) => {
+      const products = await storage.getRetailerProducts(req.supplierId!);
+      res.json(products);
+    }
+  );
+
+  // Create retailer product
+  app.post("/api/v1/supplier/retailer/products",
+    authenticateSupplier as any,
+    requireSupplierRole('retailer') as any,
+    async (req, res) => {
+      try {
+        const productData = insertRetailerProductSchema.parse({
+          ...req.body,
+          supplierId: req.supplierId
+        });
+        const product = await storage.createRetailerProduct(productData);
+        res.json(product);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+
+  // Update retailer product
+  app.patch("/api/v1/supplier/retailer/products/:id",
+    authenticateSupplier as any,
+    requireSupplierRole('retailer') as any,
+    async (req, res) => {
+      try {
+        const product = await storage.updateRetailerProduct(req.params.id, req.body);
+        res.json(product);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // Delete retailer product
+  app.delete("/api/v1/supplier/retailer/products/:id",
+    authenticateSupplier as any,
+    requireSupplierRole('retailer') as any,
+    async (req, res) => {
+      await storage.deleteRetailerProduct(req.params.id);
+      res.json({ success: true });
+    }
+  );
+
+  // ============================================
+  // SUPPLIER PORTAL - TAILOR ROUTES
+  // ============================================
+
+  // Get portfolio items
+  app.get("/api/v1/supplier/tailor/portfolio",
+    authenticateSupplier as any,
+    requireSupplierRole('tailor') as any,
+    async (req, res) => {
+      const items = await storage.getPortfolioItems(req.supplierId!);
+      res.json(items);
+    }
+  );
+
+  // Create portfolio item
+  app.post("/api/v1/supplier/tailor/portfolio",
+    authenticateSupplier as any,
+    requireSupplierRole('tailor') as any,
+    async (req, res) => {
+      try {
+        const itemData = insertPortfolioItemSchema.parse({
+          ...req.body,
+          supplierId: req.supplierId
+        });
+        const item = await storage.createPortfolioItem(itemData);
+        res.json(item);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+
+  // Get custom requests for tailor
+  app.get("/api/v1/supplier/tailor/custom-requests",
+    authenticateSupplier as any,
+    requireSupplierRole('tailor') as any,
+    async (req, res) => {
+      // Get all open custom requests that match tailor's specialties
+      const requests = await storage.getOpenCustomRequests();
+      res.json(requests);
+    }
+  );
+
+  // ============================================
+  // SUPPLIER PORTAL - DESIGNER ROUTES
+  // ============================================
+
+  // Get designer collections
+  app.get("/api/v1/supplier/designer/collections",
+    authenticateSupplier as any,
+    requireSupplierRole('designer') as any,
+    async (req, res) => {
+      const collections = await storage.getDesignerCollections(req.supplierId!);
+      res.json(collections);
+    }
+  );
+
+  // Create designer collection
+  app.post("/api/v1/supplier/designer/collections",
+    authenticateSupplier as any,
+    requireSupplierRole('designer') as any,
+    async (req, res) => {
+      try {
+        const collectionData = insertDesignerCollectionSchema.parse({
+          ...req.body,
+          supplierId: req.supplierId
+        });
+        const collection = await storage.createDesignerCollection(collectionData);
+        res.json(collection);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+
+  // Update designer collection
+  app.patch("/api/v1/supplier/designer/collections/:id",
+    authenticateSupplier as any,
+    requireSupplierRole('designer') as any,
+    async (req, res) => {
+      try {
+        const collection = await storage.updateDesignerCollection(req.params.id, req.body);
+        res.json(collection);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // SUPPLIER PORTAL - INTEGRATION ROUTES
+  // ============================================
+
+  // Get integration tokens
+  app.get("/api/v1/supplier/integrations",
+    authenticateSupplier as any,
+    requireTier('pro', 'enterprise') as any,
+    async (req, res) => {
+      const tokens = await storage.getIntegrationTokens(req.supplierId!);
+      // Decrypt tokens before sending
+      const decryptedTokens = tokens.map(t => ({
+        ...t,
+        accessToken: decrypt(t.accessToken),
+        refreshToken: t.refreshToken ? decrypt(t.refreshToken) : null
+      }));
+      res.json(decryptedTokens);
+    }
+  );
+
+  // Create integration token
+  app.post("/api/v1/supplier/integrations",
+    authenticateSupplier as any,
+    requireTier('pro', 'enterprise') as any,
+    async (req, res) => {
+      try {
+        const { accessToken, refreshToken, ...tokenData } = req.body;
+        
+        // Encrypt tokens before storage
+        const encryptedToken = insertIntegrationTokenSchema.parse({
+          ...tokenData,
+          supplierId: req.supplierId,
+          accessToken: encrypt(accessToken),
+          refreshToken: refreshToken ? encrypt(refreshToken) : null
+        });
+        
+        const token = await storage.createIntegrationToken(encryptedToken);
+        res.json(token);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+
+  // Delete integration token
+  app.delete("/api/v1/supplier/integrations/:id",
+    authenticateSupplier as any,
+    async (req, res) => {
+      await storage.deleteIntegrationToken(req.params.id);
+      res.json({ success: true });
+    }
+  );
+
+  // ============================================
+  // SUPPLIER PORTAL - MESSAGING ROUTES
+  // ============================================
+
+  // Get message threads
+  app.get("/api/v1/supplier/messages",
+    authenticateSupplier as any,
+    async (req, res) => {
+      const threads = await storage.getMessageThreads(req.supplierId!);
+      res.json(threads);
+    }
+  );
+
+  // Get messages in thread
+  app.get("/api/v1/supplier/messages/:threadId",
+    authenticateSupplier as any,
+    async (req, res) => {
+      const messages = await storage.getMessagesInThread(req.params.threadId);
+      res.json(messages);
+    }
+  );
+
+  // Send message
+  app.post("/api/v1/supplier/messages/:threadId",
+    authenticateSupplier as any,
+    async (req, res) => {
+      try {
+        const messageData = insertSupplierMessageSchema.parse({
+          threadId: req.params.threadId,
+          senderId: req.supplierId,
+          senderType: 'supplier',
+          ...req.body
+        });
+        const message = await storage.createSupplierMessage(messageData);
+        
+        // Update thread
+        await storage.updateMessageThread(req.params.threadId, {
+          lastMessageAt: new Date()
+        });
+        
+        res.json(message);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // SUPPLIER PORTAL - ORDER MANAGEMENT
+  // ============================================
+
+  // Get supplier orders
+  app.get("/api/v1/supplier/orders",
+    authenticateSupplier as any,
+    async (req, res) => {
+      const orders = await storage.getSupplierOrders(req.supplierId!);
+      res.json(orders);
+    }
+  );
+
+  // Update supplier order
+  app.patch("/api/v1/supplier/orders/:id",
+    authenticateSupplier as any,
+    async (req, res) => {
+      try {
+        const orderData = insertSupplierOrderSchema.partial().parse(req.body);
+        const order = await storage.updateSupplierOrder(req.params.id, orderData);
+        res.json(order);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // SUPPLIER PORTAL - ANALYTICS
+  // ============================================
+
+  // Get analytics snapshots
+  app.get("/api/v1/supplier/analytics",
+    authenticateSupplier as any,
+    async (req, res) => {
+      const { startDate, endDate } = req.query;
+      const snapshots = await storage.getAnalyticsSnapshots(
+        req.supplierId!,
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined
+      );
+      res.json(snapshots);
+    }
+  );
 }

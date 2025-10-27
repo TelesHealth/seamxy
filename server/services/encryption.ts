@@ -1,16 +1,25 @@
 import crypto from 'crypto';
 
 // Environment variable for 32-byte encryption key
-const ENCRYPTION_KEY = process.env.INTEGRATION_TOKEN_KEY || '';
+// DEVELOPMENT FALLBACK: In development, we use a deterministic key
+// PRODUCTION: Must set INTEGRATION_TOKEN_KEY env variable
+const DEV_FALLBACK_KEY = 'a'.repeat(64); // 32 bytes in hex = 64 chars
+const ENCRYPTION_KEY = process.env.INTEGRATION_TOKEN_KEY || DEV_FALLBACK_KEY;
 
 // Validate key on module load
 if (!ENCRYPTION_KEY || Buffer.from(ENCRYPTION_KEY, 'hex').length !== 32) {
   console.error('CRITICAL: INTEGRATION_TOKEN_KEY must be exactly 32 bytes (64 hex chars)');
   console.error('Generate with: node -e "console.log(crypto.randomBytes(32).toString(\'hex\'))"');
-  // Don't throw in development, use a fallback (NOT FOR PRODUCTION)
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('INTEGRATION_TOKEN_KEY must be exactly 32 bytes');
-  }
+  throw new Error('INTEGRATION_TOKEN_KEY must be exactly 32 bytes');
+}
+
+// Warn if using dev key
+if (ENCRYPTION_KEY === DEV_FALLBACK_KEY && process.env.NODE_ENV === 'production') {
+  throw new Error('PRODUCTION: INTEGRATION_TOKEN_KEY must be set to a secure random key');
+}
+
+if (ENCRYPTION_KEY === DEV_FALLBACK_KEY) {
+  console.warn('⚠️  WARNING: Using development encryption key. Set INTEGRATION_TOKEN_KEY for production.');
 }
 
 const IV_LENGTH = 16;

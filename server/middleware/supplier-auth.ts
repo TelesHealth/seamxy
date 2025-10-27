@@ -28,9 +28,18 @@ declare module 'express-session' {
  */
 export async function authenticateSupplier(req: Request, res: Response, next: NextFunction) {
   try {
-    // For now, we'll use a simple session-based auth
-    // In production, this should use JWT or session tokens
-    const supplierId = req.session?.supplierId;
+    // Check if session middleware is configured
+    // @ts-ignore
+    if (!req.session) {
+      console.error('Session middleware not configured. Supplier authentication requires express-session.');
+      return res.status(500).json({ 
+        error: 'Session not configured',
+        details: 'Server configuration error. Contact administrator.'
+      });
+    }
+    
+    // @ts-ignore
+    const supplierId = req.session.supplierId;
     
     if (!supplierId) {
       return res.status(401).json({ error: 'Authentication required' });
