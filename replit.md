@@ -31,6 +31,7 @@ SeamXY's architecture is built on a modern web stack designed for scalability an
     - **Marketplace**: `/api/v1/` for user profiles, style analysis, measurements, product search, maker listings, custom requests, quotes, and order creation.
     - **Admin**: `/api/v1/admin/` for authentication, user/maker management, pricing configuration, and audit logs.
     - **AI Stylist**: `/api/v1/` for listing AI personas and managing chat sessions and messages.
+    - **Supplier Portal**: `/api/v1/supplier/` for authentication, profile management, retailer product catalog, tailor portfolios, designer collections, e-commerce integrations, messaging, order management, and analytics.
 - **Scoring Algorithm**: Products are scored based on a weighted average: Fit Score (50%), Style Match (30%), and Budget Match (20%).
 - **Monetization Model**: Includes affiliate commissions (4-10%), a bespoke platform fee (10%), tiered maker subscriptions ($0, $29/mo, $99/mo), and an AI Stylist Pro subscription ($9.99/mo).
 
@@ -43,10 +44,45 @@ SeamXY's architecture is built on a modern web stack designed for scalability an
 - **Admin Panel**: Provides role-based access for staff, analytics, monetization controls, maker approval workflows, and audit logging.
 - **Supplier Portal**: A B2B platform for retailers, tailors, and designers to manage products, receive custom requests, communicate with customers, and utilize AI fit integration.
 
+## Supplier Portal Implementation (Latest)
+
+### Security & Authentication
+- **Password Hashing**: Bcrypt with configurable cost factor (min 10, default 12)
+- **Token Encryption**: AES-256-CBC for integration tokens with IV
+  - Development: Uses deterministic fallback key (warns in console)
+  - Production: Requires INTEGRATION_TOKEN_KEY (64-char hex, 32 bytes)
+- **RBAC Middleware**: Session-based supplier authentication with role guards (retailer/tailor/designer) and tier checks (basic/pro/enterprise)
+- **Session Requirement**: Supplier authentication requires express-session middleware (returns 500 with clear error if not configured)
+
+### API Endpoints (30+)
+- **Authentication**: `/api/v1/supplier/register`, `/login`, `/me`
+- **Profile**: `/api/v1/supplier/profile` (PATCH), `/complete-onboarding` (POST)
+- **Retailer** (role-gated): `/api/v1/supplier/retailer/products` (GET, POST, PATCH, DELETE)
+- **Tailor** (role-gated): `/api/v1/supplier/tailor/portfolio`, `/custom-requests`
+- **Designer** (role-gated): `/api/v1/supplier/designer/collections`
+- **Integrations** (tier-gated pro/enterprise): `/api/v1/supplier/integrations` (GET, POST, DELETE)
+- **Messaging**: `/api/v1/supplier/messages` with thread management
+- **Orders**: `/api/v1/supplier/orders` with milestone tracking
+- **Analytics**: `/api/v1/supplier/analytics` with date range filtering
+
+### E-Commerce Integrations
+- **Shopify**: OAuth flow, product sync, webhook registration (orders/create, products/update)
+- **WooCommerce**: Basic auth, product sync via REST API, webhook setup
+- **BigCommerce**: OAuth flow, catalog sync via V3 API
+- **Amazon SP-API**: Placeholder (explicitly throws error directing to other platforms)
+  - Note: Full implementation requires amazon-sp-api SDK and complex AWS signing
+  - Deferred to Phase 2 or manual CSV upload for MVP
+
+### Deployment Requirements
+1. **Session Middleware**: Must configure express-session before supplier portal testing
+2. **Encryption Key**: Set INTEGRATION_TOKEN_KEY environment variable (64-char hex) for production
+   - Generate with: `node -e "console.log(crypto.randomBytes(32).toString('hex'))"`
+3. **Amazon Integration**: Communicate to frontend teams that Amazon is not yet available (use Shopify/WooCommerce/BigCommerce)
+
 ## External Dependencies
 
 - **Database**: Neon Serverless PostgreSQL
 - **AI**: OpenAI GPT-5 (via Replit AI Integrations)
-- **E-commerce Platforms (for Supplier Portal)**: Shopify, WooCommerce, BigCommerce, Amazon Seller Central (via API/Plugin integration)
+- **E-commerce Platforms (for Supplier Portal)**: Shopify ✅, WooCommerce ✅, BigCommerce ✅, Amazon Seller Central ⏳ (deferred)
 - **Payment Processing (Future)**: Stripe
 - **AI Video/Voice (Future)**: Synthesia/HeyGen, ElevenLabs
