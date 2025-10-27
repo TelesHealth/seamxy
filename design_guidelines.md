@@ -1,4 +1,4 @@
-# PerfectFit Design Guidelines
+# SeamXY Design Guidelines
 
 ## Design Approach
 

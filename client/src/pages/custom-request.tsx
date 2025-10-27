@@ -41,7 +41,7 @@ export default function CustomRequest() {
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
 
-  const userId = localStorage.getItem("perfectfit_user_id");
+  const userId = localStorage.getItem("seamxy_user_id");
 
   // Fetch user measurements
   const { data: measurements } = useQuery({

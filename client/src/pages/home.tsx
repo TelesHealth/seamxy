@@ -60,7 +60,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="font-display text-4xl md:text-5xl font-700 text-foreground mb-4">
-              How PerfectFit Works
+              How SeamXY Works
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Three simple steps to perfectly fitting clothes

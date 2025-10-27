@@ -16,7 +16,7 @@ export default function Shop() {
   const [priceRange, setPriceRange] = useState([0, 500]);
   const [sortBy, setSortBy] = useState("best_match");
 
-  const userId = typeof window !== 'undefined' ? localStorage.getItem('perfectfit_user_id') : null;
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('seamxy_user_id') : null;
 
   // Build query string for products API
   const buildProductsUrl = () => {

@@ -92,7 +92,7 @@ interface Message {
 }
 
 export default function AiStylist() {
-  const userId = typeof window !== 'undefined' ? localStorage.getItem('perfectfit_user_id') : null;
+  const userId = typeof window !== 'undefined' ? localStorage.getItem('seamxy_user_id') : null;
   const [selectedPersona, setSelectedPersona] = useState(personas[0]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState("");

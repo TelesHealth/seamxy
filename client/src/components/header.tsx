@@ -20,7 +20,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/">
             <span className="flex items-center gap-2 font-display text-xl font-700 hover-elevate px-3 py-2 rounded-lg cursor-pointer">
-              PerfectFit
+              SeamXY
             </span>
           </Link>
 

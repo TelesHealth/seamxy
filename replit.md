@@ -1,11 +1,11 @@
-# PerfectFit - AI-Powered Universal Clothing Marketplace
+# SeamXY - AI-Powered Universal Clothing Marketplace
 
 **Last Updated**: October 27, 2025
 **Status**: Custom Fit Marketplace Phase 1 Complete - End-to-End RFQ Flow Verified
 
 ## Project Overview
 
-PerfectFit is a comprehensive fashion marketplace platform combining retail shopping with custom tailoring services, powered by AI-driven fit matching and virtual fashion consultants. Built with React, Express, PostgreSQL, and GPT-5.
+SeamXY is a comprehensive fashion marketplace platform combining retail shopping with custom tailoring services, powered by AI-driven fit matching and virtual fashion consultants. Built with React, Express, PostgreSQL, and GPT-5.
 
 ## Core Features
 
@@ -209,7 +209,7 @@ npm run db:push   # Sync database schema
 - **Decimal Columns**: Drizzle-ORM decimal type expects strings in TypeScript (precision preservation)
 - **API Requests**: Use `apiRequest(method, url, data)` parameter order consistently
 - **Query Strings**: Build URLSearchParams manually for complex GET requests
-- **localStorage**: Used for userId persistence (`perfectfit_user_id` key) and maker authentication (`perfectfit_maker_id`)
+- **localStorage**: Used for userId persistence (`seamxy_user_id` key) and maker authentication (`seamxy_maker_id`)
 - **GPT-5 Timeouts**: Style analysis and chat may take 5-15 seconds
 - **Maker Dashboard**: Uses localStorage for demo authentication, selects from real seeded maker IDs
 - **Quote Form**: Converts numeric inputs (price, leadTimeDays) to strings before submission to match schema

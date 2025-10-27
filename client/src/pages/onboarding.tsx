@@ -41,7 +41,7 @@ export default function Onboarding() {
         throw new Error("Please select a demographic");
       }
       const res = await apiRequest("POST", "/api/v1/users", {
-        email: `user_${Date.now()}@perfectfit.com`,
+        email: `user_${Date.now()}@seamxy.com`,
         password: "temporary",
         name: "New User",
         demographic,
@@ -157,7 +157,7 @@ export default function Onboarding() {
   const handleComplete = () => {
     // Store userId in localStorage for future use
     if (userId) {
-      localStorage.setItem('perfectfit_user_id', userId);
+      localStorage.setItem('seamxy_user_id', userId);
     }
     setLocation("/shop");
   };

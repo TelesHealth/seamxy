@@ -12,7 +12,7 @@ import type { CustomRequest, Quote, Maker } from "@shared/schema";
 export default function MyRequests() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const userId = localStorage.getItem("perfectfit_user_id");
+  const userId = localStorage.getItem("seamxy_user_id");
 
   const { data: requests, isLoading } = useQuery<CustomRequest[]>({
     queryKey: ['/api/v1/users', userId, 'custom-requests'],

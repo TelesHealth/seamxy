@@ -28,7 +28,7 @@ export default function MakerDashboard() {
 
   // For demo purposes, using localStorage to store maker ID
   // In production, this would be from authentication
-  const makerId = localStorage.getItem("perfectfit_maker_id");
+  const makerId = localStorage.getItem("seamxy_maker_id");
 
   // Query for available makers
   const { data: makers } = useQuery<Maker[]>({
@@ -94,7 +94,7 @@ export default function MakerDashboard() {
                     variant="outline"
                     className="w-full justify-start"
                     onClick={() => {
-                      localStorage.setItem("perfectfit_maker_id", maker.id);
+                      localStorage.setItem("seamxy_maker_id", maker.id);
                       window.location.reload();
                     }}
                     data-testid={`button-select-maker-${maker.id}`}
