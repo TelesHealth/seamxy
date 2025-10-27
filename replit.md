@@ -32,6 +32,7 @@ SeamXY's architecture is built on a modern web stack designed for scalability an
     - **Admin**: `/api/v1/admin/` for authentication, user/maker management, pricing configuration, and audit logs.
     - **AI Stylist**: `/api/v1/` for listing AI personas and managing chat sessions and messages.
     - **Supplier Portal**: `/api/v1/supplier/` for authentication, profile management, retailer product catalog, tailor portfolios, designer collections, e-commerce integrations, messaging, order management, and analytics.
+    - **Price Comparison**: `/api/v1/products/:id/compare-prices`, `/api/v1/price-alerts`, `/api/v1/affiliate-click`, `/api/v1/affiliate-conversion` for smart price comparison across retailers.
 - **Scoring Algorithm**: Products are scored based on a weighted average: Fit Score (50%), Style Match (30%), and Budget Match (20%).
 - **Monetization Model**: Includes affiliate commissions (4-10%), a bespoke platform fee (10%), tiered maker subscriptions ($0, $29/mo, $99/mo), and an AI Stylist Pro subscription ($9.99/mo).
 
@@ -87,6 +88,9 @@ Real-time price comparison across Amazon, eBay, and Rakuten retailers with AI-po
 ### Architecture
 - **Retailer Clients**: Abstracted API clients for Amazon PAA5, eBay Browse API, Rakuten Product API
 - **AI Matching**: OpenAI GPT-4o analyzes product similarity (brand, title, category, specs) with 0-100 confidence scoring
+  - Lazy initialization prevents module-load failures
+  - Graceful degradation to text-based matching when OpenAI unavailable
+  - Fallback mechanisms ensure 100% uptime even without AI credentials
 - **Price Tracking**: Automated price history logging, price drop alerts for premium users
 - **Affiliate System**: Click tracking and conversion attribution for commission calculation
 - **Caching**: 15-minute in-memory cache for search results to reduce API calls
@@ -100,12 +104,16 @@ Real-time price comparison across Amazon, eBay, and Rakuten retailers with AI-po
 - `affiliate_clicks` - Outbound click tracking with referrer data
 - `affiliate_conversions` - Completed purchases with commission tracking
 
-### API Endpoints
+### API Endpoints (Implemented ✅)
 - `GET /api/v1/products/:id/compare-prices` - Compare prices across all retailers
+  - Integrates with priceComparisonService to search Amazon, eBay, Rakuten
+  - Uses AI product matcher (GPT-4o) for intelligent matching with confidence scores
+  - Graceful degradation: works without OpenAI credentials using text-based matching
+  - Returns `aiMatchingEnabled` flag to indicate AI availability
 - `POST /api/v1/price-alerts` - Create price drop alert (premium only)
-- `GET /api/v1/price-alerts` - Get user's active alerts
-- `POST /api/v1/affiliate-click` - Track affiliate click
-- `POST /api/v1/affiliate-conversion` - Record conversion (webhook)
+- `GET /api/v1/price-alerts` - Get user's active price alerts
+- `POST /api/v1/affiliate-click` - Track affiliate click for commission attribution
+- `POST /api/v1/affiliate-conversion` - Record conversion (webhook from retailers)
 
 ### Frontend Components
 - `ComparisonModal` - Price comparison table with filters (price, delivery, sustainability, fit)
