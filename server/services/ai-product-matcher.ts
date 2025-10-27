@@ -17,12 +17,15 @@ export interface ProductMatch {
 }
 
 export class AIProductMatcher {
-  private openai: OpenAI;
+  private openai: OpenAI | null = null;
 
-  constructor() {
-    this.openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY
-    });
+  private getOpenAI(): OpenAI {
+    if (!this.openai) {
+      this.openai = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY
+      });
+    }
+    return this.openai;
   }
 
   /**
@@ -65,7 +68,7 @@ export class AIProductMatcher {
     try {
       const prompt = this.buildMatchingPrompt(internal, external);
 
-      const completion = await this.openai.chat.completions.create({
+      const completion = await this.getOpenAI().chat.completions.create({
         model: "gpt-4o",
         messages: [
           {

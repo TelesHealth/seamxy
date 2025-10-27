@@ -23,8 +23,11 @@ import {
   insertAdminUserSchema, insertPricingConfigSchema, insertAiChatSessionSchema,
   insertSupplierAccountSchema, insertSupplierProfileSchema, insertRetailerProductSchema,
   insertDesignerCollectionSchema, insertPortfolioItemSchema, insertIntegrationTokenSchema,
-  insertMessageThreadSchema, insertSupplierMessageSchema, insertSupplierOrderSchema
+  insertMessageThreadSchema, insertSupplierMessageSchema, insertSupplierOrderSchema,
+  insertPriceAlertSchema, insertAffiliateClickSchema, insertAffiliateConversionSchema
 } from "@shared/schema";
+import { priceComparisonService } from "./services/price-comparison";
+import { aiProductMatcher } from "./services/ai-product-matcher";
 
 export function registerRoutes(app: Express) {
   
@@ -168,6 +171,122 @@ export function registerRoutes(app: Express) {
       const productData = insertProductSchema.parse(req.body);
       const product = await storage.createProduct(productData);
       res.json(product);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Compare prices across retailers
+  app.get("/api/v1/products/:id/compare-prices", async (req, res) => {
+    try {
+      const productId = req.params.id;
+      const product = await storage.getProduct(productId);
+      
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+
+      // Search across retailers
+      const externalProducts = await priceComparisonService.searchAllRetailers({
+        query: `${product.brand} ${product.name}`,
+        category: product.category,
+        minPrice: Number(product.price) * 0.7, // -30%
+        maxPrice: Number(product.price) * 1.3, // +30%
+        limit: 10
+      });
+
+      // Use AI to match products (if OpenAI key is available)
+      let matches;
+      const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+      
+      if (hasOpenAIKey) {
+        try {
+          matches = await aiProductMatcher.findMatches(product, externalProducts);
+        } catch (error: any) {
+          console.warn('AI matching failed, falling back to text-based matching:', error.message);
+          hasOpenAIKey && console.error(error);
+          // Fallback: simple text similarity matching
+          matches = externalProducts.map(ext => ({
+            externalProduct: ext,
+            matchConfidence: 50, // Conservative estimate
+            matchReason: 'Text-based matching (AI unavailable)'
+          }));
+        }
+      } else {
+        // No AI: return external products with basic matching
+        matches = externalProducts.map(ext => ({
+          externalProduct: ext,
+          matchConfidence: 50,
+          matchReason: 'Text-based matching (OpenAI not configured)'
+        }));
+      }
+
+      // Return comparison results
+      res.json({
+        internalProduct: product,
+        externalMatches: matches.map(match => ({
+          ...match.externalProduct,
+          matchConfidence: match.matchConfidence,
+          matchReason: match.matchReason
+        })),
+        aiMatchingEnabled: hasOpenAIKey
+      });
+    } catch (error: any) {
+      console.error('Price comparison failed:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================
+  // PRICE ALERTS
+  // ============================================
+
+  // Create price alert
+  app.post("/api/v1/price-alerts", async (req, res) => {
+    try {
+      const alertData = insertPriceAlertSchema.parse(req.body);
+      const alert = await storage.createPriceAlert(alertData);
+      res.json(alert);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Get user's price alerts
+  app.get("/api/v1/price-alerts", async (req, res) => {
+    try {
+      const { userId } = req.query;
+      if (!userId) {
+        return res.status(400).json({ error: "userId required" });
+      }
+      const alerts = await storage.getUserPriceAlerts(userId as string);
+      res.json(alerts);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================
+  // AFFILIATE TRACKING
+  // ============================================
+
+  // Track affiliate click
+  app.post("/api/v1/affiliate-click", async (req, res) => {
+    try {
+      const clickData = insertAffiliateClickSchema.parse(req.body);
+      const click = await storage.createAffiliateClick(clickData);
+      res.json({ clickId: click.id });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Record affiliate conversion (webhook)
+  app.post("/api/v1/affiliate-conversion", async (req, res) => {
+    try {
+      const conversionData = insertAffiliateConversionSchema.parse(req.body);
+      const conversion = await storage.createAffiliateConversion(conversionData);
+      res.json({ conversionId: conversion.id });
     } catch (error: any) {
       res.status(400).json({ error: error.message });
     }

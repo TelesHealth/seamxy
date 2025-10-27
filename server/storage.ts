@@ -6,6 +6,7 @@ import {
   supplierAccounts, supplierProfiles, retailerProducts, designerCollections,
   portfolioItems, supplierSubscriptions, supplierInvoices, messageThreads,
   supplierMessages, supplierOrders, integrationTokens, analyticsSnapshots,
+  retailerConfigs, externalProducts, priceHistory, priceAlerts, affiliateClicks, affiliateConversions,
   type User, type InsertUser,
   type Measurement, type InsertMeasurement,
   type Product, type InsertProduct,
@@ -32,6 +33,12 @@ import {
   type SupplierOrder, type InsertSupplierOrder,
   type IntegrationToken, type InsertIntegrationToken,
   type AnalyticsSnapshot, type InsertAnalyticsSnapshot,
+  type RetailerConfig, type InsertRetailerConfig,
+  type ExternalProduct, type InsertExternalProduct,
+  type PriceHistory, type InsertPriceHistory,
+  type PriceAlert, type InsertPriceAlert,
+  type AffiliateClick, type InsertAffiliateClick,
+  type AffiliateConversion, type InsertAffiliateConversion,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
@@ -173,6 +180,19 @@ export interface IStorage {
   // Analytics Snapshots
   getAnalyticsSnapshots(supplierId: string, startDate?: Date, endDate?: Date): Promise<AnalyticsSnapshot[]>;
   createAnalyticsSnapshot(snapshot: InsertAnalyticsSnapshot): Promise<AnalyticsSnapshot>;
+  
+  // Price Comparison
+  getRetailerConfigs(): Promise<RetailerConfig[]>;
+  getExternalProductsByInternalId(internalProductId: string): Promise<ExternalProduct[]>;
+  createExternalProduct(product: InsertExternalProduct): Promise<ExternalProduct>;
+  updateExternalProduct(id: string, updates: Partial<InsertExternalProduct>): Promise<ExternalProduct | undefined>;
+  createPriceHistory(history: InsertPriceHistory): Promise<PriceHistory>;
+  getPriceHistory(externalProductId: string, limit?: number): Promise<PriceHistory[]>;
+  getUserPriceAlerts(userId: string): Promise<PriceAlert[]>;
+  createPriceAlert(alert: InsertPriceAlert): Promise<PriceAlert>;
+  updatePriceAlert(id: string, updates: Partial<InsertPriceAlert>): Promise<PriceAlert | undefined>;
+  createAffiliateClick(click: InsertAffiliateClick): Promise<AffiliateClick>;
+  createAffiliateConversion(conversion: InsertAffiliateConversion): Promise<AffiliateConversion>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -733,6 +753,71 @@ export class DatabaseStorage implements IStorage {
 
   async createAnalyticsSnapshot(snapshot: InsertAnalyticsSnapshot): Promise<AnalyticsSnapshot> {
     const [created] = await db.insert(analyticsSnapshots).values(snapshot).returning();
+    return created;
+  }
+
+  // Price Comparison
+  async getRetailerConfigs(): Promise<RetailerConfig[]> {
+    return db.select().from(retailerConfigs).where(eq(retailerConfigs.isActive, true));
+  }
+
+  async getExternalProductsByInternalId(internalProductId: string): Promise<ExternalProduct[]> {
+    return db.select().from(externalProducts)
+      .where(eq(externalProducts.internalProductId, internalProductId))
+      .orderBy(desc(externalProducts.currentPrice));
+  }
+
+  async createExternalProduct(product: InsertExternalProduct): Promise<ExternalProduct> {
+    const [created] = await db.insert(externalProducts).values(product).returning();
+    return created;
+  }
+
+  async updateExternalProduct(id: string, updates: Partial<InsertExternalProduct>): Promise<ExternalProduct | undefined> {
+    const [updated] = await db.update(externalProducts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(externalProducts.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async createPriceHistory(history: InsertPriceHistory): Promise<PriceHistory> {
+    const [created] = await db.insert(priceHistory).values(history).returning();
+    return created;
+  }
+
+  async getPriceHistory(externalProductId: string, limit = 30): Promise<PriceHistory[]> {
+    return db.select().from(priceHistory)
+      .where(eq(priceHistory.externalProductId, externalProductId))
+      .orderBy(desc(priceHistory.checkedAt))
+      .limit(limit);
+  }
+
+  async getUserPriceAlerts(userId: string): Promise<PriceAlert[]> {
+    return db.select().from(priceAlerts)
+      .where(and(eq(priceAlerts.userId, userId), eq(priceAlerts.status, 'active')))
+      .orderBy(desc(priceAlerts.createdAt));
+  }
+
+  async createPriceAlert(alert: InsertPriceAlert): Promise<PriceAlert> {
+    const [created] = await db.insert(priceAlerts).values(alert).returning();
+    return created;
+  }
+
+  async updatePriceAlert(id: string, updates: Partial<InsertPriceAlert>): Promise<PriceAlert | undefined> {
+    const [updated] = await db.update(priceAlerts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(priceAlerts.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async createAffiliateClick(click: InsertAffiliateClick): Promise<AffiliateClick> {
+    const [created] = await db.insert(affiliateClicks).values(click).returning();
+    return created;
+  }
+
+  async createAffiliateConversion(conversion: InsertAffiliateConversion): Promise<AffiliateConversion> {
+    const [created] = await db.insert(affiliateConversions).values(conversion).returning();
     return created;
   }
 }
