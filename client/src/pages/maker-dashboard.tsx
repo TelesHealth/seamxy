@@ -13,7 +13,7 @@ import { z } from "zod";
 import { insertQuoteSchema } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Package, DollarSign, Calendar, Send } from "lucide-react";
-import type { CustomRequest } from "@shared/schema";
+import type { CustomRequest, Maker } from "@shared/schema";
 
 const quoteFormSchema = insertQuoteSchema.extend({
   price: z.coerce.number().min(1),
@@ -30,8 +30,15 @@ export default function MakerDashboard() {
   // In production, this would be from authentication
   const makerId = localStorage.getItem("perfectfit_maker_id");
 
+  // Query for available makers
+  const { data: makers } = useQuery<Maker[]>({
+    queryKey: ['/api/v1/makers'],
+    enabled: !makerId,
+  });
+
   const { data: openRequests, isLoading } = useQuery<CustomRequest[]>({
     queryKey: ['/api/v1/custom-requests'],
+    enabled: !!makerId,
   });
 
   const submitQuoteMutation = useMutation({
@@ -56,29 +63,44 @@ export default function MakerDashboard() {
   });
 
   if (!makerId) {
+    const verifiedMakers = makers?.filter((m) => m.isVerified && m.isActive) || [];
+    
     return (
       <div className="container max-w-4xl mx-auto p-8">
         <Card>
           <CardHeader>
             <CardTitle>Maker Login Required</CardTitle>
             <CardDescription>
-              Please sign in as a maker to view and respond to requests.
+              Please select a maker profile to continue
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground mb-4">
-              For demo purposes, we'll set a temporary maker ID for you.
-            </p>
-            <Button
-              onClick={() => {
-                // Set first maker ID from seed data
-                localStorage.setItem("perfectfit_maker_id", "temp-maker-id");
-                window.location.reload();
-              }}
-              data-testid="button-demo-login"
-            >
-              Continue as Demo Maker
-            </Button>
+            {verifiedMakers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Loading makers...</p>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground mb-4">
+                  For demo purposes, select a maker profile to continue:
+                </p>
+                {verifiedMakers.map((maker) => (
+                  <Button
+                    key={maker.id}
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => {
+                      localStorage.setItem("perfectfit_maker_id", maker.id);
+                      window.location.reload();
+                    }}
+                    data-testid={`button-select-maker-${maker.id}`}
+                  >
+                    <div className="text-left">
+                      <div className="font-semibold">{maker.businessName}</div>
+                      <div className="text-xs text-muted-foreground">{maker.ownerName} · {maker.location}</div>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -276,7 +298,7 @@ function RequestCard({
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => onSelect()}
+                      onClick={() => setSelectedRequestId(null)}
                       className="flex-1"
                     >
                       Cancel
