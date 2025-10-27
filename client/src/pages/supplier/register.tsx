@@ -21,6 +21,7 @@ const registerSchema = z.object({
     .regex(/[0-9]/, 'Password must contain at least one number'),
   confirmPassword: z.string(),
   businessName: z.string().min(2, 'Business name is required'),
+  ownerName: z.string().min(2, 'Owner name is required'),
   role: z.enum(['retailer', 'tailor', 'designer'] as const)
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -42,6 +43,7 @@ export default function SupplierRegister() {
       password: '',
       confirmPassword: '',
       businessName: '',
+      ownerName: '',
       role: 'retailer'
     }
   });
@@ -53,6 +55,7 @@ export default function SupplierRegister() {
         email: data.email,
         password: data.password,
         businessName: data.businessName,
+        ownerName: data.ownerName,
         role: data.role,
         tier: 'basic'
       });
@@ -99,6 +102,24 @@ export default function SupplierRegister() {
                       <Input
                         placeholder="Your Company Inc."
                         data-testid="input-business-name"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="ownerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Owner Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="John Doe"
+                        data-testid="input-owner-name"
                         {...field}
                       />
                     </FormControl>

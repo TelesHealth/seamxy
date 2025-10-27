@@ -44,6 +44,7 @@ interface RegisterData {
   email: string;
   password: string;
   businessName: string;
+  ownerName: string;
   role: SupplierRole;
   tier?: SupplierTier;
 }
