@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { aiPersonas, subscriptionPlans, pricingConfigs, products } from "@shared/schema";
+import { aiPersonas, subscriptionPlans, pricingConfigs, products, makers } from "@shared/schema";
 
 export async function seedDatabase() {
   console.log("🌱 Seeding database...");
@@ -353,6 +353,139 @@ Your tone is refined, warm, and knowledgeable. Focus on heritage brands, proper 
     console.log("✅ Sample products seeded");
   } catch (error) {
     console.log("ℹ️ Sample products already exist");
+  }
+
+  // Seed Makers
+  const makersData = [
+    {
+      email: "aria@stitchhouse.com",
+      password: "password123",
+      businessName: "Aria's Stitch House",
+      ownerName: "Aria Williams",
+      description: "Boutique atelier specializing in custom wedding dresses and formal gowns. 15 years of experience creating dream garments.",
+      specialties: ["Dresses", "Gowns", "Formal Wear"],
+      styleTags: ["elegant", "romantic", "luxury"],
+      budgetMin: 800,
+      budgetMax: 5000,
+      location: "New York, NY",
+      deliveryZones: ["New York", "New Jersey", "Connecticut"],
+      leadTimeDays: 45,
+      rating: "4.9",
+      totalReviews: 127,
+      portfolioImages: [
+        "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=800&q=80",
+        "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=800&q=80"
+      ],
+      stripeAccountId: null,
+      subscriptionTier: "pro",
+      isVerified: true,
+      isActive: true,
+    },
+    {
+      email: "james@tailored.co",
+      password: "password123",
+      businessName: "Tailored by James",
+      ownerName: "James Chen",
+      description: "Master tailor focused on bespoke men's suits and business attire. Trained in Savile Row techniques.",
+      specialties: ["Suits", "Blazers", "Shirts"],
+      styleTags: ["classic", "professional", "modern"],
+      budgetMin: 600,
+      budgetMax: 3500,
+      location: "San Francisco, CA",
+      deliveryZones: ["California", "Nevada", "Oregon"],
+      leadTimeDays: 30,
+      rating: "4.8",
+      totalReviews: 89,
+      portfolioImages: [
+        "https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=800&q=80",
+        "https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=800&q=80"
+      ],
+      stripeAccountId: null,
+      subscriptionTier: "elite",
+      isVerified: true,
+      isActive: true,
+    },
+    {
+      email: "rosa@customcouture.com",
+      password: "password123",
+      businessName: "Rosa's Custom Couture",
+      ownerName: "Rosa Martinez",
+      description: "Vibrant custom clothing with a Latin flair. Specializing in quinceañera dresses, party wear, and colorful ensembles.",
+      specialties: ["Dresses", "Party Wear", "Traditional Attire"],
+      styleTags: ["colorful", "vibrant", "cultural"],
+      budgetMin: 400,
+      budgetMax: 2500,
+      location: "Miami, FL",
+      deliveryZones: ["Florida", "Georgia", "Texas"],
+      leadTimeDays: 21,
+      rating: "4.7",
+      totalReviews: 156,
+      portfolioImages: [
+        "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=800&q=80",
+        "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=800&q=80"
+      ],
+      stripeAccountId: null,
+      subscriptionTier: "pro",
+      isVerified: true,
+      isActive: true,
+    },
+    {
+      email: "malik@urbanstitch.com",
+      password: "password123",
+      businessName: "Urban Stitch Studio",
+      ownerName: "Malik Johnson",
+      description: "Contemporary streetwear and custom jackets. Bringing bold designs and cultural expression to life.",
+      specialties: ["Jackets", "Streetwear", "Casual"],
+      styleTags: ["street", "contemporary", "bold"],
+      budgetMin: 300,
+      budgetMax: 1500,
+      location: "Atlanta, GA",
+      deliveryZones: ["Georgia", "Alabama", "Tennessee", "North Carolina"],
+      leadTimeDays: 14,
+      rating: "4.6",
+      totalReviews: 73,
+      portfolioImages: [
+        "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=800&q=80",
+        "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=800&q=80"
+      ],
+      stripeAccountId: null,
+      subscriptionTier: "basic",
+      isVerified: true,
+      isActive: true,
+    },
+    {
+      email: "lily@minimalistwardrobe.com",
+      password: "password123",
+      businessName: "Minimalist Wardrobe",
+      ownerName: "Lily Park",
+      description: "Clean lines, quality fabrics, and timeless designs. Specializing in minimalist capsule wardrobe pieces.",
+      specialties: ["Dresses", "Pants", "Shirts", "Jackets"],
+      styleTags: ["minimalist", "modern", "versatile"],
+      budgetMin: 350,
+      budgetMax: 1800,
+      location: "Seattle, WA",
+      deliveryZones: ["Washington", "Oregon", "California"],
+      leadTimeDays: 28,
+      rating: "4.9",
+      totalReviews: 94,
+      portfolioImages: [
+        "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80",
+        "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=800&q=80"
+      ],
+      stripeAccountId: null,
+      subscriptionTier: "pro",
+      isVerified: true,
+      isActive: true,
+    },
+  ];
+
+  try {
+    for (const maker of makersData) {
+      await db.insert(makers).values(maker).onConflictDoNothing();
+    }
+    console.log("✅ Sample makers seeded");
+  } catch (error) {
+    console.log("ℹ️ Sample makers already exist");
   }
 
   console.log("🎉 Database seeding complete!");
