@@ -166,10 +166,15 @@ export function registerRoutes(app: Express) {
   // Get all makers
   app.get("/api/v1/makers", async (req, res) => {
     const { verified } = req.query;
-    const makers = await storage.getMakers({
-      verified: verified === 'true'
-    });
-    res.json(makers);
+    if (verified !== undefined) {
+      const makers = await storage.getMakers({
+        verified: verified === 'true'
+      });
+      res.json(makers);
+    } else {
+      const allMakers = await storage.getAllMakers();
+      res.json(allMakers);
+    }
   });
 
   // Get maker by ID

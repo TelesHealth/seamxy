@@ -162,6 +162,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Makers
+  async getAllMakers(): Promise<Maker[]> {
+    return db.select().from(makers);
+  }
+
   async getMakers(filters?: { specialty?: string; verified?: boolean }): Promise<Maker[]> {
     let query = db.select().from(makers);
     const conditions = [];
