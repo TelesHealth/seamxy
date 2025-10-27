@@ -1,0 +1,92 @@
+👗 New Feature: “Custom Fit Marketplace”
+
+Feature Name: Custom Work Requests / Bespoke Orders
+
+🎯 Goal
+
+Allow users to:
+
+Submit custom design or tailoring requests (e.g., suits, gowns, dresses).
+
+Receive quotes or proposals from local or online custom clothiers, tailors, and designers.
+
+Compare prices, timelines, and portfolios — and even chat before ordering.
+
+🧩 User Flow
+
+User Inputs Measurements & Style Preferences
+– From their profile or previous saved data.
+– Option to upload reference photos or design ideas.
+
+Select “Request Custom Design”
+– Choose category (Suit, Dress, Gown, Traditional Attire, etc.)
+– Describe details (fabric type, event, color, delivery deadline).
+
+AI Prepares Auto-Matched Suggestions
+– Suggests potential tailors or boutiques that match the style and budget.
+– Generates a “Request for Quote” (RFQ) template.
+
+Tailors / Designers Respond
+– Registered B2B partners can send back quotes, timelines, and sample designs.
+– Option to upload sketches or show previous work.
+
+User Reviews & Accepts
+– Can filter by price, quality rating, delivery time, or location.
+– In-app chat or video consultation option.
+
+Transaction Handling (Phase 2)
+– Enable secure payments or deposits once you have a payment partner (Stripe, PayPal, etc.).
+
+💼 Admin Panel Additions
+
+For your admin view:
+
+Manage B2B tailor/designer accounts.
+
+Review and approve RFQs and proposals.
+
+Monitor pricing, commissions, and fulfillment feedback.
+
+Add premium listing options for verified tailors.
+
+💰 Monetization Opportunities
+
+Commission per order (e.g., 5–10% of each completed custom order).
+
+Subscription tiers for designers (basic/free vs. premium for higher visibility).
+
+Promoted placement in “Featured Tailors” or “Verified Designers.”
+
+Design request credits for users (limit free requests, then paid).
+
+🧠 AI + Personalization
+
+Your AI stylist could:
+
+Translate vague inputs (“I want something classy for a summer wedding”) into detailed design briefs.
+
+Recommend tailors who match that aesthetic.
+
+Predict estimated cost ranges based on materials and complexity.
+
+⚙️ Next Development Step
+
+This feature would add a B2B matching layer to your current system:
+
+Extend your database schema to include Tailor Profiles and Custom Orders.
+
+Add a “Submit Custom Request” button to the main UI.
+
+Develop APIs for quote submission, review, and matching.
+
+Would you like me to write a feature specification document (for your developer or for Replit) that outlines:
+
+Data model updates (users, tailors, custom orders)
+
+API endpoints
+
+UI additions (screens and buttons)
+
+Workflow logic (request → quote → acceptance → order)?
+
+That would give you a clear, build-ready roadmap.
