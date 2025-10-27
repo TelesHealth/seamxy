@@ -3,6 +3,9 @@ import {
   users, measurements, products, makers, customRequests, quotes, orders,
   adminUsers, pricingConfigs, subscriptionPlans, subscriptions, auditLogs,
   aiPersonas, aiChatSessions,
+  supplierAccounts, supplierProfiles, retailerProducts, designerCollections,
+  portfolioItems, supplierSubscriptions, supplierInvoices, messageThreads,
+  supplierMessages, supplierOrders, integrationTokens, analyticsSnapshots,
   type User, type InsertUser,
   type Measurement, type InsertMeasurement,
   type Product, type InsertProduct,
@@ -17,6 +20,18 @@ import {
   type AuditLog,
   type AiPersona, type InsertAiPersona,
   type AiChatSession, type InsertAiChatSession,
+  type SupplierAccount, type InsertSupplierAccount,
+  type SupplierProfile, type InsertSupplierProfile,
+  type RetailerProduct, type InsertRetailerProduct,
+  type DesignerCollection, type InsertDesignerCollection,
+  type PortfolioItem, type InsertPortfolioItem,
+  type SupplierSubscription, type InsertSupplierSubscription,
+  type SupplierInvoice, type InsertSupplierInvoice,
+  type MessageThread, type InsertMessageThread,
+  type SupplierMessage, type InsertSupplierMessage,
+  type SupplierOrder, type InsertSupplierOrder,
+  type IntegrationToken, type InsertIntegrationToken,
+  type AnalyticsSnapshot, type InsertAnalyticsSnapshot,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
@@ -88,6 +103,76 @@ export interface IStorage {
   getUserChatSessions(userId: string): Promise<AiChatSession[]>;
   createAiChatSession(session: InsertAiChatSession): Promise<AiChatSession>;
   updateAiChatSession(id: string, messages: any): Promise<void>;
+  
+  // Supplier Accounts
+  getSupplierAccount(id: string): Promise<SupplierAccount | undefined>;
+  getSupplierAccountByEmail(email: string): Promise<SupplierAccount | undefined>;
+  createSupplierAccount(account: InsertSupplierAccount): Promise<SupplierAccount>;
+  updateSupplierAccount(id: string, updates: Partial<InsertSupplierAccount>): Promise<SupplierAccount | undefined>;
+  getSuppliersByRole(role: string): Promise<SupplierAccount[]>;
+  getSuppliersByTier(tier: string): Promise<SupplierAccount[]>;
+  
+  // Supplier Profiles
+  getSupplierProfile(supplierId: string): Promise<SupplierProfile | undefined>;
+  createSupplierProfile(profile: InsertSupplierProfile): Promise<SupplierProfile>;
+  updateSupplierProfile(supplierId: string, updates: Partial<InsertSupplierProfile>): Promise<SupplierProfile | undefined>;
+  
+  // Retailer Products
+  getRetailerProducts(supplierId: string): Promise<RetailerProduct[]>;
+  getRetailerProduct(id: string): Promise<RetailerProduct | undefined>;
+  createRetailerProduct(product: InsertRetailerProduct): Promise<RetailerProduct>;
+  updateRetailerProduct(id: string, updates: Partial<InsertRetailerProduct>): Promise<RetailerProduct | undefined>;
+  deleteRetailerProduct(id: string): Promise<void>;
+  
+  // Designer Collections
+  getDesignerCollections(supplierId: string): Promise<DesignerCollection[]>;
+  getDesignerCollection(id: string): Promise<DesignerCollection | undefined>;
+  createDesignerCollection(collection: InsertDesignerCollection): Promise<DesignerCollection>;
+  updateDesignerCollection(id: string, updates: Partial<InsertDesignerCollection>): Promise<DesignerCollection | undefined>;
+  deleteDesignerCollection(id: string): Promise<void>;
+  
+  // Portfolio Items
+  getPortfolioItems(supplierId: string): Promise<PortfolioItem[]>;
+  getPortfolioItem(id: string): Promise<PortfolioItem | undefined>;
+  createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem>;
+  updatePortfolioItem(id: string, updates: Partial<InsertPortfolioItem>): Promise<PortfolioItem | undefined>;
+  deletePortfolioItem(id: string): Promise<void>;
+  
+  // Supplier Subscriptions
+  getSupplierSubscription(supplierId: string): Promise<SupplierSubscription | undefined>;
+  createSupplierSubscription(subscription: InsertSupplierSubscription): Promise<SupplierSubscription>;
+  updateSupplierSubscription(supplierId: string, updates: Partial<InsertSupplierSubscription>): Promise<SupplierSubscription | undefined>;
+  
+  // Supplier Invoices
+  getSupplierInvoices(supplierId: string): Promise<SupplierInvoice[]>;
+  getSupplierInvoice(id: string): Promise<SupplierInvoice | undefined>;
+  createSupplierInvoice(invoice: InsertSupplierInvoice): Promise<SupplierInvoice>;
+  
+  // Message Threads & Messages
+  getMessageThreads(supplierId: string): Promise<MessageThread[]>;
+  getMessageThread(id: string): Promise<MessageThread | undefined>;
+  createMessageThread(thread: InsertMessageThread): Promise<MessageThread>;
+  updateMessageThread(id: string, updates: Partial<MessageThread>): Promise<MessageThread | undefined>;
+  getMessagesInThread(threadId: string): Promise<SupplierMessage[]>;
+  createSupplierMessage(message: InsertSupplierMessage): Promise<SupplierMessage>;
+  
+  // Supplier Orders
+  getSupplierOrders(supplierId: string): Promise<SupplierOrder[]>;
+  getSupplierOrder(id: string): Promise<SupplierOrder | undefined>;
+  createSupplierOrder(order: InsertSupplierOrder): Promise<SupplierOrder>;
+  updateSupplierOrder(id: string, updates: Partial<InsertSupplierOrder>): Promise<SupplierOrder | undefined>;
+  
+  // Integration Tokens
+  getIntegrationTokens(supplierId: string): Promise<IntegrationToken[]>;
+  getIntegrationToken(id: string): Promise<IntegrationToken | undefined>;
+  getIntegrationTokenByPlatform(supplierId: string, platform: string): Promise<IntegrationToken | undefined>;
+  createIntegrationToken(token: InsertIntegrationToken): Promise<IntegrationToken>;
+  updateIntegrationToken(id: string, updates: Partial<InsertIntegrationToken>): Promise<IntegrationToken | undefined>;
+  deleteIntegrationToken(id: string): Promise<void>;
+  
+  // Analytics Snapshots
+  getAnalyticsSnapshots(supplierId: string, startDate?: Date, endDate?: Date): Promise<AnalyticsSnapshot[]>;
+  createAnalyticsSnapshot(snapshot: InsertAnalyticsSnapshot): Promise<AnalyticsSnapshot>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -365,6 +450,290 @@ export class DatabaseStorage implements IStorage {
     await db.update(aiChatSessions)
       .set({ messages, updatedAt: new Date() })
       .where(eq(aiChatSessions.id, id));
+  }
+
+  // Supplier Accounts
+  async getSupplierAccount(id: string): Promise<SupplierAccount | undefined> {
+    const [account] = await db.select().from(supplierAccounts).where(eq(supplierAccounts.id, id));
+    return account || undefined;
+  }
+
+  async getSupplierAccountByEmail(email: string): Promise<SupplierAccount | undefined> {
+    const [account] = await db.select().from(supplierAccounts).where(eq(supplierAccounts.email, email));
+    return account || undefined;
+  }
+
+  async createSupplierAccount(account: InsertSupplierAccount): Promise<SupplierAccount> {
+    const [created] = await db.insert(supplierAccounts).values(account).returning();
+    return created;
+  }
+
+  async updateSupplierAccount(id: string, updates: Partial<InsertSupplierAccount>): Promise<SupplierAccount | undefined> {
+    const [updated] = await db.update(supplierAccounts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(supplierAccounts.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getSuppliersByRole(role: string): Promise<SupplierAccount[]> {
+    return db.select().from(supplierAccounts).where(eq(supplierAccounts.role, role as any));
+  }
+
+  async getSuppliersByTier(tier: string): Promise<SupplierAccount[]> {
+    return db.select().from(supplierAccounts).where(eq(supplierAccounts.tier, tier as any));
+  }
+
+  // Supplier Profiles
+  async getSupplierProfile(supplierId: string): Promise<SupplierProfile | undefined> {
+    const [profile] = await db.select().from(supplierProfiles).where(eq(supplierProfiles.supplierId, supplierId));
+    return profile || undefined;
+  }
+
+  async createSupplierProfile(profile: InsertSupplierProfile): Promise<SupplierProfile> {
+    const [created] = await db.insert(supplierProfiles).values(profile).returning();
+    return created;
+  }
+
+  async updateSupplierProfile(supplierId: string, updates: Partial<InsertSupplierProfile>): Promise<SupplierProfile | undefined> {
+    const [updated] = await db.update(supplierProfiles)
+      .set(updates)
+      .where(eq(supplierProfiles.supplierId, supplierId))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Retailer Products
+  async getRetailerProducts(supplierId: string): Promise<RetailerProduct[]> {
+    return db.select().from(retailerProducts)
+      .where(eq(retailerProducts.supplierId, supplierId))
+      .orderBy(desc(retailerProducts.createdAt));
+  }
+
+  async getRetailerProduct(id: string): Promise<RetailerProduct | undefined> {
+    const [product] = await db.select().from(retailerProducts).where(eq(retailerProducts.id, id));
+    return product || undefined;
+  }
+
+  async createRetailerProduct(product: InsertRetailerProduct): Promise<RetailerProduct> {
+    const [created] = await db.insert(retailerProducts).values(product).returning();
+    return created;
+  }
+
+  async updateRetailerProduct(id: string, updates: Partial<InsertRetailerProduct>): Promise<RetailerProduct | undefined> {
+    const [updated] = await db.update(retailerProducts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(retailerProducts.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteRetailerProduct(id: string): Promise<void> {
+    await db.delete(retailerProducts).where(eq(retailerProducts.id, id));
+  }
+
+  // Designer Collections
+  async getDesignerCollections(supplierId: string): Promise<DesignerCollection[]> {
+    return db.select().from(designerCollections)
+      .where(eq(designerCollections.supplierId, supplierId))
+      .orderBy(desc(designerCollections.createdAt));
+  }
+
+  async getDesignerCollection(id: string): Promise<DesignerCollection | undefined> {
+    const [collection] = await db.select().from(designerCollections).where(eq(designerCollections.id, id));
+    return collection || undefined;
+  }
+
+  async createDesignerCollection(collection: InsertDesignerCollection): Promise<DesignerCollection> {
+    const [created] = await db.insert(designerCollections).values(collection).returning();
+    return created;
+  }
+
+  async updateDesignerCollection(id: string, updates: Partial<InsertDesignerCollection>): Promise<DesignerCollection | undefined> {
+    const [updated] = await db.update(designerCollections)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(designerCollections.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteDesignerCollection(id: string): Promise<void> {
+    await db.delete(designerCollections).where(eq(designerCollections.id, id));
+  }
+
+  // Portfolio Items
+  async getPortfolioItems(supplierId: string): Promise<PortfolioItem[]> {
+    return db.select().from(portfolioItems)
+      .where(eq(portfolioItems.supplierId, supplierId))
+      .orderBy(desc(portfolioItems.createdAt));
+  }
+
+  async getPortfolioItem(id: string): Promise<PortfolioItem | undefined> {
+    const [item] = await db.select().from(portfolioItems).where(eq(portfolioItems.id, id));
+    return item || undefined;
+  }
+
+  async createPortfolioItem(item: InsertPortfolioItem): Promise<PortfolioItem> {
+    const [created] = await db.insert(portfolioItems).values(item).returning();
+    return created;
+  }
+
+  async updatePortfolioItem(id: string, updates: Partial<InsertPortfolioItem>): Promise<PortfolioItem | undefined> {
+    const [updated] = await db.update(portfolioItems)
+      .set(updates)
+      .where(eq(portfolioItems.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deletePortfolioItem(id: string): Promise<void> {
+    await db.delete(portfolioItems).where(eq(portfolioItems.id, id));
+  }
+
+  // Supplier Subscriptions
+  async getSupplierSubscription(supplierId: string): Promise<SupplierSubscription | undefined> {
+    const [subscription] = await db.select().from(supplierSubscriptions).where(eq(supplierSubscriptions.supplierId, supplierId));
+    return subscription || undefined;
+  }
+
+  async createSupplierSubscription(subscription: InsertSupplierSubscription): Promise<SupplierSubscription> {
+    const [created] = await db.insert(supplierSubscriptions).values(subscription).returning();
+    return created;
+  }
+
+  async updateSupplierSubscription(supplierId: string, updates: Partial<InsertSupplierSubscription>): Promise<SupplierSubscription | undefined> {
+    const [updated] = await db.update(supplierSubscriptions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(supplierSubscriptions.supplierId, supplierId))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Supplier Invoices
+  async getSupplierInvoices(supplierId: string): Promise<SupplierInvoice[]> {
+    return db.select().from(supplierInvoices)
+      .where(eq(supplierInvoices.supplierId, supplierId))
+      .orderBy(desc(supplierInvoices.createdAt));
+  }
+
+  async getSupplierInvoice(id: string): Promise<SupplierInvoice | undefined> {
+    const [invoice] = await db.select().from(supplierInvoices).where(eq(supplierInvoices.id, id));
+    return invoice || undefined;
+  }
+
+  async createSupplierInvoice(invoice: InsertSupplierInvoice): Promise<SupplierInvoice> {
+    const [created] = await db.insert(supplierInvoices).values(invoice).returning();
+    return created;
+  }
+
+  // Message Threads & Messages
+  async getMessageThreads(supplierId: string): Promise<MessageThread[]> {
+    return db.select().from(messageThreads)
+      .where(eq(messageThreads.supplierId, supplierId))
+      .orderBy(desc(messageThreads.updatedAt));
+  }
+
+  async getMessageThread(id: string): Promise<MessageThread | undefined> {
+    const [thread] = await db.select().from(messageThreads).where(eq(messageThreads.id, id));
+    return thread || undefined;
+  }
+
+  async createMessageThread(thread: InsertMessageThread): Promise<MessageThread> {
+    const [created] = await db.insert(messageThreads).values(thread).returning();
+    return created;
+  }
+
+  async updateMessageThread(id: string, updates: Partial<MessageThread>): Promise<MessageThread | undefined> {
+    const [updated] = await db.update(messageThreads)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(messageThreads.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async getMessagesInThread(threadId: string): Promise<SupplierMessage[]> {
+    return db.select().from(supplierMessages)
+      .where(eq(supplierMessages.threadId, threadId))
+      .orderBy(supplierMessages.createdAt);
+  }
+
+  async createSupplierMessage(message: InsertSupplierMessage): Promise<SupplierMessage> {
+    const [created] = await db.insert(supplierMessages).values(message).returning();
+    return created;
+  }
+
+  // Supplier Orders
+  async getSupplierOrders(supplierId: string): Promise<SupplierOrder[]> {
+    return db.select().from(supplierOrders)
+      .where(eq(supplierOrders.supplierId, supplierId))
+      .orderBy(desc(supplierOrders.createdAt));
+  }
+
+  async getSupplierOrder(id: string): Promise<SupplierOrder | undefined> {
+    const [order] = await db.select().from(supplierOrders).where(eq(supplierOrders.id, id));
+    return order || undefined;
+  }
+
+  async createSupplierOrder(order: InsertSupplierOrder): Promise<SupplierOrder> {
+    const [created] = await db.insert(supplierOrders).values(order).returning();
+    return created;
+  }
+
+  async updateSupplierOrder(id: string, updates: Partial<InsertSupplierOrder>): Promise<SupplierOrder | undefined> {
+    const [updated] = await db.update(supplierOrders)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(supplierOrders.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Integration Tokens
+  async getIntegrationTokens(supplierId: string): Promise<IntegrationToken[]> {
+    return db.select().from(integrationTokens).where(eq(integrationTokens.supplierId, supplierId));
+  }
+
+  async getIntegrationToken(id: string): Promise<IntegrationToken | undefined> {
+    const [token] = await db.select().from(integrationTokens).where(eq(integrationTokens.id, id));
+    return token || undefined;
+  }
+
+  async getIntegrationTokenByPlatform(supplierId: string, platform: string): Promise<IntegrationToken | undefined> {
+    const [token] = await db.select().from(integrationTokens)
+      .where(and(eq(integrationTokens.supplierId, supplierId), eq(integrationTokens.platform, platform)));
+    return token || undefined;
+  }
+
+  async createIntegrationToken(token: InsertIntegrationToken): Promise<IntegrationToken> {
+    const [created] = await db.insert(integrationTokens).values(token).returning();
+    return created;
+  }
+
+  async updateIntegrationToken(id: string, updates: Partial<InsertIntegrationToken>): Promise<IntegrationToken | undefined> {
+    const [updated] = await db.update(integrationTokens)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(integrationTokens.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteIntegrationToken(id: string): Promise<void> {
+    await db.delete(integrationTokens).where(eq(integrationTokens.id, id));
+  }
+
+  // Analytics Snapshots
+  async getAnalyticsSnapshots(supplierId: string, startDate?: Date, endDate?: Date): Promise<AnalyticsSnapshot[]> {
+    const conditions = [eq(analyticsSnapshots.supplierId, supplierId)];
+    if (startDate) conditions.push(gte(analyticsSnapshots.snapshotDate, startDate));
+    if (endDate) conditions.push(lte(analyticsSnapshots.snapshotDate, endDate));
+    
+    return db.select().from(analyticsSnapshots)
+      .where(and(...conditions))
+      .orderBy(desc(analyticsSnapshots.snapshotDate));
+  }
+
+  async createAnalyticsSnapshot(snapshot: InsertAnalyticsSnapshot): Promise<AnalyticsSnapshot> {
+    const [created] = await db.insert(analyticsSnapshots).values(snapshot).returning();
+    return created;
   }
 }
 
