@@ -10,6 +10,9 @@ export const budgetTierEnum = pgEnum("budget_tier", ["affordable", "mid_range", 
 export const adminRoleEnum = pgEnum("admin_role", ["super_admin", "monetization_manager", "support_admin"]);
 export const orderStatusEnum = pgEnum("order_status", ["pending", "paid", "processing", "shipped", "delivered", "cancelled"]);
 export const requestStatusEnum = pgEnum("request_status", ["open", "quoted", "accepted", "in_progress", "completed", "cancelled"]);
+export const supplierRoleEnum = pgEnum("supplier_role", ["retailer", "tailor", "designer"]);
+export const supplierTierEnum = pgEnum("supplier_tier", ["basic", "pro", "enterprise"]);
+export const messageStatusEnum = pgEnum("message_status", ["sent", "delivered", "read"]);
 
 // ============================================
 // CORE MARKETPLACE - USERS
@@ -235,6 +238,249 @@ export const auditLogs = pgTable("audit_logs", {
 });
 
 // ============================================
+// SUPPLIER PORTAL - ACCOUNTS & PROFILES
+// ============================================
+
+export const supplierAccounts = pgTable("supplier_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(), // SECURITY: Hash with bcrypt/argon2 before storage
+  role: supplierRoleEnum("role").notNull(), // "retailer", "tailor", "designer"
+  tier: supplierTierEnum("tier").default("basic").notNull(), // "basic", "pro", "enterprise"
+  businessName: text("business_name").notNull(),
+  ownerName: text("owner_name").notNull(),
+  phoneNumber: text("phone_number"),
+  isVerified: boolean("is_verified").default(false),
+  isActive: boolean("is_active").default(true),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  stripeAccountId: text("stripe_account_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const supplierProfiles = pgTable("supplier_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supplierId: varchar("supplier_id").notNull().unique().references(() => supplierAccounts.id, { onDelete: "cascade" }), // One profile per supplier
+  description: text("description"),
+  location: text("location"),
+  websiteUrl: text("website_url"),
+  logoUrl: text("logo_url"),
+  // For tailors and designers
+  specialties: text("specialties").array(),
+  styleTags: text("style_tags").array(),
+  budgetMin: integer("budget_min"),
+  budgetMax: integer("budget_max"),
+  deliveryZones: text("delivery_zones").array(),
+  leadTimeDays: integer("lead_time_days").default(14),
+  portfolioImages: text("portfolio_images").array(),
+  // For retailers
+  ecommercePlatform: text("ecommerce_platform"), // "shopify", "woocommerce", "amazon", "manual"
+  catalogSyncEnabled: boolean("catalog_sync_enabled").default(false),
+  lastSyncAt: timestamp("last_sync_at"),
+  // Ratings and reviews
+  rating: decimal("rating", { precision: 3, scale: 2 }).default("0"),
+  totalReviews: integer("total_reviews").default(0),
+  totalOrders: integer("total_orders").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ============================================
+// SUPPLIER PORTAL - PRODUCTS & COLLECTIONS
+// ============================================
+
+export const retailerProducts = pgTable("retailer_products", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supplierId: varchar("supplier_id").notNull().references(() => supplierAccounts.id, { onDelete: "cascade" }),
+  productId: varchar("product_id").references(() => products.id), // Link to main products table if synced
+  name: text("name").notNull(),
+  brand: text("brand").notNull(),
+  category: text("category").notNull(),
+  demographic: demographicEnum("demographic").notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  budgetTier: budgetTierEnum("budget_tier").notNull(),
+  styleTags: text("style_tags").array(),
+  imageUrl: text("image_url"),
+  description: text("description"),
+  sizes: text("sizes").array(),
+  sizeChart: jsonb("size_chart"),
+  stockQuantity: integer("stock_quantity").default(0),
+  sku: text("sku"),
+  // E-commerce integration fields
+  externalId: text("external_id"), // Shopify/WooCommerce/Amazon product ID
+  externalUrl: text("external_url"),
+  channelSource: text("channel_source"), // "shopify", "woocommerce", "amazon", "manual"
+  syncStatus: text("sync_status").default("active"), // "active", "syncing", "error", "disabled"
+  lastSyncAt: timestamp("last_sync_at"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const designerCollections = pgTable("designer_collections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supplierId: varchar("supplier_id").notNull().references(() => supplierAccounts.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  styleTags: text("style_tags").array(),
+  coverImageUrl: text("cover_image_url"),
+  isMadeToMeasure: boolean("is_made_to_measure").default(false),
+  priceMin: decimal("price_min", { precision: 10, scale: 2 }),
+  priceMax: decimal("price_max", { precision: 10, scale: 2 }),
+  leadTimeDays: integer("lead_time_days").default(21),
+  isActive: boolean("is_active").default(true),
+  isFeatured: boolean("is_featured").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const portfolioItems = pgTable("portfolio_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supplierId: varchar("supplier_id").notNull().references(() => supplierAccounts.id, { onDelete: "cascade" }),
+  collectionId: varchar("collection_id").references(() => designerCollections.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  imageUrl: text("image_url").notNull(),
+  styleTags: text("style_tags").array(),
+  itemType: text("item_type"), // "dress", "suit", "jacket", etc.
+  displayOrder: integer("display_order").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ============================================
+// SUPPLIER PORTAL - SUBSCRIPTIONS & BILLING
+// ============================================
+
+export const supplierSubscriptions = pgTable("supplier_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supplierId: varchar("supplier_id").notNull().references(() => supplierAccounts.id, { onDelete: "cascade" }),
+  tier: supplierTierEnum("tier").notNull(),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  status: text("status").default("active"), // "active", "cancelled", "past_due", "trial"
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAt: timestamp("cancel_at"),
+  trialEndsAt: timestamp("trial_ends_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const supplierInvoices = pgTable("supplier_invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supplierId: varchar("supplier_id").notNull().references(() => supplierAccounts.id, { onDelete: "cascade" }),
+  orderId: varchar("order_id").references(() => orders.id),
+  invoiceType: text("invoice_type").notNull(), // "subscription", "transaction_fee", "payout"
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: text("currency").default("USD"),
+  status: text("status").default("pending"), // "pending", "paid", "failed", "refunded"
+  stripeInvoiceId: text("stripe_invoice_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  description: text("description"),
+  paidAt: timestamp("paid_at"),
+  dueDate: timestamp("due_date"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ============================================
+// SUPPLIER PORTAL - MESSAGING
+// ============================================
+
+export const messageThreads = pgTable("message_threads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supplierId: varchar("supplier_id").notNull().references(() => supplierAccounts.id, { onDelete: "cascade" }),
+  customerId: varchar("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  orderId: varchar("order_id").references(() => orders.id),
+  requestId: varchar("request_id").references(() => customRequests.id),
+  subject: text("subject"),
+  status: text("status").default("active"), // "active", "closed", "archived"
+  lastMessageAt: timestamp("last_message_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const supplierMessages = pgTable("supplier_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  threadId: varchar("thread_id").notNull().references(() => messageThreads.id, { onDelete: "cascade" }),
+  senderId: varchar("sender_id").notNull(), // supplierId or userId
+  senderType: text("sender_type").notNull(), // "supplier" or "customer"
+  content: text("content").notNull(),
+  attachments: text("attachments").array(),
+  status: messageStatusEnum("status").default("sent"),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ============================================
+// SUPPLIER PORTAL - ORDERS & TRACKING
+// ============================================
+
+export const supplierOrders = pgTable("supplier_orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  orderId: varchar("order_id").notNull().unique().references(() => orders.id, { onDelete: "cascade" }), // One tracking row per order
+  supplierId: varchar("supplier_id").notNull().references(() => supplierAccounts.id, { onDelete: "cascade" }),
+  milestones: jsonb("milestones"), // [{name, status, completedAt, notes}]
+  internalNotes: text("internal_notes"),
+  estimatedCompletionDate: timestamp("estimated_completion_date"),
+  actualCompletionDate: timestamp("actual_completion_date"),
+  qualityCheckStatus: text("quality_check_status"), // "pending", "passed", "failed"
+  returnRequested: boolean("return_requested").default(false),
+  returnReason: text("return_reason"),
+  returnStatus: text("return_status"), // "pending", "approved", "rejected", "completed"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ============================================
+// SUPPLIER PORTAL - INTEGRATIONS
+// ============================================
+
+export const integrationTokens = pgTable("integration_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  supplierId: varchar("supplier_id").notNull().references(() => supplierAccounts.id, { onDelete: "cascade" }),
+  platform: text("platform").notNull(), // "shopify", "woocommerce", "amazon", "bigcommerce"
+  accessToken: text("access_token").notNull(), // SECURITY: Encrypt at-rest using AES-256 before storage
+  refreshToken: text("refresh_token"), // SECURITY: Encrypt at-rest using AES-256 before storage
+  tokenType: text("token_type").default("Bearer"),
+  expiresAt: timestamp("expires_at"),
+  shopDomain: text("shop_domain"), // For Shopify
+  storeUrl: text("store_url"),
+  scopes: text("scopes").array(),
+  isActive: boolean("is_active").default(true),
+  lastSyncAt: timestamp("last_sync_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ============================================
+// SUPPLIER PORTAL - ANALYTICS
+// ============================================
+
+export const analyticsSnapshots = pgTable("analytics_snapshots", {
+  id: serial("id").primaryKey(),
+  supplierId: varchar("supplier_id").notNull().references(() => supplierAccounts.id, { onDelete: "cascade" }),
+  snapshotDate: timestamp("snapshot_date").notNull(),
+  // Order metrics
+  totalOrders: integer("total_orders").default(0),
+  completedOrders: integer("completed_orders").default(0),
+  cancelledOrders: integer("cancelled_orders").default(0),
+  averageOrderValue: decimal("average_order_value", { precision: 10, scale: 2 }),
+  totalRevenue: decimal("total_revenue", { precision: 10, scale: 2 }),
+  // Customer metrics
+  newCustomers: integer("new_customers").default(0),
+  returningCustomers: integer("returning_customers").default(0),
+  // Fit metrics
+  fitMatchRate: decimal("fit_match_rate", { precision: 5, scale: 2 }), // Percentage
+  averageFitScore: decimal("average_fit_score", { precision: 5, scale: 3 }),
+  // Product metrics
+  topSellingProducts: jsonb("top_selling_products"), // [{productId, name, sales}]
+  sizingDistribution: jsonb("sizing_distribution"), // {S: 10, M: 25, L: 30, ...}
+  // Conversion metrics
+  viewsToOrders: decimal("views_to_orders", { precision: 5, scale: 2 }), // Conversion rate
+  quotesToOrders: decimal("quotes_to_orders", { precision: 5, scale: 2 }), // For tailors/designers
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ============================================
 // AI PERSONALITY - CHAT SESSIONS
 // ============================================
 
@@ -342,6 +588,86 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   }),
 }));
 
+export const supplierAccountsRelations = relations(supplierAccounts, ({ one, many }) => ({
+  profile: one(supplierProfiles),
+  retailerProducts: many(retailerProducts),
+  collections: many(designerCollections),
+  portfolioItems: many(portfolioItems),
+  subscriptions: many(supplierSubscriptions),
+  invoices: many(supplierInvoices),
+  messageThreads: many(messageThreads),
+  orders: many(supplierOrders),
+  integrationTokens: many(integrationTokens),
+  analyticsSnapshots: many(analyticsSnapshots),
+}));
+
+export const supplierProfilesRelations = relations(supplierProfiles, ({ one }) => ({
+  supplier: one(supplierAccounts, {
+    fields: [supplierProfiles.supplierId],
+    references: [supplierAccounts.id],
+  }),
+}));
+
+export const retailerProductsRelations = relations(retailerProducts, ({ one }) => ({
+  supplier: one(supplierAccounts, {
+    fields: [retailerProducts.supplierId],
+    references: [supplierAccounts.id],
+  }),
+  product: one(products, {
+    fields: [retailerProducts.productId],
+    references: [products.id],
+  }),
+}));
+
+export const designerCollectionsRelations = relations(designerCollections, ({ one, many }) => ({
+  supplier: one(supplierAccounts, {
+    fields: [designerCollections.supplierId],
+    references: [supplierAccounts.id],
+  }),
+  portfolioItems: many(portfolioItems),
+}));
+
+export const portfolioItemsRelations = relations(portfolioItems, ({ one }) => ({
+  supplier: one(supplierAccounts, {
+    fields: [portfolioItems.supplierId],
+    references: [supplierAccounts.id],
+  }),
+  collection: one(designerCollections, {
+    fields: [portfolioItems.collectionId],
+    references: [designerCollections.id],
+  }),
+}));
+
+export const messageThreadsRelations = relations(messageThreads, ({ one, many }) => ({
+  supplier: one(supplierAccounts, {
+    fields: [messageThreads.supplierId],
+    references: [supplierAccounts.id],
+  }),
+  customer: one(users, {
+    fields: [messageThreads.customerId],
+    references: [users.id],
+  }),
+  messages: many(supplierMessages),
+}));
+
+export const supplierMessagesRelations = relations(supplierMessages, ({ one }) => ({
+  thread: one(messageThreads, {
+    fields: [supplierMessages.threadId],
+    references: [messageThreads.id],
+  }),
+}));
+
+export const supplierOrdersRelations = relations(supplierOrders, ({ one }) => ({
+  order: one(orders, {
+    fields: [supplierOrders.orderId],
+    references: [orders.id],
+  }),
+  supplier: one(supplierAccounts, {
+    fields: [supplierOrders.supplierId],
+    references: [supplierAccounts.id],
+  }),
+}));
+
 // ============================================
 // INSERT SCHEMAS & TYPES
 // ============================================
@@ -413,6 +739,75 @@ export const insertAiChatSessionSchema = createInsertSchema(aiChatSessions).omit
   updatedAt: true,
 });
 
+// Supplier Portal Insert Schemas
+export const insertSupplierAccountSchema = createInsertSchema(supplierAccounts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSupplierProfileSchema = createInsertSchema(supplierProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertRetailerProductSchema = createInsertSchema(retailerProducts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertDesignerCollectionSchema = createInsertSchema(designerCollections).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPortfolioItemSchema = createInsertSchema(portfolioItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSupplierSubscriptionSchema = createInsertSchema(supplierSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSupplierInvoiceSchema = createInsertSchema(supplierInvoices).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertMessageThreadSchema = createInsertSchema(messageThreads).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertSupplierMessageSchema = createInsertSchema(supplierMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertSupplierOrderSchema = createInsertSchema(supplierOrders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertIntegrationTokenSchema = createInsertSchema(integrationTokens).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAnalyticsSnapshotSchema = createInsertSchema(analyticsSnapshots).omit({
+  id: true,
+  createdAt: true,
+});
+
 // ============================================
 // TYPES
 // ============================================
@@ -456,3 +851,40 @@ export type InsertAiPersona = z.infer<typeof insertAiPersonaSchema>;
 
 export type AiChatSession = typeof aiChatSessions.$inferSelect;
 export type InsertAiChatSession = z.infer<typeof insertAiChatSessionSchema>;
+
+// Supplier Portal Types
+export type SupplierAccount = typeof supplierAccounts.$inferSelect;
+export type InsertSupplierAccount = z.infer<typeof insertSupplierAccountSchema>;
+
+export type SupplierProfile = typeof supplierProfiles.$inferSelect;
+export type InsertSupplierProfile = z.infer<typeof insertSupplierProfileSchema>;
+
+export type RetailerProduct = typeof retailerProducts.$inferSelect;
+export type InsertRetailerProduct = z.infer<typeof insertRetailerProductSchema>;
+
+export type DesignerCollection = typeof designerCollections.$inferSelect;
+export type InsertDesignerCollection = z.infer<typeof insertDesignerCollectionSchema>;
+
+export type PortfolioItem = typeof portfolioItems.$inferSelect;
+export type InsertPortfolioItem = z.infer<typeof insertPortfolioItemSchema>;
+
+export type SupplierSubscription = typeof supplierSubscriptions.$inferSelect;
+export type InsertSupplierSubscription = z.infer<typeof insertSupplierSubscriptionSchema>;
+
+export type SupplierInvoice = typeof supplierInvoices.$inferSelect;
+export type InsertSupplierInvoice = z.infer<typeof insertSupplierInvoiceSchema>;
+
+export type MessageThread = typeof messageThreads.$inferSelect;
+export type InsertMessageThread = z.infer<typeof insertMessageThreadSchema>;
+
+export type SupplierMessage = typeof supplierMessages.$inferSelect;
+export type InsertSupplierMessage = z.infer<typeof insertSupplierMessageSchema>;
+
+export type SupplierOrder = typeof supplierOrders.$inferSelect;
+export type InsertSupplierOrder = z.infer<typeof insertSupplierOrderSchema>;
+
+export type IntegrationToken = typeof integrationTokens.$inferSelect;
+export type InsertIntegrationToken = z.infer<typeof insertIntegrationTokenSchema>;
+
+export type AnalyticsSnapshot = typeof analyticsSnapshots.$inferSelect;
+export type InsertAnalyticsSnapshot = z.infer<typeof insertAnalyticsSnapshotSchema>;
