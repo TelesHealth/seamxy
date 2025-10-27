@@ -79,10 +79,50 @@ SeamXY's architecture is built on a modern web stack designed for scalability an
    - Generate with: `node -e "console.log(crypto.randomBytes(32).toString('hex'))"`
 3. **Amazon Integration**: Communicate to frontend teams that Amazon is not yet available (use Shopify/WooCommerce/BigCommerce)
 
+## Smart Price Compare Feature (Latest)
+
+### Overview
+Real-time price comparison across Amazon, eBay, and Rakuten retailers with AI-powered product matching and fit scoring.
+
+### Architecture
+- **Retailer Clients**: Abstracted API clients for Amazon PAA5, eBay Browse API, Rakuten Product API
+- **AI Matching**: OpenAI GPT-4o analyzes product similarity (brand, title, category, specs) with 0-100 confidence scoring
+- **Price Tracking**: Automated price history logging, price drop alerts for premium users
+- **Affiliate System**: Click tracking and conversion attribution for commission calculation
+- **Caching**: 15-minute in-memory cache for search results to reduce API calls
+- **Rate Limiting**: 1000 requests/hour per retailer with automatic reset
+
+### Database Schema (6 new tables)
+- `retailer_configs` - API credentials and partner tags (encrypted)
+- `external_products` - Products from external retailers with match/fit confidence
+- `price_history` - Historical price tracking for trend analysis
+- `price_alerts` - User price drop subscriptions (premium feature)
+- `affiliate_clicks` - Outbound click tracking with referrer data
+- `affiliate_conversions` - Completed purchases with commission tracking
+
+### API Endpoints
+- `GET /api/v1/products/:id/compare-prices` - Compare prices across all retailers
+- `POST /api/v1/price-alerts` - Create price drop alert (premium only)
+- `GET /api/v1/price-alerts` - Get user's active alerts
+- `POST /api/v1/affiliate-click` - Track affiliate click
+- `POST /api/v1/affiliate-conversion` - Record conversion (webhook)
+
+### Frontend Components
+- `ComparisonModal` - Price comparison table with filters (price, delivery, sustainability, fit)
+- `ComparePricesButton` - CTA on product cards
+- `PriceAlertForm` - Set price thresholds
+- `PriceHistoryChart` - Historical price trends
+
+### Monetization
+- Affiliate commissions: 4-10% per purchase
+- Price alerts: Premium subscription feature ($9.99/mo)
+- Sponsored listings: Retailer promotion opportunities
+
 ## External Dependencies
 
 - **Database**: Neon Serverless PostgreSQL
 - **AI**: OpenAI GPT-5 (via Replit AI Integrations)
+- **Retailer APIs**: Amazon Product Advertising API ⏳, eBay Browse API ⏳, Rakuten API ⏳ (configured via retailer_configs table)
 - **E-commerce Platforms (for Supplier Portal)**: Shopify ✅, WooCommerce ✅, BigCommerce ✅, Amazon Seller Central ⏳ (deferred)
 - **Payment Processing (Future)**: Stripe
 - **AI Video/Voice (Future)**: Synthesia/HeyGen, ElevenLabs
