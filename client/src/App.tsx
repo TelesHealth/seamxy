@@ -19,6 +19,11 @@ import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import NotFound from "@/pages/not-found";
 
+// How It Works Pages
+import MeasureDescribe from "@/pages/measure-describe";
+import SmartMatching from "@/pages/smart-matching";
+import BuyCustomOrder from "@/pages/buy-custom-order";
+
 // Supplier Portal Pages
 import SupplierLogin from "@/pages/supplier/login";
 import SupplierRegister from "@/pages/supplier/register";
@@ -46,6 +51,11 @@ function Router() {
       <Route path="/ai-stylist" component={AiStylist} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
+      
+      {/* How It Works Pages */}
+      <Route path="/how-it-works/measure-describe" component={MeasureDescribe} />
+      <Route path="/how-it-works/smart-matching" component={SmartMatching} />
+      <Route path="/how-it-works/buy-custom-order" component={BuyCustomOrder} />
       
       {/* Supplier Portal Routes (No Header) */}
       <Route path="/supplier/login" component={SupplierLogin} />

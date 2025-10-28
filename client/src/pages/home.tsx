@@ -73,29 +73,34 @@ export default function Home() {
                 icon: <Sparkles className="w-12 h-12" />,
                 title: "Measure & Describe",
                 description: "Enter your measurements and tell us your style in your own words. Our AI understands exactly what you're looking for.",
+                href: "/how-it-works/measure-describe",
               },
               {
                 icon: <TrendingUp className="w-12 h-12" />,
                 title: "Smart Matching",
                 description: "Get scored recommendations based on fit (50%), style (30%), and budget (20%). Every item shows exactly how well it matches you.",
+                href: "/how-it-works/smart-matching",
               },
               {
                 icon: <ShoppingBag className="w-12 h-12" />,
                 title: "Buy or Custom Order",
                 description: "Quick Buy from top retailers with one tap, or request custom-made pieces from verified tailors worldwide.",
+                href: "/how-it-works/buy-custom-order",
               },
             ].map((step, i) => (
-              <Card key={i} className="p-8 text-center hover-elevate">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-6">
-                  {step.icon}
-                </div>
-                <h3 className="font-display text-2xl font-600 text-foreground mb-4">
-                  {step.title}
-                </h3>
-                <p className="text-muted-foreground">
-                  {step.description}
-                </p>
-              </Card>
+              <Link key={i} href={step.href}>
+                <Card className="p-8 text-center hover-elevate cursor-pointer" data-testid={`card-how-${i}`}>
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-6">
+                    {step.icon}
+                  </div>
+                  <h3 className="font-display text-2xl font-600 text-foreground mb-4">
+                    {step.title}
+                  </h3>
+                  <p className="text-muted-foreground">
+                    {step.description}
+                  </p>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>
