@@ -13,6 +13,7 @@ vite.config.ts.*
 
 # PM2 ecosystem with production credentials
 ecosystem.config.js
+ecosystem.cjs
 
 # PM2 logs and state
 .pm2
