@@ -109,6 +109,133 @@ export function registerRoutes(app: Express) {
   });
 
   // ============================================
+  // CUSTOMER AUTHENTICATION ROUTES
+  // ============================================
+
+  // Customer registration
+  app.post("/api/v1/auth/register", async (req, res) => {
+    try {
+      const { email, password, name, demographic } = req.body;
+
+      // Validate required fields
+      if (!email || !password || !name || !demographic) {
+        return res.status(400).json({ 
+          error: "Missing required fields: email, password, name, demographic" 
+        });
+      }
+
+      // Validate password strength
+      const passwordValidation = validatePasswordStrength(password);
+      if (!passwordValidation.valid) {
+        return res.status(400).json({ error: passwordValidation.error });
+      }
+
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ error: "Email already registered" });
+      }
+
+      // Hash password
+      const hashedPassword = await hashPassword(password);
+
+      // Create user account
+      const user = await storage.createUser({
+        email,
+        password: hashedPassword,
+        name,
+        demographic,
+        budgetMin: req.body.budgetMin || 0,
+        budgetMax: req.body.budgetMax || 1000,
+        styleTags: req.body.styleTags || []
+      });
+
+      // Set session
+      // @ts-ignore
+      if (req.session) {
+        // @ts-ignore
+        req.session.userId = user.id;
+      }
+
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.status(201).json(userWithoutPassword);
+    } catch (error: any) {
+      console.error("Customer registration error:", error);
+      res.status(500).json({ error: error.message || "Registration failed" });
+    }
+  });
+
+  // Customer login
+  app.post("/api/v1/auth/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      // Verify password
+      const isValid = await verifyPassword(password, user.password);
+      if (!isValid) {
+        return res.status(401).json({ error: "Invalid email or password" });
+      }
+
+      // Set session
+      // @ts-ignore
+      if (req.session) {
+        // @ts-ignore
+        req.session.userId = user.id;
+      }
+
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error: any) {
+      console.error("Customer login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  // Get current customer
+  app.get("/api/v1/auth/me", requireUser, async (req: AuthenticatedRequest, res) => {
+    try {
+      const user = await storage.getUser(req.userId!);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Return user without password
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Customer logout
+  app.post("/api/v1/auth/logout", (req, res) => {
+    // @ts-ignore
+    if (req.session) {
+      // @ts-ignore
+      req.session.destroy((err: any) => {
+        if (err) {
+          return res.status(500).json({ error: "Logout failed" });
+        }
+        res.json({ message: "Logged out successfully" });
+      });
+    } else {
+      res.json({ message: "Logged out successfully" });
+    }
+  });
+
+  // ============================================
   // MARKETPLACE - PRODUCT ROUTES
   // ============================================
 

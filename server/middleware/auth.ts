@@ -7,25 +7,44 @@ export interface AuthenticatedRequest extends Request {
     email: string;
     role?: string;
   };
+  userId?: string;
 }
 
-// Simple auth middleware (in production, use JWT tokens)
+// Session-based customer authentication middleware
 export async function requireUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  // For now, we'll use a simple email in header approach
-  // In production, implement proper JWT authentication
-  const userId = req.headers['x-user-id'] as string;
-  
-  if (!userId) {
-    return res.status(401).json({ error: "Authentication required" });
+  try {
+    // Check if session middleware is configured
+    // @ts-ignore
+    if (!req.session) {
+      console.error('Session middleware not configured');
+      return res.status(500).json({ 
+        error: 'Session not configured',
+        details: 'Server configuration error. Contact administrator.'
+      });
+    }
+    
+    // @ts-ignore
+    const userId = req.session.userId;
+    
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const user = await storage.getUser(userId);
+    
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid user account' });
+    }
+    
+    // Attach user data to request
+    req.userId = user.id;
+    req.user = { id: user.id, email: user.email };
+    
+    next();
+  } catch (error) {
+    console.error('Customer authentication error:', error);
+    res.status(500).json({ error: 'Authentication failed' });
   }
-
-  const user = await storage.getUser(userId);
-  if (!user) {
-    return res.status(401).json({ error: "Invalid user" });
-  }
-
-  req.user = { id: user.id, email: user.email };
-  next();
 }
 
 export async function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
