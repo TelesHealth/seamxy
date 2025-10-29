@@ -16,8 +16,8 @@ if (!process.env.DATABASE_URL) {
 const isNeon = process.env.DATABASE_URL.includes('neon.tech') || 
                process.env.DATABASE_URL.includes('neon.database');
 
-let pool: NeonPool | PgPool;
-let db: any;
+export let pool: NeonPool | PgPool;
+export let db: any;
 
 if (isNeon) {
   // Use Neon serverless driver
@@ -25,31 +25,36 @@ if (isNeon) {
   neonConfig.webSocketConstructor = ws;
   neonConfig.poolQueryViaFetch = true;
   
-  pool = new NeonPool({ 
+  const neonPool = new NeonPool({ 
     connectionString: process.env.DATABASE_URL,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
   });
   
-  db = drizzleNeon({ client: pool, schema });
+  pool = neonPool;
+  db = drizzleNeon({ client: neonPool, schema });
+  
+  // Handle pool errors
+  neonPool.on('error', (err: Error) => {
+    console.error('Unexpected database pool error:', err);
+  });
 } else {
   // Use regular PostgreSQL driver for Docker/local/VPS PostgreSQL
   console.log('Using standard PostgreSQL driver');
   
-  pool = new PgPool({
+  const pgPool = new PgPool({
     connectionString: process.env.DATABASE_URL,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
   });
   
-  db = drizzlePg(pool, { schema });
+  pool = pgPool;
+  db = drizzlePg(pgPool, { schema });
+  
+  // Handle pool errors
+  pgPool.on('error', (err: Error) => {
+    console.error('Unexpected database pool error:', err);
+  });
 }
-
-// Handle pool errors
-pool.on('error', (err) => {
-  console.error('Unexpected database pool error:', err);
-});
-
-export { pool, db };
