@@ -1,5 +1,6 @@
 import { db } from "./db";
-import { aiPersonas, subscriptionPlans, pricingConfigs, products, makers } from "@shared/schema";
+import { aiPersonas, subscriptionPlans, pricingConfigs, products, makers, users, measurements } from "@shared/schema";
+import bcrypt from "bcrypt";
 
 export async function seedDatabase() {
   console.log("🌱 Seeding database...");
@@ -510,6 +511,45 @@ Always ask clarifying questions to understand their vision before making recomme
     console.log("✅ Sample makers seeded");
   } catch (error) {
     console.log("ℹ️ Sample makers already exist");
+  }
+
+  // Seed Test User Account for Fashion Consultant
+  try {
+    const hashedPassword = await bcrypt.hash("test123", 12);
+    
+    const [testUser] = await db.insert(users).values({
+      email: "consultant@seamxy.test",
+      password: hashedPassword,
+      name: "Fashion Consultant Test",
+      demographic: "women",
+      budgetMin: 500,
+      budgetMax: 3000,
+      styleTags: ["elegant", "modern", "sophisticated", "timeless"],
+    }).onConflictDoNothing().returning();
+
+    if (testUser) {
+      // Add measurements for test user
+      await db.insert(measurements).values({
+        userId: testUser.id,
+        height: "66.1",
+        weight: "136.7",
+        chest: "35.8",
+        waist: "28.0",
+        hips: "37.8",
+        inseam: "30.0",
+        shoulders: "15.7",
+        neck: "13.8",
+        sleeve: "23.2",
+        shoeSize: "8.5",
+        unit: "inches",
+      }).onConflictDoNothing();
+      
+      console.log("✅ Test account created: consultant@seamxy.test / test123");
+    } else {
+      console.log("ℹ️ Test account already exists");
+    }
+  } catch (error) {
+    console.log("ℹ️ Test account already exists or error:", error);
   }
 
   console.log("🎉 Database seeding complete!");
