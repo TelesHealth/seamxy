@@ -191,20 +191,29 @@ To disable automatic seeding in production, comment out the seeding code in `ser
 
 ```bash
 # Clean previous builds
-rm -rf dist/
+rm -rf dist/ server/public/
 
 # Build production bundle
 npm run build
 ```
 
+This creates optimized production builds:
+- `dist/index.js` - Backend server bundle (entry point for PM2)
+- `server/public/` - Frontend static files
+
+**Important**: The PM2 configuration runs the built JavaScript (`node dist/index.js`), not the TypeScript source files. Always build before deploying!
+
 ### 2. Start with PM2
 
 ```bash
-# Start application using ecosystem config
+# Start application using ecosystem config (recommended)
 pm2 start ecosystem.config.js --env production
 
-# Or start directly
-pm2 start "tsx server/index.ts" --name "seamxy-production" -i max --env production
+# Or use ecosystem.cjs (CommonJS format)
+pm2 start ecosystem.cjs --env production
+
+# Or start directly without ecosystem file
+pm2 start dist/index.js --name "seamxy-production" -i max --env production
 
 # Save PM2 process list
 pm2 save
