@@ -23,7 +23,6 @@ if (isNeon) {
   // Use Neon serverless driver
   console.log('Using Neon serverless PostgreSQL driver');
   neonConfig.webSocketConstructor = ws;
-  neonConfig.poolQueryViaFetch = true;
   
   const neonPool = new NeonPool({ 
     connectionString: process.env.DATABASE_URL,
