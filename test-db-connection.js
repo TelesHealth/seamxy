@@ -5,13 +5,9 @@
  * Run with: node test-db-connection.js
  */
 
-import { Pool } from '@neondatabase/serverless';
-import ws from 'ws';
-import { neonConfig } from '@neondatabase/serverless';
+import { Pool } from 'pg';
 
-// Configure WebSocket
-neonConfig.webSocketConstructor = ws;
-neonConfig.poolQueryViaFetch = true;
+// Using standard PostgreSQL driver (not Neon serverless)
 
 console.log('🔍 Testing database connection...\n');
 
