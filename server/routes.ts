@@ -28,6 +28,7 @@ import {
 } from "@shared/schema";
 import { priceComparisonService } from "./services/price-comparison";
 import { aiProductMatcher } from "./services/ai-product-matcher";
+import { registerEventRoutes } from "./routes/events";
 
 export function registerRoutes(app: Express) {
   
@@ -1038,4 +1039,11 @@ export function registerRoutes(app: Express) {
       res.json(snapshots);
     }
   );
+
+  // ============================================
+  // WEDDING & PROM CONCIERGE ROUTES
+  // ============================================
+  
+  // Register event routes
+  registerEventRoutes(app);
 }
