@@ -126,8 +126,8 @@ export function registerRoutes(app: Express) {
 
       // Validate password strength
       const passwordValidation = validatePasswordStrength(password);
-      if (!passwordValidation.valid) {
-        return res.status(400).json({ error: passwordValidation.error });
+      if (!passwordValidation.isValid) {
+        return res.status(400).json({ error: passwordValidation.errors.join(", ") });
       }
 
       // Check if email already exists

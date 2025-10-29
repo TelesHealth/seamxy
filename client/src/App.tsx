@@ -5,9 +5,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Header } from "@/components/header";
 import { SupplierAuthProvider } from "@/lib/supplier-auth";
+import { CustomerAuthProvider } from "@/lib/customer-auth";
 
 // Pages
 import Home from "@/pages/home";
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
 import Onboarding from "@/pages/onboarding";
 import Shop from "@/pages/shop";
 import Makers from "@/pages/makers";
@@ -42,6 +45,8 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
       <Route path="/onboarding" component={Onboarding} />
       <Route path="/shop" component={Shop} />
       <Route path="/makers" component={Makers} />
@@ -96,17 +101,19 @@ function Router() {
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SupplierAuthProvider>
-        <TooltipProvider>
-          <div className="min-h-screen bg-background">
-            <Header />
-            <main>
-              <Router />
-            </main>
-          </div>
-          <Toaster />
-        </TooltipProvider>
-      </SupplierAuthProvider>
+      <CustomerAuthProvider>
+        <SupplierAuthProvider>
+          <TooltipProvider>
+            <div className="min-h-screen bg-background">
+              <Header />
+              <main>
+                <Router />
+              </main>
+            </div>
+            <Toaster />
+          </TooltipProvider>
+        </SupplierAuthProvider>
+      </CustomerAuthProvider>
     </QueryClientProvider>
   );
 }
