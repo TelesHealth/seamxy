@@ -1099,3 +1099,94 @@ export type InsertAffiliateClick = z.infer<typeof insertAffiliateClickSchema>;
 
 export type AffiliateConversion = typeof affiliateConversions.$inferSelect;
 export type InsertAffiliateConversion = z.infer<typeof insertAffiliateConversionSchema>;
+
+// ============================================
+// WEDDING & PROM CONCIERGE FEATURE
+// ============================================
+
+export const eventTypeEnum = pgEnum("event_type", ["wedding", "prom", "formal", "other"]);
+export const eventRoleEnum = pgEnum("event_role", ["bride", "groom", "guest", "attendee", "parent"]);
+
+export const events = pgTable("events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  eventType: eventTypeEnum("event_type").notNull(),
+  eventRole: eventRoleEnum("event_role").notNull(),
+  eventDate: timestamp("event_date"),
+  budget: decimal("budget", { precision: 10, scale: 2 }),
+  stylePreferences: text("style_preferences").array(),
+  colorScheme: text("color_scheme").array(),
+  venue: text("venue"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const eventImageReferences = pgTable("event_image_references", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventId: varchar("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
+  imageUrl: text("image_url").notNull(),
+  imageType: text("image_type").notNull(), // "inspiration", "venue", "color_swatch", "design"
+  description: text("description"),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+});
+
+export const eventCustomRequests = pgTable("event_custom_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventId: varchar("event_id").notNull().references(() => events.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  itemType: text("item_type").notNull(), // "dress", "suit", "tuxedo", "accessories"
+  description: text("description"),
+  budgetMin: integer("budget_min").notNull(),
+  budgetMax: integer("budget_max").notNull(),
+  measurements: jsonb("measurements").notNull(),
+  status: requestStatusEnum("status").default("open").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const voiceLogs = pgTable("voice_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  eventId: varchar("event_id").references(() => events.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  audioUrl: text("audio_url"),
+  transcription: text("transcription"),
+  duration: integer("duration"), // in seconds
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schemas
+export const insertEventSchema = createInsertSchema(events).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEventImageReferenceSchema = createInsertSchema(eventImageReferences).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export const insertEventCustomRequestSchema = createInsertSchema(eventCustomRequests).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertVoiceLogSchema = createInsertSchema(voiceLogs).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+
+export type EventImageReference = typeof eventImageReferences.$inferSelect;
+export type InsertEventImageReference = z.infer<typeof insertEventImageReferenceSchema>;
+
+export type EventCustomRequest = typeof eventCustomRequests.$inferSelect;
+export type InsertEventCustomRequest = z.infer<typeof insertEventCustomRequestSchema>;
+
+export type VoiceLog = typeof voiceLogs.$inferSelect;
+export type InsertVoiceLog = z.infer<typeof insertVoiceLogSchema>;

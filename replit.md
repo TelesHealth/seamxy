@@ -126,11 +126,45 @@ Real-time price comparison across Amazon, eBay, and Rakuten retailers with AI-po
 - Price alerts: Premium subscription feature ($9.99/mo)
 - Sponsored listings: Retailer promotion opportunities
 
+## Wedding & Prom Concierge Feature (Latest - October 2025)
+
+### Overview
+AI-powered conversational stylist for event shopping (weddings, proms, formal events) combining retail aggregation with custom tailor quotes.
+
+### Database Schema (4 new tables)
+- `events` - Event details (type, role, date, budget, style preferences, venue)
+- `event_image_references` - User-uploaded inspiration images (design references, venue, color swatches)
+- `event_custom_requests` - Custom tailor requests tied to specific events
+- `voice_logs` - Voice-to-text transcriptions and audio recordings
+
+### Core Features
+- **AI Stylist Chat**: Event-specific persona with GPT-4o, guided questions about preferences/budget/measurements
+- **Voice Integration**: Speech-to-text for hands-free interaction (Google Speech-to-Text / AWS Transcribe)
+- **Image Upload**: Design inspiration and reference photos
+- **Dual Marketplace**: Retail products (Etsy, Amazon, eBay, Rakuten) + custom maker quotes side-by-side
+- **Event Timeline**: Date tracking with turnaround-time-aware recommendations
+- **Quote Management**: Supplier portal extension for event-specific quote handling
+
+### Retailer API Status
+- **Etsy**: ✅ Available - OAuth 2.0, Open API v3, free access
+- **Nordstrom**: ❌ No public API
+- **ASOS**: ❌ Deprecated public API
+- **David's Bridal**: ❌ No public API
+- Fallback: Amazon/eBay/Rakuten from existing price comparison feature
+
+### Success Metrics
+- 70% conversation completion rate
+- 20% custom quote request rate
+- 10% quote-to-purchase conversion
+- 25% increase in supplier engagement
+
 ## External Dependencies
 
-- **Database**: Neon Serverless PostgreSQL
-- **AI**: OpenAI GPT-5 (via Replit AI Integrations)
-- **Retailer APIs**: Amazon Product Advertising API ⏳, eBay Browse API ⏳, Rakuten API ⏳ (configured via retailer_configs table)
+- **Database**: Neon Serverless PostgreSQL (auto-detects and supports standard PostgreSQL for Docker deployments)
+- **AI**: OpenAI GPT-5/GPT-4o (via OPENAI_API_KEY for production, Replit AI Integrations for dev)
+- **Retailer APIs**: Etsy Open API v3 ✅, Amazon Product Advertising API ⏳, eBay Browse API ⏳, Rakuten API ⏳ (configured via retailer_configs table)
 - **E-commerce Platforms (for Supplier Portal)**: Shopify ✅, WooCommerce ✅, BigCommerce ✅, Amazon Seller Central ⏳ (deferred)
+- **Voice**: Google Speech-to-Text or AWS Transcribe ⏳
+- **Image Storage**: Cloud storage for user uploads ⏳
 - **Payment Processing (Future)**: Stripe
 - **AI Video/Voice (Future)**: Synthesia/HeyGen, ElevenLabs
