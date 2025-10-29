@@ -108,9 +108,12 @@ PGDATABASE=seamxy_production
 SESSION_SECRET=<generated-128-char-secret>
 INTEGRATION_TOKEN_KEY=<generated-64-char-key>
 
-# AI Services (from Replit AI Integrations or OpenAI)
-AI_INTEGRATIONS_OPENAI_BASE_URL=https://your-ai-endpoint
-AI_INTEGRATIONS_OPENAI_API_KEY=your-ai-api-key
+# AI Services
+# For external deployment, use direct OpenAI (get key from platform.openai.com)
+OPENAI_API_KEY=sk-proj-your-openai-api-key-here
+
+# Note: Replit AI Integrations only work on Replit platform
+# Don't use AI_INTEGRATIONS_* vars for external deployment
 ```
 
 ### 3. Configure PM2 Ecosystem
