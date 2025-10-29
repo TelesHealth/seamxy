@@ -1,10 +1,12 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, User, Sparkles, Shield, Scissors, Package } from "lucide-react";
+import { ShoppingBag, User, Sparkles, Shield, Scissors, Package, LogOut, LogIn } from "lucide-react";
 import seamxyLogo from "@assets/Seamxy_1761527023424.png";
+import { useCustomerAuth } from "@/lib/customer-auth";
 
 export function Header() {
   const [location] = useLocation();
+  const { customer, logout } = useCustomerAuth();
 
   const navItems = [
     { href: "/", label: "Home", icon: null },
@@ -48,12 +50,39 @@ export function Header() {
                 <Shield className="w-5 h-5" />
               </Button>
             </Link>
-            <Link href="/onboarding">
-              <Button variant="outline" data-testid="nav-profile">
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </Button>
-            </Link>
+            
+            {customer ? (
+              <>
+                <Link href="/onboarding">
+                  <Button variant="outline" data-testid="nav-profile">
+                    <User className="w-4 h-4 mr-2" />
+                    {customer.name}
+                  </Button>
+                </Link>
+                <Button 
+                  variant="ghost" 
+                  onClick={logout}
+                  data-testid="button-logout"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" data-testid="button-login-header">
+                    <LogIn className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button variant="default" data-testid="button-signup-header">
+                    Sign Up
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
