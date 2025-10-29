@@ -1,9 +1,35 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
+import session from "express-session";
+import ConnectPgSimple from "connect-pg-simple";
+import { pool } from "./db";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// Session configuration for supplier portal, admin, and user authentication
+const PgSession = ConnectPgSimple(session);
+
+if (!process.env.SESSION_SECRET) {
+  console.warn('WARNING: SESSION_SECRET not set. Using fallback for development only.');
+}
+
+app.use(session({
+  store: new PgSession({
+    pool: pool,
+    tableName: 'session',
+    createTableIfMissing: true,
+  }),
+  secret: process.env.SESSION_SECRET || 'fallback-dev-secret-please-change-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  }
+}));
 
 declare module 'http' {
   interface IncomingMessage {
