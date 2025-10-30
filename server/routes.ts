@@ -699,6 +699,19 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Get a specific chat session
+  app.get("/api/v1/ai-sessions/:sessionId", async (req, res) => {
+    try {
+      const session = await storage.getAiChatSession(req.params.sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      res.json(session);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Send message to AI stylist
   app.post("/api/v1/ai-sessions/:sessionId/messages", async (req, res) => {
     try {

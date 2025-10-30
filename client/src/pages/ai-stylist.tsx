@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useCustomerAuth } from "@/lib/customer-auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -109,7 +110,8 @@ interface ChatSession {
 }
 
 export default function AiStylist() {
-  const userId = typeof window !== 'undefined' ? localStorage.getItem('seamxy_user_id') : null;
+  const { customer } = useCustomerAuth();
+  const userId = customer?.id || null;
   const [selectedPersona, setSelectedPersona] = useState(personas[0]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState("");
@@ -318,7 +320,7 @@ export default function AiStylist() {
                           <p className="text-sm">{message.content}</p>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>
