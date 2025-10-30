@@ -110,7 +110,7 @@ ${personaSystemPrompt}`;
     const response = await openai.chat.completions.create({
       model: "gpt-5",
       messages: messages as any,
-      max_completion_tokens: 800
+      max_completion_tokens: 4000
     });
 
     console.log('✅ OpenAI response received');
