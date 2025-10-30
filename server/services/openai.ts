@@ -101,11 +101,31 @@ ${personaSystemPrompt}`;
     { role: "user", content: userMessage }
   ];
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-5",
-    messages: messages as any,
-    max_completion_tokens: 800
-  });
+  try {
+    console.log('🤖 Calling OpenAI API for AI stylist...');
+    console.log('Model: gpt-5');
+    console.log('Messages count:', messages.length);
+    
+    const response = await openai.chat.completions.create({
+      model: "gpt-5",
+      messages: messages as any,
+      max_completion_tokens: 800
+    });
 
-  return response.choices[0].message.content || "I'm here to help with your style!";
+    console.log('✅ OpenAI response received');
+    console.log('Response content length:', response.choices[0]?.message?.content?.length || 0);
+    
+    const content = response.choices[0]?.message?.content;
+    
+    if (!content) {
+      console.error('❌ OpenAI returned empty content');
+      throw new Error('OpenAI returned empty response');
+    }
+    
+    return content;
+  } catch (error: any) {
+    console.error('❌ OpenAI API Error:', error.message);
+    console.error('Error details:', error);
+    throw new Error(`AI stylist error: ${error.message}`);
+  }
 }
