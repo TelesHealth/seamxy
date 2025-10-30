@@ -105,6 +105,7 @@ ${personaSystemPrompt}`;
     console.log('🤖 Calling OpenAI API for AI stylist...');
     console.log('Model: gpt-5');
     console.log('Messages count:', messages.length);
+    console.log('System prompt:', contextPrompt.substring(0, 200) + '...');
     
     const response = await openai.chat.completions.create({
       model: "gpt-5",
@@ -113,12 +114,18 @@ ${personaSystemPrompt}`;
     });
 
     console.log('✅ OpenAI response received');
+    console.log('Full response:', JSON.stringify(response, null, 2));
+    console.log('Choices count:', response.choices?.length || 0);
+    console.log('First choice:', response.choices[0]);
+    console.log('Message:', response.choices[0]?.message);
+    console.log('Content:', response.choices[0]?.message?.content);
     console.log('Response content length:', response.choices[0]?.message?.content?.length || 0);
     
     const content = response.choices[0]?.message?.content;
     
     if (!content) {
       console.error('❌ OpenAI returned empty content');
+      console.error('Response object:', response);
       throw new Error('OpenAI returned empty response');
     }
     
