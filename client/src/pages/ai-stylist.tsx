@@ -91,6 +91,23 @@ interface Message {
   timestamp: Date;
 }
 
+interface AiPersona {
+  id: string;
+  name: string;
+  description: string;
+  tone: string;
+  specialty: string;
+  avatarUrl: string;
+}
+
+interface ChatSession {
+  id: string;
+  userId: string;
+  personaId: string;
+  messages: Message[];
+  userContext: any;
+}
+
 export default function AiStylist() {
   const userId = typeof window !== 'undefined' ? localStorage.getItem('seamxy_user_id') : null;
   const [selectedPersona, setSelectedPersona] = useState(personas[0]);
@@ -99,13 +116,13 @@ export default function AiStylist() {
   const [isPro, setIsPro] = useState(false);
 
   // Fetch AI personas from API
-  const { data: apiPersonas = [] } = useQuery({
+  const { data: apiPersonas = [] } = useQuery<AiPersona[]>({
     queryKey: ["/api/v1/ai-personas"],
   });
 
   // Merge API personas with local AI-generated avatars
-  const availablePersonas = apiPersonas.length > 0 
-    ? apiPersonas.map((apiPersona: any) => {
+  const availablePersonas = Array.isArray(apiPersonas) && apiPersonas.length > 0 
+    ? apiPersonas.map((apiPersona) => {
         const localPersona = personas.find(p => p.id === apiPersona.id);
         return {
           ...apiPersona,
@@ -149,12 +166,12 @@ export default function AiStylist() {
   });
 
   // Get current session
-  const { data: session } = useQuery({
+  const { data: session } = useQuery<ChatSession>({
     queryKey: ["/api/v1/ai-sessions", sessionId],
     enabled: !!sessionId
   });
 
-  const messages = (session?.messages as Message[]) || [];
+  const messages = session?.messages || [];
 
   // Create session when persona changes
   useEffect(() => {
