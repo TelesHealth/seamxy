@@ -18,6 +18,7 @@ import meiPortrait from "@assets/generated_images/Asian_female_fashion_stylist_p
 import marcusPortrait from "@assets/generated_images/Black_male_fashion_stylist_portrait_7ce47f5b.png";
 import sofiaPortrait from "@assets/generated_images/Hispanic_female_fashion_stylist_portrait_219a5f62.png";
 import eduardoPortrait from "@assets/generated_images/Distinguished_Hispanic_older_gentleman_stylist_95ce41f9.png";
+import elenaPortrait from "@assets/generated_images/Elena_Rose_avatar_portrait_7f7f635f.png";
 
 const personas = [
   {
@@ -83,6 +84,14 @@ const personas = [
     tone: "Refined, warm, knowledgeable",
     specialty: "Classic & Timeless Elegance",
     avatarUrl: eduardoPortrait,
+  },
+  {
+    id: "elena-wedding",
+    name: "Elena Rose",
+    description: "Wedding & Prom Concierge",
+    tone: "Warm, excited, detail-oriented, supportive",
+    specialty: "Weddings, Proms & Formal Events",
+    avatarUrl: elenaPortrait,
   },
 ];
 
