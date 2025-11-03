@@ -898,6 +898,61 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Get or create stylist profile for supplier (for AI Stylist Onboarding)
+  app.get("/api/v1/supplier/:supplierId/stylist-profile", authenticateSupplier as any, async (req, res) => {
+    try {
+      const supplierId = req.params.supplierId;
+      
+      // Check if supplier exists
+      const supplier = await storage.getSupplierAccount(supplierId);
+      if (!supplier) {
+        return res.status(404).json({ error: "Supplier not found" });
+      }
+      
+      // Try to find existing stylist profile by handle (using supplier business name)
+      const handle = supplier.businessName.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const existingProfile = await storage.getStylistProfileByHandle(handle);
+      
+      if (existingProfile) {
+        return res.json(existingProfile);
+      }
+      
+      // Create a user account for the supplier if needed (for stylist profile foreign key)
+      // This is a workaround since stylistProfiles requires a userId
+      const userEmail = `supplier-${supplier.id}@seamxy.internal`;
+      let user = await storage.getUserByEmail(userEmail);
+      
+      if (!user) {
+        const hashedPassword = await hashPassword(Math.random().toString(36));
+        user = await storage.createUser({
+          email: userEmail,
+          password: hashedPassword,
+          name: supplier.ownerName,
+          demographic: "unisex",
+          budgetMin: 0,
+          budgetMax: 10000,
+          styleTags: [],
+        });
+      }
+      
+      // Create stylist profile
+      const stylistProfile = await storage.createStylistProfile({
+        userId: user.id,
+        handle,
+        displayName: supplier.businessName,
+        bio: `AI Stylist for ${supplier.businessName}`,
+        location: null,
+        styleSpecialties: [],
+        isVerified: true,
+        isActive: true,
+      });
+      
+      res.json(stylistProfile);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
   // ============================================
   // SUPPLIER PORTAL - RETAILER ROUTES
   // ============================================

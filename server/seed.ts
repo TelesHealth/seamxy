@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { aiPersonas, subscriptionPlans, pricingConfigs, products, makers, users, measurements } from "@shared/schema";
+import { aiPersonas, subscriptionPlans, pricingConfigs, products, makers, users, measurements, supplierAccounts } from "@shared/schema";
 import bcrypt from "bcrypt";
 
 export async function seedDatabase() {
@@ -550,6 +550,33 @@ Always ask clarifying questions to understand their vision before making recomme
     }
   } catch (error) {
     console.log("ℹ️ Test account already exists or error:", error);
+  }
+
+  // Seed Test Supplier Account for AI Stylist Testing
+  try {
+    const hashedPassword = await bcrypt.hash("password", 12);
+    
+    const [testSupplier] = await db.insert(supplierAccounts).values({
+      email: "supplier@test.com",
+      password: hashedPassword,
+      role: "designer",
+      tier: "pro",
+      businessName: "Test Stylist Studio",
+      ownerName: "Test Stylist",
+      phoneNumber: "+1-555-0100",
+      isVerified: true,
+      isActive: true,
+      onboardingCompleted: true,
+      stripeAccountId: null,
+    }).onConflictDoNothing().returning();
+
+    if (testSupplier) {
+      console.log("✅ Test supplier account created: supplier@test.com / password");
+    } else {
+      console.log("ℹ️ Test supplier account already exists");
+    }
+  } catch (error) {
+    console.log("ℹ️ Test supplier account already exists or error:", error);
   }
 
   console.log("🎉 Database seeding complete!");
