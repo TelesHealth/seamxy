@@ -7,6 +7,7 @@ import {
   portfolioItems, supplierSubscriptions, supplierInvoices, messageThreads,
   supplierMessages, supplierOrders, integrationTokens, analyticsSnapshots,
   retailerConfigs, externalProducts, priceHistory, priceAlerts, affiliateClicks, affiliateConversions,
+  stylistApplications, stylistProfiles, stylistPortfolioItems, stylistRfqs, stylistFollowers, stylistReviews,
   type User, type InsertUser,
   type Measurement, type InsertMeasurement,
   type Product, type InsertProduct,
@@ -39,6 +40,11 @@ import {
   type PriceAlert, type InsertPriceAlert,
   type AffiliateClick, type InsertAffiliateClick,
   type AffiliateConversion, type InsertAffiliateConversion,
+  type StylistApplication, type InsertStylistApplication,
+  type StylistProfile, type InsertStylistProfile,
+  type StylistPortfolioItem, type InsertStylistPortfolioItem,
+  type StylistRfq, type InsertStylistRfq,
+  type StylistReview, type InsertStylistReview,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
@@ -193,6 +199,42 @@ export interface IStorage {
   updatePriceAlert(id: string, updates: Partial<InsertPriceAlert>): Promise<PriceAlert | undefined>;
   createAffiliateClick(click: InsertAffiliateClick): Promise<AffiliateClick>;
   createAffiliateConversion(conversion: InsertAffiliateConversion): Promise<AffiliateConversion>;
+  
+  // Stylist Applications
+  getStylistApplicationById(id: string): Promise<StylistApplication | undefined>;
+  getStylistApplicationByUserId(userId: string): Promise<StylistApplication | undefined>;
+  getAllStylistApplications(status?: 'pending' | 'approved' | 'rejected'): Promise<StylistApplication[]>;
+  createStylistApplication(application: InsertStylistApplication): Promise<StylistApplication>;
+  updateStylistApplication(id: string, updates: Partial<StylistApplication>): Promise<StylistApplication | undefined>;
+  
+  // Stylist Profiles
+  getStylistProfileById(id: string): Promise<StylistProfile | undefined>;
+  getStylistProfileByUserId(userId: string): Promise<StylistProfile | undefined>;
+  getStylistProfileByHandle(handle: string): Promise<StylistProfile | undefined>;
+  browseStylistProfiles(filters: { specialty?: string; tags?: string[]; location?: string; search?: string }): Promise<StylistProfile[]>;
+  createStylistProfile(profile: InsertStylistProfile): Promise<StylistProfile>;
+  updateStylistProfile(id: string, updates: Partial<InsertStylistProfile>): Promise<StylistProfile | undefined>;
+  
+  // Stylist Portfolio Items
+  getStylistPortfolioItemById(id: string): Promise<StylistPortfolioItem | undefined>;
+  getStylistPortfolioItems(stylistId: string): Promise<StylistPortfolioItem[]>;
+  createStylistPortfolioItem(item: InsertStylistPortfolioItem): Promise<StylistPortfolioItem>;
+  updateStylistPortfolioItem(id: string, updates: Partial<InsertStylistPortfolioItem>): Promise<StylistPortfolioItem | undefined>;
+  deleteStylistPortfolioItem(id: string): Promise<void>;
+  
+  // Stylist RFQs
+  getStylistRfqById(id: string): Promise<StylistRfq | undefined>;
+  getStylistRfqs(stylistId: string): Promise<StylistRfq[]>;
+  createStylistRfq(rfq: InsertStylistRfq): Promise<StylistRfq>;
+  updateStylistRfq(id: string, updates: Partial<StylistRfq>): Promise<StylistRfq | undefined>;
+  
+  // Stylist Followers
+  followStylist(userId: string, stylistId: string): Promise<void>;
+  unfollowStylist(userId: string, stylistId: string): Promise<void>;
+  
+  // Stylist Reviews
+  getStylistReviews(stylistId: string): Promise<StylistReview[]>;
+  createStylistReview(review: InsertStylistReview): Promise<StylistReview>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -818,6 +860,160 @@ export class DatabaseStorage implements IStorage {
 
   async createAffiliateConversion(conversion: InsertAffiliateConversion): Promise<AffiliateConversion> {
     const [created] = await db.insert(affiliateConversions).values(conversion).returning();
+    return created;
+  }
+
+  // Stylist Applications
+  async getStylistApplicationById(id: string): Promise<StylistApplication | undefined> {
+    const [application] = await db.select().from(stylistApplications).where(eq(stylistApplications.id, id));
+    return application || undefined;
+  }
+
+  async getStylistApplicationByUserId(userId: string): Promise<StylistApplication | undefined> {
+    const [application] = await db.select().from(stylistApplications).where(eq(stylistApplications.userId, userId));
+    return application || undefined;
+  }
+
+  async getAllStylistApplications(status?: 'pending' | 'approved' | 'rejected'): Promise<StylistApplication[]> {
+    if (status) {
+      return db.select().from(stylistApplications)
+        .where(eq(stylistApplications.status, status))
+        .orderBy(desc(stylistApplications.submittedAt));
+    }
+    return db.select().from(stylistApplications).orderBy(desc(stylistApplications.submittedAt));
+  }
+
+  async createStylistApplication(application: InsertStylistApplication): Promise<StylistApplication> {
+    const [created] = await db.insert(stylistApplications).values(application).returning();
+    return created;
+  }
+
+  async updateStylistApplication(id: string, updates: Partial<StylistApplication>): Promise<StylistApplication | undefined> {
+    const [updated] = await db.update(stylistApplications)
+      .set(updates)
+      .where(eq(stylistApplications.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Stylist Profiles
+  async getStylistProfileById(id: string): Promise<StylistProfile | undefined> {
+    const [profile] = await db.select().from(stylistProfiles).where(eq(stylistProfiles.id, id));
+    return profile || undefined;
+  }
+
+  async getStylistProfileByUserId(userId: string): Promise<StylistProfile | undefined> {
+    const [profile] = await db.select().from(stylistProfiles).where(eq(stylistProfiles.userId, userId));
+    return profile || undefined;
+  }
+
+  async getStylistProfileByHandle(handle: string): Promise<StylistProfile | undefined> {
+    const [profile] = await db.select().from(stylistProfiles).where(eq(stylistProfiles.handle, handle));
+    return profile || undefined;
+  }
+
+  async browseStylistProfiles(filters: { specialty?: string; tags?: string[]; location?: string; search?: string }): Promise<StylistProfile[]> {
+    let query = db.select().from(stylistProfiles).where(eq(stylistProfiles.isActive, true));
+    
+    if (filters.location) {
+      query = query.where(eq(stylistProfiles.location, filters.location)) as any;
+    }
+    
+    if (filters.search) {
+      query = query.where(
+        sql`${stylistProfiles.displayName} ILIKE ${'%' + filters.search + '%'} OR ${stylistProfiles.handle} ILIKE ${'%' + filters.search + '%'}`
+      ) as any;
+    }
+    
+    return query.orderBy(desc(stylistProfiles.totalFollowers));
+  }
+
+  async createStylistProfile(profile: InsertStylistProfile): Promise<StylistProfile> {
+    const [created] = await db.insert(stylistProfiles).values(profile).returning();
+    return created;
+  }
+
+  async updateStylistProfile(id: string, updates: Partial<InsertStylistProfile>): Promise<StylistProfile | undefined> {
+    const [updated] = await db.update(stylistProfiles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(stylistProfiles.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Stylist Portfolio Items
+  async getStylistPortfolioItemById(id: string): Promise<StylistPortfolioItem | undefined> {
+    const [item] = await db.select().from(stylistPortfolioItems).where(eq(stylistPortfolioItems.id, id));
+    return item || undefined;
+  }
+
+  async getStylistPortfolioItems(stylistId: string): Promise<StylistPortfolioItem[]> {
+    return db.select().from(stylistPortfolioItems)
+      .where(eq(stylistPortfolioItems.stylistId, stylistId))
+      .orderBy(desc(stylistPortfolioItems.uploadedAt));
+  }
+
+  async createStylistPortfolioItem(item: InsertStylistPortfolioItem): Promise<StylistPortfolioItem> {
+    const [created] = await db.insert(stylistPortfolioItems).values(item).returning();
+    return created;
+  }
+
+  async updateStylistPortfolioItem(id: string, updates: Partial<InsertStylistPortfolioItem>): Promise<StylistPortfolioItem | undefined> {
+    const [updated] = await db.update(stylistPortfolioItems)
+      .set(updates)
+      .where(eq(stylistPortfolioItems.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  async deleteStylistPortfolioItem(id: string): Promise<void> {
+    await db.delete(stylistPortfolioItems).where(eq(stylistPortfolioItems.id, id));
+  }
+
+  // Stylist RFQs
+  async getStylistRfqById(id: string): Promise<StylistRfq | undefined> {
+    const [rfq] = await db.select().from(stylistRfqs).where(eq(stylistRfqs.id, id));
+    return rfq || undefined;
+  }
+
+  async getStylistRfqs(stylistId: string): Promise<StylistRfq[]> {
+    return db.select().from(stylistRfqs)
+      .where(eq(stylistRfqs.stylistId, stylistId))
+      .orderBy(desc(stylistRfqs.createdAt));
+  }
+
+  async createStylistRfq(rfq: InsertStylistRfq): Promise<StylistRfq> {
+    const [created] = await db.insert(stylistRfqs).values(rfq).returning();
+    return created;
+  }
+
+  async updateStylistRfq(id: string, updates: Partial<StylistRfq>): Promise<StylistRfq | undefined> {
+    const [updated] = await db.update(stylistRfqs)
+      .set(updates)
+      .where(eq(stylistRfqs.id, id))
+      .returning();
+    return updated || undefined;
+  }
+
+  // Stylist Followers
+  async followStylist(userId: string, stylistId: string): Promise<void> {
+    await db.insert(stylistFollowers).values({ userId, stylistId }).onConflictDoNothing();
+  }
+
+  async unfollowStylist(userId: string, stylistId: string): Promise<void> {
+    await db.delete(stylistFollowers)
+      .where(and(eq(stylistFollowers.userId, userId), eq(stylistFollowers.stylistId, stylistId)));
+  }
+
+  // Stylist Reviews
+  async getStylistReviews(stylistId: string): Promise<StylistReview[]> {
+    return db.select().from(stylistReviews)
+      .where(eq(stylistReviews.stylistId, stylistId))
+      .orderBy(desc(stylistReviews.createdAt));
+  }
+
+  async createStylistReview(review: InsertStylistReview): Promise<StylistReview> {
+    const [created] = await db.insert(stylistReviews).values(review).returning();
     return created;
   }
 }

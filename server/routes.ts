@@ -24,11 +24,19 @@ import {
   insertSupplierAccountSchema, insertSupplierProfileSchema, insertRetailerProductSchema,
   insertDesignerCollectionSchema, insertPortfolioItemSchema, insertIntegrationTokenSchema,
   insertMessageThreadSchema, insertSupplierMessageSchema, insertSupplierOrderSchema,
-  insertPriceAlertSchema, insertAffiliateClickSchema, insertAffiliateConversionSchema
+  insertPriceAlertSchema, insertAffiliateClickSchema, insertAffiliateConversionSchema,
+  insertStylistApplicationSchema, insertStylistProfileSchema, insertStylistPortfolioItemSchema,
+  insertStylistRfqSchema, insertStylistReviewSchema
 } from "@shared/schema";
 import { priceComparisonService } from "./services/price-comparison";
 import { aiProductMatcher } from "./services/ai-product-matcher";
 import { registerEventRoutes } from "./routes/events";
+import { 
+  generateStylistPortfolioUploadUrl,
+  generateStylistAvatarUploadUrl,
+  generateStylistCoverUploadUrl,
+  deleteS3Object
+} from "./services/s3";
 
 export function registerRoutes(app: Express) {
   
@@ -1177,6 +1185,514 @@ export function registerRoutes(app: Express) {
         endDate ? new Date(endDate as string) : undefined
       );
       res.json(snapshots);
+    }
+  );
+
+  // ============================================
+  // STYLIST PORTFOLIOS & PERSONAL AI PAGES
+  // ============================================
+  
+  // Generate S3 presigned upload URL for portfolio images
+  app.post("/api/v1/stylist/generate-upload-url",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { fileName, contentType, uploadType } = req.body;
+        
+        if (!fileName || !contentType) {
+          return res.status(400).json({ error: "fileName and contentType required" });
+        }
+        
+        // Get stylist profile
+        const stylistProfile = await storage.getStylistProfileByUserId(req.userId!);
+        if (!stylistProfile) {
+          return res.status(403).json({ error: "Must be an approved stylist to upload images" });
+        }
+        
+        let uploadData;
+        if (uploadType === 'avatar') {
+          uploadData = await generateStylistAvatarUploadUrl(stylistProfile.id, fileName, contentType);
+        } else if (uploadType === 'cover') {
+          uploadData = await generateStylistCoverUploadUrl(stylistProfile.id, fileName, contentType);
+        } else {
+          uploadData = await generateStylistPortfolioUploadUrl({
+            stylistId: stylistProfile.id,
+            fileName,
+            contentType
+          });
+        }
+        
+        res.json(uploadData);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Submit stylist application
+  app.post("/api/v1/stylist/apply",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const applicationData = insertStylistApplicationSchema.parse({
+          ...req.body,
+          userId: req.userId
+        });
+        
+        // Check if user already has an application
+        const existing = await storage.getStylistApplicationByUserId(req.userId!);
+        if (existing) {
+          return res.status(400).json({ error: "Application already submitted" });
+        }
+        
+        const application = await storage.createStylistApplication(applicationData);
+        res.json(application);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get user's own stylist application status
+  app.get("/api/v1/stylist/application",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      const application = await storage.getStylistApplicationByUserId(req.userId!);
+      res.json(application || null);
+    }
+  );
+  
+  // Get stylist profile by userId (own profile)
+  app.get("/api/v1/stylist/profile",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      const profile = await storage.getStylistProfileByUserId(req.userId!);
+      res.json(profile || null);
+    }
+  );
+  
+  // Update stylist profile
+  app.patch("/api/v1/stylist/profile",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByUserId(req.userId!);
+        if (!profile) {
+          return res.status(404).json({ error: "Stylist profile not found" });
+        }
+        
+        const updateData = insertStylistProfileSchema.partial().parse(req.body);
+        const updated = await storage.updateStylistProfile(profile.id, updateData);
+        res.json(updated);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Link AI persona to stylist profile
+  app.post("/api/v1/stylist/link-persona/:personaId",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByUserId(req.userId!);
+        if (!profile) {
+          return res.status(404).json({ error: "Stylist profile not found" });
+        }
+        
+        // Verify persona exists
+        const persona = await storage.getAiPersona(req.params.personaId);
+        if (!persona) {
+          return res.status(404).json({ error: "AI persona not found" });
+        }
+        
+        const updated = await storage.updateStylistProfile(profile.id, {
+          linkedPersonaId: req.params.personaId
+        });
+        
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Create portfolio item (after S3 upload)
+  app.post("/api/v1/stylist/portfolio",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByUserId(req.userId!);
+        if (!profile) {
+          return res.status(403).json({ error: "Must be an approved stylist" });
+        }
+        
+        const portfolioData = insertStylistPortfolioItemSchema.parse({
+          ...req.body,
+          stylistId: profile.id
+        });
+        
+        const item = await storage.createStylistPortfolioItem(portfolioData);
+        res.json(item);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get own portfolio items
+  app.get("/api/v1/stylist/portfolio",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      const profile = await storage.getStylistProfileByUserId(req.userId!);
+      if (!profile) {
+        return res.json([]);
+      }
+      
+      const items = await storage.getStylistPortfolioItems(profile.id);
+      res.json(items);
+    }
+  );
+  
+  // Update portfolio item
+  app.patch("/api/v1/stylist/portfolio/:id",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByUserId(req.userId!);
+        if (!profile) {
+          return res.status(403).json({ error: "Must be an approved stylist" });
+        }
+        
+        // Verify ownership
+        const item = await storage.getStylistPortfolioItemById(req.params.id);
+        if (!item || item.stylistId !== profile.id) {
+          return res.status(404).json({ error: "Portfolio item not found" });
+        }
+        
+        const updateData = insertStylistPortfolioItemSchema.partial().parse(req.body);
+        const updated = await storage.updateStylistPortfolioItem(req.params.id, updateData);
+        res.json(updated);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Delete portfolio item
+  app.delete("/api/v1/stylist/portfolio/:id",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByUserId(req.userId!);
+        if (!profile) {
+          return res.status(403).json({ error: "Must be an approved stylist" });
+        }
+        
+        // Verify ownership
+        const item = await storage.getStylistPortfolioItemById(req.params.id);
+        if (!item || item.stylistId !== profile.id) {
+          return res.status(404).json({ error: "Portfolio item not found" });
+        }
+        
+        // Delete from S3
+        await deleteS3Object(item.s3Key);
+        
+        // Delete from database
+        await storage.deleteStylistPortfolioItem(req.params.id);
+        
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get received RFQs (stylist inbox)
+  app.get("/api/v1/stylist/rfqs",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      const profile = await storage.getStylistProfileByUserId(req.userId!);
+      if (!profile) {
+        return res.json([]);
+      }
+      
+      const rfqs = await storage.getStylistRfqs(profile.id);
+      res.json(rfqs);
+    }
+  );
+  
+  // Respond to RFQ
+  app.patch("/api/v1/stylist/rfqs/:id/respond",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByUserId(req.userId!);
+        if (!profile) {
+          return res.status(403).json({ error: "Must be an approved stylist" });
+        }
+        
+        const rfq = await storage.getStylistRfqById(req.params.id);
+        if (!rfq || rfq.stylistId !== profile.id) {
+          return res.status(404).json({ error: "RFQ not found" });
+        }
+        
+        const { stylistResponse, estimatedPrice, estimatedTimeline } = req.body;
+        
+        const updated = await storage.updateStylistRfq(req.params.id, {
+          stylistResponse,
+          estimatedPrice,
+          estimatedTimeline,
+          status: 'responded',
+          respondedAt: new Date()
+        });
+        
+        res.json(updated);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Browse all stylists (public)
+  app.get("/api/v1/stylists", async (req, res) => {
+    const { specialty, tags, location, search } = req.query;
+    
+    const stylists = await storage.browseStylistProfiles({
+      specialty: specialty as string,
+      tags: tags ? (tags as string).split(',') : undefined,
+      location: location as string,
+      search: search as string
+    });
+    
+    res.json(stylists);
+  });
+  
+  // Get stylist profile by handle (public)
+  app.get("/api/v1/stylists/:handle", async (req, res) => {
+    const profile = await storage.getStylistProfileByHandle(req.params.handle);
+    if (!profile) {
+      return res.status(404).json({ error: "Stylist not found" });
+    }
+    
+    res.json(profile);
+  });
+  
+  // Get stylist portfolio by handle (public)
+  app.get("/api/v1/stylists/:handle/portfolio", async (req, res) => {
+    const profile = await storage.getStylistProfileByHandle(req.params.handle);
+    if (!profile) {
+      return res.status(404).json({ error: "Stylist not found" });
+    }
+    
+    const items = await storage.getStylistPortfolioItems(profile.id);
+    res.json(items);
+  });
+  
+  // Submit RFQ to stylist
+  app.post("/api/v1/stylists/:handle/rfq",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByHandle(req.params.handle);
+        if (!profile) {
+          return res.status(404).json({ error: "Stylist not found" });
+        }
+        
+        const rfqData = insertStylistRfqSchema.parse({
+          ...req.body,
+          userId: req.userId,
+          stylistId: profile.id
+        });
+        
+        const rfq = await storage.createStylistRfq(rfqData);
+        res.json(rfq);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Follow stylist
+  app.post("/api/v1/stylists/:handle/follow",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByHandle(req.params.handle);
+        if (!profile) {
+          return res.status(404).json({ error: "Stylist not found" });
+        }
+        
+        await storage.followStylist(req.userId!, profile.id);
+        
+        // Update follower count
+        await storage.updateStylistProfile(profile.id, {
+          totalFollowers: (profile.totalFollowers || 0) + 1
+        });
+        
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Unfollow stylist
+  app.delete("/api/v1/stylists/:handle/follow",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByHandle(req.params.handle);
+        if (!profile) {
+          return res.status(404).json({ error: "Stylist not found" });
+        }
+        
+        await storage.unfollowStylist(req.userId!, profile.id);
+        
+        // Update follower count
+        await storage.updateStylistProfile(profile.id, {
+          totalFollowers: Math.max(0, (profile.totalFollowers || 0) - 1)
+        });
+        
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Submit review
+  app.post("/api/v1/stylists/:handle/review",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getStylistProfileByHandle(req.params.handle);
+        if (!profile) {
+          return res.status(404).json({ error: "Stylist not found" });
+        }
+        
+        const reviewData = insertStylistReviewSchema.parse({
+          ...req.body,
+          userId: req.userId,
+          stylistId: profile.id
+        });
+        
+        const review = await storage.createStylistReview(reviewData);
+        
+        // Recalculate average rating
+        const allReviews = await storage.getStylistReviews(profile.id);
+        const avgRating = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+        
+        await storage.updateStylistProfile(profile.id, {
+          totalReviews: allReviews.length,
+          averageRating: avgRating.toFixed(2)
+        });
+        
+        res.json(review);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get stylist reviews
+  app.get("/api/v1/stylists/:handle/reviews", async (req, res) => {
+    const profile = await storage.getStylistProfileByHandle(req.params.handle);
+    if (!profile) {
+      return res.status(404).json({ error: "Stylist not found" });
+    }
+    
+    const reviews = await storage.getStylistReviews(profile.id);
+    res.json(reviews);
+  });
+  
+  // ============================================
+  // ADMIN - STYLIST MANAGEMENT
+  // ============================================
+  
+  // Get all stylist applications
+  app.get("/api/v1/admin/stylist-applications",
+    requireAdmin as any,
+    async (req, res) => {
+      const { status } = req.query;
+      const applications = await storage.getAllStylistApplications(status as any);
+      res.json(applications);
+    }
+  );
+  
+  // Approve stylist application
+  app.post("/api/v1/admin/stylist-applications/:id/approve",
+    requireAdmin as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const application = await storage.getStylistApplicationById(req.params.id);
+        if (!application) {
+          return res.status(404).json({ error: "Application not found" });
+        }
+        
+        if (application.status !== 'pending') {
+          return res.status(400).json({ error: "Application already processed" });
+        }
+        
+        // Update application status
+        await storage.updateStylistApplication(req.params.id, {
+          status: 'approved',
+          reviewedBy: req.userId,
+          reviewedAt: new Date(),
+          reviewNotes: req.body.reviewNotes
+        });
+        
+        // Get user info
+        const user = await storage.getUser(application.userId);
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+        
+        // Create stylist profile
+        const handle = req.body.handle || user.name.toLowerCase().replace(/\s+/g, '');
+        const profile = await storage.createStylistProfile({
+          userId: application.userId,
+          applicationId: application.id,
+          handle,
+          displayName: user.name,
+          styleSpecialties: application.styleSpecialties,
+          instagramHandle: application.instagramHandle,
+          tiktokHandle: application.tiktokHandle,
+          websiteUrl: application.websiteUrl
+        });
+        
+        res.json({ application, profile });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Reject stylist application
+  app.post("/api/v1/admin/stylist-applications/:id/reject",
+    requireAdmin as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const application = await storage.getStylistApplicationById(req.params.id);
+        if (!application) {
+          return res.status(404).json({ error: "Application not found" });
+        }
+        
+        if (application.status !== 'pending') {
+          return res.status(400).json({ error: "Application already processed" });
+        }
+        
+        const updated = await storage.updateStylistApplication(req.params.id, {
+          status: 'rejected',
+          reviewedBy: req.userId,
+          reviewedAt: new Date(),
+          reviewNotes: req.body.reviewNotes
+        });
+        
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
     }
   );
 
