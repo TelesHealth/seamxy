@@ -1253,6 +1253,9 @@ export const stylistPortfolioItems = pgTable("stylist_portfolio_items", {
   collectionName: text("collection_name"),
   season: text("season"), // "Spring 2025", "Fall/Winter 2024"
   occasion: text("occasion"), // "Wedding", "Casual", "Business"
+  clientType: text("client_type"), // For AI training: "bride", "business professional", "casual client"
+  priceRange: text("price_range"), // For AI training: "$500-1000", "$1000-2000", "$2000+"
+  styleNotes: text("style_notes"), // Detailed notes for AI training
   views: integer("views").default(0),
   likes: integer("likes").default(0),
   uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),

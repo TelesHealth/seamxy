@@ -158,6 +158,77 @@ AI-powered conversational stylist for event shopping (weddings, proms, formal ev
 - 10% quote-to-purchase conversion
 - 25% increase in supplier engagement
 
+## AI Stylist Onboarding System (Latest - November 2025)
+
+### Overview
+Complete system allowing individual stylists (suppliers) to create personalized AI clones. Stylists complete 66 training questions across 4 sections and upload portfolio items. The system generates custom OpenAI prompts mirroring their aesthetic, communication style, and expertise. Customers can chat with stylist AI clones with free tier (5 messages/month) and premium subscription ($9.99/month, 80/20 split to stylist/platform).
+
+### Database Schema (4 new tables)
+- `ai_training_responses` - Stores answers to 66 training questions (philosophy, client approach, expertise, personality)
+- `ai_stylist_prompts` - Generated custom OpenAI system prompts for each stylist's AI clone
+- `conversation_credits` - Free tier message tracking (5/month) per customer per stylist
+- `ai_subscriptions` - Premium subscription management ($9.99/mo) with 80/20 revenue split
+
+### Training Question System
+66 questions across 4 categories defined in `shared/training-questions.ts`:
+- **Philosophy (16 questions)**: Core styling philosophy, aesthetic principles, fashion influences
+- **Client Approach (16 questions)**: Communication style, client interaction, consultation process
+- **Expertise (17 questions)**: Specializations, body types, occasions, price points
+- **Personality (17 questions)**: Tone of voice, favorite brands, deal-breakers, unique traits
+
+### Prompt Generation Engine (`server/services/prompt-generator.ts`)
+- Analyzes training responses using GPT-4o to extract key themes
+- Generates custom system prompts with stylist's voice, aesthetic, and expertise
+- Includes mandatory SeamXY platform integration (product recommendations, measurement capture)
+- Versioning system for prompt iterations
+
+### Credit & Subscription System (`server/services/credit-manager.ts`)
+- Free tier: 5 messages/month per customer per stylist (auto-resets monthly)
+- Premium: $9.99/month subscription for 100 messages/month
+- Revenue split: 80% to stylist, 20% to platform
+- Subscription status: active/cancelled/expired
+- Automatic credit reset on 1st of each month
+
+### API Endpoints (Implemented ✅)
+- `GET /api/v1/supplier/:supplierId/stylist-profile` - Auto-creates stylist profile for supplier
+- `GET /api/v1/supplier/:stylistId/training-responses` - Fetch all training answers
+- `POST /api/v1/supplier/training-responses` - Save/update training answers (upsert logic)
+- `POST /api/v1/supplier/:stylistId/generate-prompt` - Generate AI system prompt from training
+- `GET /api/v1/stylist/:handle` - Public stylist profile with AI chat availability
+- `POST /api/v1/stylist/:handle/chat` - Send message to stylist AI clone (credit-aware)
+- `GET /api/v1/credits/:stylistId` - Check remaining message credits
+- `POST /api/v1/subscribe/:stylistId` - Subscribe to premium tier
+- `POST /api/v1/unsubscribe/:stylistId` - Cancel premium subscription
+
+### Frontend Components
+- `ai-training.tsx` - 66-question training interface with progress tracking
+- `ai-preview.tsx` - Test chat interface for stylists to preview their AI clone
+- `stylist-profile.tsx` - Public profile with AI chat for customers (credit/subscription UI)
+- Uses `useSupplierAuth()` for supplier pages, `useCustomerAuth()` for customer pages
+
+### Authentication Architecture
+- **Supplier Side**: Uses `supplier_accounts` table, authenticated via `useSupplierAuth()`
+- **Customer Side**: Uses `users` table, authenticated via `useCustomerAuth()`
+- **Bridge**: `/api/v1/supplier/:supplierId/stylist-profile` creates placeholder user + stylist profile for suppliers
+  - Workaround for `stylistProfiles.userId` foreign key constraint
+  - Auto-generates unique handle from business name
+  - Creates internal user account: `supplier-{id}@seamxy.internal`
+
+### Technical Implementation Notes
+- Training responses use application-level upsert (check + update/insert) to prevent duplicates
+- Prompt generation is asynchronous, shows loading state during GPT-4o analysis
+- AI chat enforces credit limits before OpenAI API calls
+- Subscription renewals handled manually (future: Stripe webhooks for auto-renewal)
+- All AI clones coexist with existing generic AI personas
+
+### Remaining Work ⏳
+- **Task 7**: Portfolio upload with context questions (image upload + descriptions)
+- **Task 13**: End-to-end integration testing with Playwright
+
+### Test Accounts
+- **Supplier**: `supplier@test.com` / `password` (for testing AI training workflow)
+- **Customer**: `test@example.com` / `password` (for testing AI chat with stylists)
+
 ## External Dependencies
 
 - **Database**: Neon Serverless PostgreSQL (auto-detects and supports standard PostgreSQL for Docker deployments)

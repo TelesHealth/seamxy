@@ -1740,6 +1740,61 @@ export function registerRoutes(app: Express) {
     }
   });
   
+  // ============================================
+  // AI STYLIST ONBOARDING - PORTFOLIO UPLOADS
+  // ============================================
+  
+  // Get stylist portfolio items
+  app.get("/api/v1/stylist/:stylistId/portfolio", async (req, res) => {
+    try {
+      const items = await storage.getStylistPortfolioItems(req.params.stylistId);
+      res.json(items);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Create portfolio item (note: imageUrl should be pre-uploaded to S3/storage)
+  app.post("/api/v1/stylist/:stylistId/portfolio", async (req, res) => {
+    try {
+      const itemData = insertStylistPortfolioItemSchema.parse({
+        stylistId: req.params.stylistId,
+        ...req.body
+      });
+      
+      const item = await storage.createStylistPortfolioItem(itemData);
+      res.json(item);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  
+  // Update portfolio item
+  app.patch("/api/v1/stylist/portfolio/:itemId", async (req, res) => {
+    try {
+      const updates = insertStylistPortfolioItemSchema.partial().parse(req.body);
+      const updated = await storage.updateStylistPortfolioItem(req.params.itemId, updates);
+      
+      if (!updated) {
+        return res.status(404).json({ error: "Portfolio item not found" });
+      }
+      
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  
+  // Delete portfolio item
+  app.delete("/api/v1/stylist/portfolio/:itemId", async (req, res) => {
+    try {
+      await storage.deleteStylistPortfolioItem(req.params.itemId);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
   // Generate AI prompt from training responses
   app.post("/api/v1/stylist/:stylistId/generate-prompt", async (req, res) => {
     try {
@@ -1751,15 +1806,16 @@ export function registerRoutes(app: Express) {
       const responses = await storage.getTrainingResponses(req.params.stylistId);
       const portfolioItems = await storage.getStylistPortfolioItems(req.params.stylistId);
       
-      // TODO: Extract portfolio context from portfolio item descriptions
+      // Extract portfolio context from new AI training fields
       const portfolioWithContext = portfolioItems.map(item => ({
         item,
         context: {
-          description: item.title || "",
-          clientType: item.description || "",
-          problemSolved: "",
-          unique: "",
-          occasion: item.occasion || ""
+          description: item.description || item.title || "",
+          clientType: item.clientType || "",
+          problemSolved: item.styleNotes || "",
+          unique: item.tags?.join(", ") || "",
+          occasion: item.occasion || "",
+          priceRange: item.priceRange || ""
         }
       }));
       
