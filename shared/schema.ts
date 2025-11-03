@@ -600,9 +600,12 @@ export const aiPersonas = pgTable("ai_personas", {
 export const aiChatSessions = pgTable("ai_chat_sessions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  personaId: varchar("persona_id").notNull().references(() => aiPersonas.id),
+  personaId: varchar("persona_id").references(() => aiPersonas.id),
+  stylistId: varchar("stylist_id").references(() => stylistProfiles.id), // For stylist AI clones
   messages: jsonb("messages").notNull(), // Array of {role, content, timestamp}
   userContext: jsonb("user_context"), // Snapshot of user profile for this session
+  messageCount: integer("message_count").default(0), // Track messages for credit system
+  isFreeTier: boolean("is_free_tier").default(true), // Free vs Premium chat
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -1290,6 +1293,61 @@ export const stylistReviews = pgTable("stylist_reviews", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// ============================================
+// AI STYLIST ONBOARDING - TRAINING & PROMPTS
+// ============================================
+
+export const aiTrainingResponses = pgTable("ai_training_responses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  questionId: varchar("question_id").notNull(), // e.g., "PHIL_01", "CLIENT_05"
+  questionText: text("question_text").notNull(),
+  answer: text("answer").notNull(),
+  category: text("category").notNull(), // "philosophy", "client_approach", "expertise", "personality"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const aiStylistPrompts = pgTable("ai_stylist_prompts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stylistId: varchar("stylist_id").notNull().unique().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  systemPrompt: text("system_prompt").notNull(), // Full OpenAI system prompt
+  promptVersion: integer("prompt_version").default(1).notNull(),
+  trainingCompletedAt: timestamp("training_completed_at"),
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const conversationCredits = pgTable("conversation_credits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  creditsRemaining: integer("credits_remaining").default(5).notNull(), // 5 free messages per month
+  periodStart: timestamp("period_start").defaultNow().notNull(),
+  periodEnd: timestamp("period_end").notNull(), // Reset monthly
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const aiSubscriptions = pgTable("ai_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("active"), // "active", "cancelled", "expired"
+  plan: text("plan").notNull().default("premium"), // "premium" ($9.99/mo)
+  pricePerMonth: decimal("price_per_month", { precision: 10, scale: 2 }).default("9.99").notNull(),
+  stylistShare: decimal("stylist_share", { precision: 10, scale: 2 }).default("7.99").notNull(), // 80%
+  platformShare: decimal("platform_share", { precision: 10, scale: 2 }).default("2.00").notNull(), // 20%
+  stripeSubscriptionId: text("stripe_subscription_id"), // Stripe subscription ID (stub for now)
+  stripeCustomerId: text("stripe_customer_id"), // Stripe customer ID (stub for now)
+  currentPeriodStart: timestamp("current_period_start").defaultNow().notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  cancelledAt: timestamp("cancelled_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertStylistApplicationSchema = createInsertSchema(stylistApplications).omit({
   id: true,
@@ -1341,3 +1399,41 @@ export type InsertStylistFollower = z.infer<typeof insertStylistFollowerSchema>;
 
 export type StylistReview = typeof stylistReviews.$inferSelect;
 export type InsertStylistReview = z.infer<typeof insertStylistReviewSchema>;
+
+// AI Stylist Onboarding insert schemas
+export const insertAiTrainingResponseSchema = createInsertSchema(aiTrainingResponses).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiStylistPromptSchema = createInsertSchema(aiStylistPrompts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertConversationCreditSchema = createInsertSchema(conversationCredits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAiSubscriptionSchema = createInsertSchema(aiSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// AI Stylist Onboarding types
+export type AiTrainingResponse = typeof aiTrainingResponses.$inferSelect;
+export type InsertAiTrainingResponse = z.infer<typeof insertAiTrainingResponseSchema>;
+
+export type AiStylistPrompt = typeof aiStylistPrompts.$inferSelect;
+export type InsertAiStylistPrompt = z.infer<typeof insertAiStylistPromptSchema>;
+
+export type ConversationCredit = typeof conversationCredits.$inferSelect;
+export type InsertConversationCredit = z.infer<typeof insertConversationCreditSchema>;
+
+export type AiSubscription = typeof aiSubscriptions.$inferSelect;
+export type InsertAiSubscription = z.infer<typeof insertAiSubscriptionSchema>;

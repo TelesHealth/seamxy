@@ -39,7 +39,12 @@ import SupplierMessages from "@/pages/supplier/messages";
 import SupplierPortfolio from "@/pages/supplier/portfolio";
 import SupplierCollections from "@/pages/supplier/collections";
 import SupplierRequests from "@/pages/supplier/requests";
+import SupplierAiTraining from "@/pages/supplier/ai-training";
+import SupplierAiPreview from "@/pages/supplier/ai-preview";
 import { SupplierLayout } from "@/pages/supplier/layout";
+
+// Stylist Public Profile
+import StylistProfile from "@/pages/stylist-profile";
 
 function Router() {
   return (
@@ -92,6 +97,15 @@ function Router() {
       <Route path="/supplier/requests">
         <SupplierLayout><SupplierRequests /></SupplierLayout>
       </Route>
+      <Route path="/supplier/ai-training">
+        <SupplierLayout><SupplierAiTraining /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/ai-preview">
+        <SupplierLayout><SupplierAiPreview /></SupplierLayout>
+      </Route>
+      
+      {/* Stylist Public Profile */}
+      <Route path="/stylists/:handle" component={StylistProfile} />
       
       <Route component={NotFound} />
     </Switch>

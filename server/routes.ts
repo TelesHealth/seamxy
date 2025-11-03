@@ -1607,6 +1607,313 @@ export function registerRoutes(app: Express) {
   });
   
   // ============================================
+  // AI STYLIST ONBOARDING - TRAINING & PROMPTS
+  // ============================================
+  
+  // Get all training responses for a stylist
+  app.get("/api/v1/stylist/:stylistId/training-responses", async (req, res) => {
+    try {
+      const responses = await storage.getTrainingResponses(req.params.stylistId);
+      res.json(responses);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Save or update training response (upsert)
+  app.post("/api/v1/stylist/:stylistId/training-responses", async (req, res) => {
+    try {
+      const { questionId, questionText, answer, category } = req.body;
+      
+      if (!questionId || !questionText || !answer || !category) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      
+      // Check if response already exists for this question
+      const existingResponses = await storage.getTrainingResponses(req.params.stylistId);
+      const existing = existingResponses.find(r => r.questionId === questionId);
+      
+      let response;
+      if (existing) {
+        // Update existing response
+        response = await storage.updateTrainingResponse(existing.id, answer);
+      } else {
+        // Create new response
+        response = await storage.saveTrainingResponse({
+          stylistId: req.params.stylistId,
+          questionId,
+          questionText,
+          answer,
+          category
+        });
+      }
+      
+      res.json(response);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  
+  // Update training response
+  app.patch("/api/v1/stylist/training-responses/:responseId", async (req, res) => {
+    try {
+      const { answer } = req.body;
+      
+      if (!answer) {
+        return res.status(400).json({ error: "Answer is required" });
+      }
+      
+      const updated = await storage.updateTrainingResponse(req.params.responseId, answer);
+      
+      if (!updated) {
+        return res.status(404).json({ error: "Training response not found" });
+      }
+      
+      res.json(updated);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  
+  // Delete training response
+  app.delete("/api/v1/stylist/training-responses/:responseId", async (req, res) => {
+    try {
+      await storage.deleteTrainingResponse(req.params.responseId);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Generate AI prompt from training responses
+  app.post("/api/v1/stylist/:stylistId/generate-prompt", async (req, res) => {
+    try {
+      const stylist = await storage.getStylistProfileById(req.params.stylistId);
+      if (!stylist) {
+        return res.status(404).json({ error: "Stylist not found" });
+      }
+      
+      const responses = await storage.getTrainingResponses(req.params.stylistId);
+      const portfolioItems = await storage.getStylistPortfolioItems(req.params.stylistId);
+      
+      // TODO: Extract portfolio context from portfolio item descriptions
+      const portfolioWithContext = portfolioItems.map(item => ({
+        item,
+        context: {
+          description: item.title || "",
+          clientType: item.description || "",
+          problemSolved: "",
+          unique: "",
+          occasion: item.occasion || ""
+        }
+      }));
+      
+      const { promptGenerator } = await import("./services/prompt-generator");
+      const systemPrompt = promptGenerator.generate({
+        stylist,
+        trainingResponses: responses,
+        portfolioItems: portfolioWithContext
+      });
+      
+      // Check if prompt already exists
+      let existingPrompt = await storage.getStylistPrompt(req.params.stylistId);
+      
+      if (existingPrompt) {
+        // Update existing prompt
+        const updated = await storage.updateStylistPrompt(req.params.stylistId, {
+          systemPrompt,
+          promptVersion: existingPrompt.promptVersion + 1,
+          trainingCompletedAt: new Date()
+        });
+        res.json(updated);
+      } else {
+        // Create new prompt
+        const prompt = await storage.createStylistPrompt({
+          stylistId: req.params.stylistId,
+          systemPrompt,
+          promptVersion: 1,
+          trainingCompletedAt: new Date(),
+          isActive: true
+        });
+        res.json(prompt);
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Get stylist's AI prompt
+  app.get("/api/v1/stylist/:stylistId/prompt", async (req, res) => {
+    try {
+      const prompt = await storage.getStylistPrompt(req.params.stylistId);
+      if (!prompt) {
+        return res.status(404).json({ error: "Prompt not found. Complete training first." });
+      }
+      res.json(prompt);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Check conversation credits
+  app.get("/api/v1/users/:userId/stylists/:stylistId/credits", async (req, res) => {
+    try {
+      const { userId, stylistId } = req.params;
+      
+      const credit = await storage.getConversationCredit(userId, stylistId);
+      const subscription = await storage.getAiSubscription(userId, stylistId);
+      
+      const { creditManager } = await import("./services/credit-manager");
+      const check = await creditManager.checkCredit(credit || null, subscription || null);
+      
+      res.json(check);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Chat with stylist AI (with credit deduction)
+  app.post("/api/v1/stylists/:handle/chat", async (req, res) => {
+    try {
+      const { userId, message } = req.body;
+      
+      if (!userId || !message) {
+        return res.status(400).json({ error: "Missing userId or message" });
+      }
+      
+      const stylist = await storage.getStylistProfileByHandle(req.params.handle);
+      if (!stylist) {
+        return res.status(404).json({ error: "Stylist not found" });
+      }
+      
+      const prompt = await storage.getStylistPrompt(stylist.id);
+      if (!prompt) {
+        return res.status(404).json({ error: "Stylist AI not trained yet" });
+      }
+      
+      // Check credits and subscription
+      let credit = await storage.getConversationCredit(userId, stylist.id);
+      const subscription = await storage.getAiSubscription(userId, stylist.id);
+      
+      const { creditManager } = await import("./services/credit-manager");
+      
+      // Initialize credits if needed
+      if (!credit && !subscription) {
+        credit = await storage.createConversationCredit(
+          creditManager.createInitialCredit(userId, stylist.id)
+        );
+      }
+      
+      // Check if reset needed
+      if (credit && creditManager.shouldResetCredits(credit)) {
+        const reset = creditManager.resetCreditPeriod(credit);
+        credit = await storage.updateConversationCredit(credit.id, reset) || credit;
+      }
+      
+      // Check credit availability
+      const check = await creditManager.checkCredit(credit || null, subscription || null);
+      
+      if (!check.hasCredits) {
+        return res.status(402).json({ 
+          error: "No credits remaining",
+          requiresUpgrade: true,
+          message: "Please upgrade to premium for unlimited messages."
+        });
+      }
+      
+      // Generate AI response
+      const { generateAiStylistResponse } = await import("./services/openai");
+      
+      const user = await storage.getUser(userId);
+      const measurements = await storage.getUserMeasurements(userId);
+      
+      const aiResponse = await generateAiStylistResponse(
+        prompt.systemPrompt,
+        {
+          measurements: measurements || {},
+          styleTags: user?.styleTags || [],
+          budgetMin: user?.budgetMin || 0,
+          budgetMax: user?.budgetMax || 500
+        },
+        [], // Empty chat history for now - TODO: add session management
+        message
+      );
+      
+      // Deduct credit (only if not subscribed)
+      if (!subscription && credit) {
+        const deduction = creditManager.deductCredit(credit);
+        if (deduction.success) {
+          await storage.updateConversationCredit(credit.id, {
+            creditsRemaining: deduction.newCreditsRemaining
+          });
+        }
+        
+        res.json({
+          role: "assistant",
+          content: aiResponse,
+          timestamp: new Date(),
+          creditsRemaining: deduction.newCreditsRemaining,
+          creditMessage: deduction.message
+        });
+      } else {
+        res.json({
+          role: "assistant",
+          content: aiResponse,
+          timestamp: new Date(),
+          isSubscribed: true
+        });
+      }
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Create AI subscription
+  app.post("/api/v1/users/:userId/stylists/:stylistId/subscribe", async (req, res) => {
+    try {
+      const { userId, stylistId } = req.params;
+      
+      // Check if subscription already exists
+      const existing = await storage.getAiSubscription(userId, stylistId);
+      if (existing && existing.status === "active") {
+        return res.status(400).json({ error: "Subscription already active" });
+      }
+      
+      const { creditManager } = await import("./services/credit-manager");
+      const subscription = await storage.createAiSubscription(
+        creditManager.createSubscription(userId, stylistId)
+      );
+      
+      res.json(subscription);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  
+  // Cancel AI subscription
+  app.post("/api/v1/subscriptions/:subscriptionId/cancel", async (req, res) => {
+    try {
+      const cancelled = await storage.cancelAiSubscription(req.params.subscriptionId);
+      if (!cancelled) {
+        return res.status(404).json({ error: "Subscription not found" });
+      }
+      res.json(cancelled);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Get user's AI subscriptions
+  app.get("/api/v1/users/:userId/ai-subscriptions", async (req, res) => {
+    try {
+      const subscriptions = await storage.getUserAiSubscriptions(req.params.userId);
+      res.json(subscriptions);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // ============================================
   // ADMIN - STYLIST MANAGEMENT
   // ============================================
   

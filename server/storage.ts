@@ -45,6 +45,11 @@ import {
   type StylistPortfolioItem, type InsertStylistPortfolioItem,
   type StylistRfq, type InsertStylistRfq,
   type StylistReview, type InsertStylistReview,
+  aiTrainingResponses, aiStylistPrompts, conversationCredits, aiSubscriptions,
+  type AiTrainingResponse, type InsertAiTrainingResponse,
+  type AiStylistPrompt, type InsertAiStylistPrompt,
+  type ConversationCredit, type InsertConversationCredit,
+  type AiSubscription, type InsertAiSubscription,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
@@ -235,6 +240,31 @@ export interface IStorage {
   // Stylist Reviews
   getStylistReviews(stylistId: string): Promise<StylistReview[]>;
   createStylistReview(review: InsertStylistReview): Promise<StylistReview>;
+  
+  // AI Training Responses
+  getTrainingResponses(stylistId: string): Promise<AiTrainingResponse[]>;
+  getTrainingResponsesByCategory(stylistId: string, category: string): Promise<AiTrainingResponse[]>;
+  saveTrainingResponse(response: InsertAiTrainingResponse): Promise<AiTrainingResponse>;
+  updateTrainingResponse(id: string, answer: string): Promise<AiTrainingResponse | undefined>;
+  deleteTrainingResponse(id: string): Promise<void>;
+  
+  // AI Stylist Prompts
+  getStylistPrompt(stylistId: string): Promise<AiStylistPrompt | undefined>;
+  createStylistPrompt(prompt: InsertAiStylistPrompt): Promise<AiStylistPrompt>;
+  updateStylistPrompt(stylistId: string, updates: Partial<InsertAiStylistPrompt>): Promise<AiStylistPrompt | undefined>;
+  
+  // Conversation Credits
+  getConversationCredit(userId: string, stylistId: string): Promise<ConversationCredit | undefined>;
+  createConversationCredit(credit: InsertConversationCredit): Promise<ConversationCredit>;
+  updateConversationCredit(id: string, updates: Partial<ConversationCredit>): Promise<ConversationCredit | undefined>;
+  
+  // AI Subscriptions
+  getAiSubscription(userId: string, stylistId: string): Promise<AiSubscription | undefined>;
+  getUserAiSubscriptions(userId: string): Promise<AiSubscription[]>;
+  getStylistAiSubscriptions(stylistId: string): Promise<AiSubscription[]>;
+  createAiSubscription(subscription: InsertAiSubscription): Promise<AiSubscription>;
+  updateAiSubscription(id: string, updates: Partial<AiSubscription>): Promise<AiSubscription | undefined>;
+  cancelAiSubscription(id: string): Promise<AiSubscription | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1015,6 +1045,126 @@ export class DatabaseStorage implements IStorage {
   async createStylistReview(review: InsertStylistReview): Promise<StylistReview> {
     const [created] = await db.insert(stylistReviews).values(review).returning();
     return created;
+  }
+  
+  // AI Training Responses
+  async getTrainingResponses(stylistId: string): Promise<AiTrainingResponse[]> {
+    return await db.select().from(aiTrainingResponses).where(eq(aiTrainingResponses.stylistId, stylistId));
+  }
+  
+  async getTrainingResponsesByCategory(stylistId: string, category: string): Promise<AiTrainingResponse[]> {
+    return await db.select().from(aiTrainingResponses).where(
+      and(
+        eq(aiTrainingResponses.stylistId, stylistId),
+        eq(aiTrainingResponses.category, category)
+      )
+    );
+  }
+  
+  async saveTrainingResponse(response: InsertAiTrainingResponse): Promise<AiTrainingResponse> {
+    const [created] = await db.insert(aiTrainingResponses).values(response).returning();
+    return created;
+  }
+  
+  async updateTrainingResponse(id: string, answer: string): Promise<AiTrainingResponse | undefined> {
+    const [updated] = await db.update(aiTrainingResponses)
+      .set({ answer, updatedAt: new Date() })
+      .where(eq(aiTrainingResponses.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  async deleteTrainingResponse(id: string): Promise<void> {
+    await db.delete(aiTrainingResponses).where(eq(aiTrainingResponses.id, id));
+  }
+  
+  // AI Stylist Prompts
+  async getStylistPrompt(stylistId: string): Promise<AiStylistPrompt | undefined> {
+    const [prompt] = await db.select().from(aiStylistPrompts).where(eq(aiStylistPrompts.stylistId, stylistId));
+    return prompt || undefined;
+  }
+  
+  async createStylistPrompt(prompt: InsertAiStylistPrompt): Promise<AiStylistPrompt> {
+    const [created] = await db.insert(aiStylistPrompts).values(prompt).returning();
+    return created;
+  }
+  
+  async updateStylistPrompt(stylistId: string, updates: Partial<InsertAiStylistPrompt>): Promise<AiStylistPrompt | undefined> {
+    const [updated] = await db.update(aiStylistPrompts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(aiStylistPrompts.stylistId, stylistId))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // Conversation Credits
+  async getConversationCredit(userId: string, stylistId: string): Promise<ConversationCredit | undefined> {
+    const [credit] = await db.select().from(conversationCredits).where(
+      and(
+        eq(conversationCredits.userId, userId),
+        eq(conversationCredits.stylistId, stylistId)
+      )
+    );
+    return credit || undefined;
+  }
+  
+  async createConversationCredit(credit: InsertConversationCredit): Promise<ConversationCredit> {
+    const [created] = await db.insert(conversationCredits).values(credit).returning();
+    return created;
+  }
+  
+  async updateConversationCredit(id: string, updates: Partial<ConversationCredit>): Promise<ConversationCredit | undefined> {
+    const [updated] = await db.update(conversationCredits)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(conversationCredits.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // AI Subscriptions
+  async getAiSubscription(userId: string, stylistId: string): Promise<AiSubscription | undefined> {
+    const [subscription] = await db.select().from(aiSubscriptions).where(
+      and(
+        eq(aiSubscriptions.userId, userId),
+        eq(aiSubscriptions.stylistId, stylistId),
+        eq(aiSubscriptions.status, "active")
+      )
+    );
+    return subscription || undefined;
+  }
+  
+  async getUserAiSubscriptions(userId: string): Promise<AiSubscription[]> {
+    return await db.select().from(aiSubscriptions).where(eq(aiSubscriptions.userId, userId));
+  }
+  
+  async getStylistAiSubscriptions(stylistId: string): Promise<AiSubscription[]> {
+    return await db.select().from(aiSubscriptions).where(
+      and(
+        eq(aiSubscriptions.stylistId, stylistId),
+        eq(aiSubscriptions.status, "active")
+      )
+    );
+  }
+  
+  async createAiSubscription(subscription: InsertAiSubscription): Promise<AiSubscription> {
+    const [created] = await db.insert(aiSubscriptions).values(subscription).returning();
+    return created;
+  }
+  
+  async updateAiSubscription(id: string, updates: Partial<AiSubscription>): Promise<AiSubscription | undefined> {
+    const [updated] = await db.update(aiSubscriptions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(aiSubscriptions.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  async cancelAiSubscription(id: string): Promise<AiSubscription | undefined> {
+    const [cancelled] = await db.update(aiSubscriptions)
+      .set({ status: "cancelled", cancelledAt: new Date(), updatedAt: new Date() })
+      .where(eq(aiSubscriptions.id, id))
+      .returning();
+    return cancelled || undefined;
   }
 }
 
