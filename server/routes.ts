@@ -928,7 +928,7 @@ export function registerRoutes(app: Express) {
           email: userEmail,
           password: hashedPassword,
           name: supplier.ownerName,
-          demographic: "unisex",
+          demographic: "men",
           budgetMin: 0,
           budgetMax: 10000,
           styleTags: [],

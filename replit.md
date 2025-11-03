@@ -2,7 +2,7 @@
 
 ## Overview
 
-SeamXY is a comprehensive AI-powered fashion marketplace platform that combines retail shopping with custom tailoring services. It leverages AI for fit matching and virtual fashion consultation, aiming to become a global fashion ecosystem connecting consumers, retailers, tailors, and designers. The platform supports multi-demographic shopping, offers a dual marketplace for quick retail purchases and custom tailor networks, and provides smart onboarding for personalized recommendations. The business vision is to reduce returns, increase customer loyalty, empower bespoke craftsmanship, and drive sustainable innovation within the fashion industry.
+SeamXY is an AI-powered fashion marketplace platform that integrates retail shopping with custom tailoring. It utilizes AI for fit matching and virtual fashion consultation, aiming to create a global fashion ecosystem. The platform supports multi-demographic shopping, offers both retail and custom tailor networks, and provides smart onboarding for personalized recommendations. Its vision is to reduce returns, enhance customer loyalty, empower bespoke craftsmanship, and foster sustainable innovation in fashion.
 
 ## User Preferences
 
@@ -14,228 +14,45 @@ Do not make changes to the file `Y`.
 
 ## System Architecture
 
-SeamXY's architecture is built on a modern web stack designed for scalability and rich user experiences.
+SeamXY's architecture is built on a modern web stack for scalability and rich user experiences.
 
 ### UI/UX Decisions
-- **Typography**: Primary font is Inter, display font is Plus Jakarta Sans, with a clear hierarchy for readability.
-- **Color Scheme**: Utilizes `shadcn/ui`'s default color system with semantic tokens, including elevation utilities for interactive elements.
-- **Components**: Leverages `shadcn/ui` primitives, alongside custom components like `ProductCard` and a specialized persona chat interface.
-- **Design Patterns**: Responsive grid patterns for product display, supporting various column layouts.
+- **Typography**: Inter (primary), Plus Jakarta Sans (display) for clear hierarchy.
+- **Color Scheme**: `shadcn/ui`'s default system with semantic tokens and elevation utilities.
+- **Components**: `shadcn/ui` primitives, custom `ProductCard`, and a persona chat interface.
+- **Design Patterns**: Responsive grid layouts for product display.
 
 ### Technical Implementations
-- **Frontend**: React 18, Wouter for routing, TanStack Query for data fetching, Tailwind CSS for styling, and shadcn/ui for UI components.
+- **Frontend**: React 18, Wouter, TanStack Query, Tailwind CSS, `shadcn/ui`.
 - **Backend**: Express.js with TypeScript, connected to Neon Serverless PostgreSQL.
-- **AI Integration**: OpenAI GPT-5 is used for AI-driven features like style analysis and virtual stylists, integrated via Replit AI Integrations.
-- **Database Schema**: Core entities include `users`, `measurements`, `products`, `makers`, `custom_requests`, `quotes`, and `orders`. Admin functionalities are supported by `admin_users`, `pricing_configs`, `subscription_plans`, `subscriptions`, and `audit_logs`. The Supplier Portal introduces `supplier_accounts`, `supplier_profiles`, `retailer_products`, `designer_collections`, `portfolio_items`, `supplier_subscriptions`, `supplier_invoices`, `supplier_messages`, `message_threads`, `supplier_orders`, `integration_tokens`, and `analytics_snapshots`.
+- **AI Integration**: OpenAI GPT-5/GPT-4o for style analysis, virtual stylists, and product matching, integrated via Replit AI Integrations.
+- **Database Schema**: Core entities include `users`, `measurements`, `products`, `makers`, `custom_requests`, `quotes`, and `orders`. Admin functionalities leverage `admin_users`, `pricing_configs`, `subscription_plans`, `subscriptions`, and `audit_logs`. Supplier Portal adds `supplier_accounts`, `retailer_products`, `designer_collections`, `portfolio_items`, `supplier_subscriptions`, and `supplier_orders`. New features introduce `retailer_configs`, `external_products`, `price_history`, `price_alerts`, `affiliate_clicks`, `affiliate_conversions`, `events`, `event_image_references`, `event_custom_requests`, `voice_logs`, `ai_training_responses`, `ai_stylist_prompts`, `conversation_credits`, and `ai_subscriptions`.
 - **API Routes**:
-    - **Marketplace**: `/api/v1/` for user profiles, style analysis, measurements, product search, maker listings, custom requests, quotes, and order creation.
-    - **Admin**: `/api/v1/admin/` for authentication, user/maker management, pricing configuration, and audit logs.
-    - **AI Stylist**: `/api/v1/` for listing AI personas and managing chat sessions and messages.
-    - **Supplier Portal**: `/api/v1/supplier/` for authentication, profile management, retailer product catalog, tailor portfolios, designer collections, e-commerce integrations, messaging, order management, and analytics.
-    - **Price Comparison**: `/api/v1/products/:id/compare-prices`, `/api/v1/price-alerts`, `/api/v1/affiliate-click`, `/api/v1/affiliate-conversion` for smart price comparison across retailers.
-- **Scoring Algorithm**: Products are scored based on a weighted average: Fit Score (50%), Style Match (30%), and Budget Match (20%).
-- **Monetization Model**: Includes affiliate commissions (4-10%), a bespoke platform fee (10%), tiered maker subscriptions ($0, $29/mo, $99/mo), and an AI Stylist Pro subscription ($9.99/mo).
+    - **Marketplace**: User profiles, style analysis, product search, maker listings, custom requests.
+    - **Admin**: Authentication, user/maker management, pricing, audit logs.
+    - **AI Stylist**: AI personas, chat sessions.
+    - **Supplier Portal**: Authentication, profile management, product catalogs, portfolios, e-commerce integrations, messaging, orders, analytics.
+    - **Price Comparison**: `/api/v1/products/:id/compare-prices`, `/api/v1/price-alerts`, `/api/v1/affiliate-click`, `/api/v1/affiliate-conversion`.
+    - **AI Stylist Onboarding**: `/api/v1/supplier/:stylistId/training-responses`, `/api/v1/supplier/:stylistId/generate-prompt`, `/api/v1/stylist/:handle/chat`, `/api/v1/subscribe/:stylistId`.
+- **Scoring Algorithm**: Products are scored based on Fit (50%), Style (30%), and Budget (20%).
+- **Monetization Model**: Affiliate commissions (4-10%), bespoke platform fee (10%), tiered maker subscriptions, and AI Stylist Pro subscriptions.
+- **Security**: Bcrypt for password hashing, AES-256-CBC for token encryption, RBAC middleware for supplier authentication.
 
 ### Feature Specifications
 - **Multi-Demographic Support**: Caters to Men, Women, Young Adults, and Children.
-- **AI-Powered Fit Matching**: Scores products based on user measurements, style, and budget.
-- **Dual Marketplace**: Seamlessly integrates retail quick-buy options with a custom tailor network.
-- **Smart Onboarding**: Guides users through measurement input, freehand style description (AI-analyzed), and budget selection.
-- **AI Personality Stylists**: Features 8 diverse GPT-5 powered personas offering context-aware fashion advice.
-- **Admin Panel**: Provides role-based access for staff, analytics, monetization controls, maker approval workflows, and audit logging.
-- **Supplier Portal**: A B2B platform for retailers, tailors, and designers to manage products, receive custom requests, communicate with customers, and utilize AI fit integration.
-
-## Supplier Portal Implementation (Latest)
-
-### Security & Authentication
-- **Password Hashing**: Bcrypt with configurable cost factor (min 10, default 12)
-- **Token Encryption**: AES-256-CBC for integration tokens with IV
-  - Development: Uses deterministic fallback key (warns in console)
-  - Production: Requires INTEGRATION_TOKEN_KEY (64-char hex, 32 bytes)
-- **RBAC Middleware**: Session-based supplier authentication with role guards (retailer/tailor/designer) and tier checks (basic/pro/enterprise)
-- **Session Requirement**: Supplier authentication requires express-session middleware (returns 500 with clear error if not configured)
-
-### API Endpoints (30+)
-- **Authentication**: `/api/v1/supplier/register`, `/login`, `/me`
-- **Profile**: `/api/v1/supplier/profile` (PATCH), `/complete-onboarding` (POST)
-- **Retailer** (role-gated): `/api/v1/supplier/retailer/products` (GET, POST, PATCH, DELETE)
-- **Tailor** (role-gated): `/api/v1/supplier/tailor/portfolio`, `/custom-requests`
-- **Designer** (role-gated): `/api/v1/supplier/designer/collections`
-- **Integrations** (tier-gated pro/enterprise): `/api/v1/supplier/integrations` (GET, POST, DELETE)
-- **Messaging**: `/api/v1/supplier/messages` with thread management
-- **Orders**: `/api/v1/supplier/orders` with milestone tracking
-- **Analytics**: `/api/v1/supplier/analytics` with date range filtering
-
-### E-Commerce Integrations
-- **Shopify**: OAuth flow, product sync, webhook registration (orders/create, products/update)
-- **WooCommerce**: Basic auth, product sync via REST API, webhook setup
-- **BigCommerce**: OAuth flow, catalog sync via V3 API
-- **Amazon SP-API**: Placeholder (explicitly throws error directing to other platforms)
-  - Note: Full implementation requires amazon-sp-api SDK and complex AWS signing
-  - Deferred to Phase 2 or manual CSV upload for MVP
-
-### Deployment Requirements
-1. **Session Middleware**: Must configure express-session before supplier portal testing
-2. **Encryption Key**: Set INTEGRATION_TOKEN_KEY environment variable (64-char hex) for production
-   - Generate with: `node -e "console.log(crypto.randomBytes(32).toString('hex'))"`
-3. **Amazon Integration**: Communicate to frontend teams that Amazon is not yet available (use Shopify/WooCommerce/BigCommerce)
-
-## Smart Price Compare Feature (Latest)
-
-### Overview
-Real-time price comparison across Amazon, eBay, and Rakuten retailers with AI-powered product matching and fit scoring.
-
-### Architecture
-- **Retailer Clients**: Abstracted API clients for Amazon PAA5, eBay Browse API, Rakuten Product API
-- **AI Matching**: OpenAI GPT-4o analyzes product similarity (brand, title, category, specs) with 0-100 confidence scoring
-  - Lazy initialization prevents module-load failures
-  - Graceful degradation to text-based matching when OpenAI unavailable
-  - Fallback mechanisms ensure 100% uptime even without AI credentials
-- **Price Tracking**: Automated price history logging, price drop alerts for premium users
-- **Affiliate System**: Click tracking and conversion attribution for commission calculation
-- **Caching**: 15-minute in-memory cache for search results to reduce API calls
-- **Rate Limiting**: 1000 requests/hour per retailer with automatic reset
-
-### Database Schema (6 new tables)
-- `retailer_configs` - API credentials and partner tags (encrypted)
-- `external_products` - Products from external retailers with match/fit confidence
-- `price_history` - Historical price tracking for trend analysis
-- `price_alerts` - User price drop subscriptions (premium feature)
-- `affiliate_clicks` - Outbound click tracking with referrer data
-- `affiliate_conversions` - Completed purchases with commission tracking
-
-### API Endpoints (Implemented ✅)
-- `GET /api/v1/products/:id/compare-prices` - Compare prices across all retailers
-  - Integrates with priceComparisonService to search Amazon, eBay, Rakuten
-  - Uses AI product matcher (GPT-4o) for intelligent matching with confidence scores
-  - Graceful degradation: works without OpenAI credentials using text-based matching
-  - Returns `aiMatchingEnabled` flag to indicate AI availability
-- `POST /api/v1/price-alerts` - Create price drop alert (premium only)
-- `GET /api/v1/price-alerts` - Get user's active price alerts
-- `POST /api/v1/affiliate-click` - Track affiliate click for commission attribution
-- `POST /api/v1/affiliate-conversion` - Record conversion (webhook from retailers)
-
-### Frontend Components
-- `ComparisonModal` - Price comparison table with filters (price, delivery, sustainability, fit)
-- `ComparePricesButton` - CTA on product cards
-- `PriceAlertForm` - Set price thresholds
-- `PriceHistoryChart` - Historical price trends
-
-### Monetization
-- Affiliate commissions: 4-10% per purchase
-- Price alerts: Premium subscription feature ($9.99/mo)
-- Sponsored listings: Retailer promotion opportunities
-
-## Wedding & Prom Concierge Feature (Latest - October 2025)
-
-### Overview
-AI-powered conversational stylist for event shopping (weddings, proms, formal events) combining retail aggregation with custom tailor quotes.
-
-### Database Schema (4 new tables)
-- `events` - Event details (type, role, date, budget, style preferences, venue)
-- `event_image_references` - User-uploaded inspiration images (design references, venue, color swatches)
-- `event_custom_requests` - Custom tailor requests tied to specific events
-- `voice_logs` - Voice-to-text transcriptions and audio recordings
-
-### Core Features
-- **AI Stylist Chat**: Event-specific persona with GPT-4o, guided questions about preferences/budget/measurements
-- **Voice Integration**: Speech-to-text for hands-free interaction (Google Speech-to-Text / AWS Transcribe)
-- **Image Upload**: Design inspiration and reference photos
-- **Dual Marketplace**: Retail products (Etsy, Amazon, eBay, Rakuten) + custom maker quotes side-by-side
-- **Event Timeline**: Date tracking with turnaround-time-aware recommendations
-- **Quote Management**: Supplier portal extension for event-specific quote handling
-
-### Retailer API Status
-- **Etsy**: ✅ Available - OAuth 2.0, Open API v3, free access
-- **Nordstrom**: ❌ No public API
-- **ASOS**: ❌ Deprecated public API
-- **David's Bridal**: ❌ No public API
-- Fallback: Amazon/eBay/Rakuten from existing price comparison feature
-
-### Success Metrics
-- 70% conversation completion rate
-- 20% custom quote request rate
-- 10% quote-to-purchase conversion
-- 25% increase in supplier engagement
-
-## AI Stylist Onboarding System (Latest - November 2025)
-
-### Overview
-Complete system allowing individual stylists (suppliers) to create personalized AI clones. Stylists complete 66 training questions across 4 sections and upload portfolio items. The system generates custom OpenAI prompts mirroring their aesthetic, communication style, and expertise. Customers can chat with stylist AI clones with free tier (5 messages/month) and premium subscription ($9.99/month, 80/20 split to stylist/platform).
-
-### Database Schema (4 new tables)
-- `ai_training_responses` - Stores answers to 66 training questions (philosophy, client approach, expertise, personality)
-- `ai_stylist_prompts` - Generated custom OpenAI system prompts for each stylist's AI clone
-- `conversation_credits` - Free tier message tracking (5/month) per customer per stylist
-- `ai_subscriptions` - Premium subscription management ($9.99/mo) with 80/20 revenue split
-
-### Training Question System
-66 questions across 4 categories defined in `shared/training-questions.ts`:
-- **Philosophy (16 questions)**: Core styling philosophy, aesthetic principles, fashion influences
-- **Client Approach (16 questions)**: Communication style, client interaction, consultation process
-- **Expertise (17 questions)**: Specializations, body types, occasions, price points
-- **Personality (17 questions)**: Tone of voice, favorite brands, deal-breakers, unique traits
-
-### Prompt Generation Engine (`server/services/prompt-generator.ts`)
-- Analyzes training responses using GPT-4o to extract key themes
-- Generates custom system prompts with stylist's voice, aesthetic, and expertise
-- Includes mandatory SeamXY platform integration (product recommendations, measurement capture)
-- Versioning system for prompt iterations
-
-### Credit & Subscription System (`server/services/credit-manager.ts`)
-- Free tier: 5 messages/month per customer per stylist (auto-resets monthly)
-- Premium: $9.99/month subscription for 100 messages/month
-- Revenue split: 80% to stylist, 20% to platform
-- Subscription status: active/cancelled/expired
-- Automatic credit reset on 1st of each month
-
-### API Endpoints (Implemented ✅)
-- `GET /api/v1/supplier/:supplierId/stylist-profile` - Auto-creates stylist profile for supplier
-- `GET /api/v1/supplier/:stylistId/training-responses` - Fetch all training answers
-- `POST /api/v1/supplier/training-responses` - Save/update training answers (upsert logic)
-- `POST /api/v1/supplier/:stylistId/generate-prompt` - Generate AI system prompt from training
-- `GET /api/v1/stylist/:handle` - Public stylist profile with AI chat availability
-- `POST /api/v1/stylist/:handle/chat` - Send message to stylist AI clone (credit-aware)
-- `GET /api/v1/credits/:stylistId` - Check remaining message credits
-- `POST /api/v1/subscribe/:stylistId` - Subscribe to premium tier
-- `POST /api/v1/unsubscribe/:stylistId` - Cancel premium subscription
-
-### Frontend Components
-- `ai-training.tsx` - 66-question training interface with progress tracking
-- `ai-preview.tsx` - Test chat interface for stylists to preview their AI clone
-- `stylist-profile.tsx` - Public profile with AI chat for customers (credit/subscription UI)
-- Uses `useSupplierAuth()` for supplier pages, `useCustomerAuth()` for customer pages
-
-### Authentication Architecture
-- **Supplier Side**: Uses `supplier_accounts` table, authenticated via `useSupplierAuth()`
-- **Customer Side**: Uses `users` table, authenticated via `useCustomerAuth()`
-- **Bridge**: `/api/v1/supplier/:supplierId/stylist-profile` creates placeholder user + stylist profile for suppliers
-  - Workaround for `stylistProfiles.userId` foreign key constraint
-  - Auto-generates unique handle from business name
-  - Creates internal user account: `supplier-{id}@seamxy.internal`
-
-### Technical Implementation Notes
-- Training responses use application-level upsert (check + update/insert) to prevent duplicates
-- Prompt generation is asynchronous, shows loading state during GPT-4o analysis
-- AI chat enforces credit limits before OpenAI API calls
-- Subscription renewals handled manually (future: Stripe webhooks for auto-renewal)
-- All AI clones coexist with existing generic AI personas
-
-### Remaining Work ⏳
-- **Task 7**: Portfolio upload with context questions (image upload + descriptions)
-- **Task 13**: End-to-end integration testing with Playwright
-
-### Test Accounts
-- **Supplier**: `supplier@test.com` / `password` (for testing AI training workflow)
-- **Customer**: `test@example.com` / `password` (for testing AI chat with stylists)
+- **AI-Powered Fit Matching**: Scores products based on user input.
+- **Dual Marketplace**: Integrates retail quick-buy with a custom tailor network.
+- **Smart Onboarding**: Guides users through measurement, style description, and budget.
+- **AI Personality Stylists**: 8 GPT-5 powered personas for fashion advice.
+- **Admin Panel**: Role-based access, analytics, monetization controls, maker approval.
+- **Supplier Portal**: B2B platform for retailers, tailors, designers to manage products, custom requests, and communications.
+- **Smart Price Compare**: Real-time comparison across Amazon, eBay, Rakuten with AI product matching.
+- **Wedding & Prom Concierge**: AI-powered conversational stylist for event shopping, combining retail with custom tailor quotes.
+- **AI Stylist Onboarding System**: Allows stylists to create personalized AI clones via training questions, generating custom OpenAI prompts reflecting their style and expertise. Offers free and premium tiers with revenue sharing.
 
 ## External Dependencies
 
-- **Database**: Neon Serverless PostgreSQL (auto-detects and supports standard PostgreSQL for Docker deployments)
-- **AI**: OpenAI GPT-5/GPT-4o (via OPENAI_API_KEY for production, Replit AI Integrations for dev)
-- **Retailer APIs**: Etsy Open API v3 ✅, Amazon Product Advertising API ⏳, eBay Browse API ⏳, Rakuten API ⏳ (configured via retailer_configs table)
-- **E-commerce Platforms (for Supplier Portal)**: Shopify ✅, WooCommerce ✅, BigCommerce ✅, Amazon Seller Central ⏳ (deferred)
-- **Voice**: Google Speech-to-Text or AWS Transcribe ⏳
-- **Image Storage**: Cloud storage for user uploads ⏳
-- **Payment Processing (Future)**: Stripe
-- **AI Video/Voice (Future)**: Synthesia/HeyGen, ElevenLabs
+- **Database**: Neon Serverless PostgreSQL.
+- **AI**: OpenAI GPT-5/GPT-4o.
+- **Retailer APIs**: Etsy Open API v3, Amazon Product Advertising API, eBay Browse API, Rakuten API.
+- **E-commerce Platforms (for Supplier Portal)**: Shopify, WooCommerce, BigCommerce.
