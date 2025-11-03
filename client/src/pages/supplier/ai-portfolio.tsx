@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useSupplierAuth } from "@/lib/auth";
+import { useSupplierAuth } from "@/lib/supplier-auth";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,19 +67,16 @@ export default function AiPortfolio() {
 
   const createMutation = useMutation({
     mutationFn: async (data: PortfolioFormData) => {
-      return apiRequest(`/api/v1/stylist/${stylistProfile!.id}/portfolio`, {
-        method: "POST",
-        body: JSON.stringify({
-          imageUrl: data.imageUrl,
-          s3Key: data.s3Key,
-          title: data.title,
-          description: data.description,
-          occasion: data.occasion,
-          clientType: data.clientType,
-          priceRange: data.priceRange,
-          styleNotes: data.styleNotes,
-          tags: data.tags.split(",").map(t => t.trim()).filter(Boolean),
-        }),
+      return apiRequest('POST', `/api/v1/stylist/${stylistProfile!.id}/portfolio`, {
+        imageUrl: data.imageUrl,
+        s3Key: data.s3Key,
+        title: data.title,
+        description: data.description,
+        occasion: data.occasion,
+        clientType: data.clientType,
+        priceRange: data.priceRange,
+        styleNotes: data.styleNotes,
+        tags: data.tags.split(",").map(t => t.trim()).filter(Boolean),
       });
     },
     onSuccess: () => {
@@ -94,9 +91,7 @@ export default function AiPortfolio() {
 
   const deleteMutation = useMutation({
     mutationFn: async (itemId: string) => {
-      return apiRequest(`/api/v1/stylist/portfolio/${itemId}`, {
-        method: "DELETE",
-      });
+      return apiRequest('DELETE', `/api/v1/stylist/portfolio/${itemId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/v1/stylist/:stylistId/portfolio", stylistProfile?.id] });

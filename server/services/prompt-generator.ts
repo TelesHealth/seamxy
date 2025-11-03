@@ -8,6 +8,7 @@ interface PortfolioWithContext {
     problemSolved: string;
     unique: string;
     occasion: string;
+    priceRange: string;
   };
 }
 
@@ -310,19 +311,23 @@ export class PromptGenerator {
       const portfolioParts = [`\n${title}`];
       
       if (context.clientType) {
-        portfolioParts.push(`Client: ${context.clientType}`);
+        portfolioParts.push(`Client Type: ${context.clientType}`);
       }
       
       if (context.occasion) {
         portfolioParts.push(`Occasion: ${context.occasion}`);
       }
       
+      if (context.priceRange) {
+        portfolioParts.push(`Price Range: ${context.priceRange}`);
+      }
+      
       if (context.problemSolved) {
-        portfolioParts.push(`Problem Solved: ${context.problemSolved}`);
+        portfolioParts.push(`Style Notes: ${context.problemSolved}`);
       }
       
       if (context.unique) {
-        portfolioParts.push(`What Made It Special: ${context.unique}`);
+        portfolioParts.push(`Key Elements: ${context.unique}`);
       }
 
       if (item.tags && item.tags.length > 0) {
