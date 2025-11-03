@@ -15,6 +15,8 @@ export const supplierTierEnum = pgEnum("supplier_tier", ["basic", "pro", "enterp
 export const messageStatusEnum = pgEnum("message_status", ["sent", "delivered", "read"]);
 export const retailerEnum = pgEnum("retailer", ["amazon", "ebay", "rakuten", "shopify", "internal"]);
 export const priceAlertStatusEnum = pgEnum("price_alert_status", ["active", "triggered", "expired", "cancelled"]);
+export const stylistApplicationStatusEnum = pgEnum("stylist_application_status", ["pending", "approved", "rejected"]);
+export const rfqStatusEnum = pgEnum("rfq_status", ["open", "responded", "accepted", "declined", "completed"]);
 
 // ============================================
 // CORE MARKETPLACE - USERS
@@ -1190,3 +1192,152 @@ export type InsertEventCustomRequest = z.infer<typeof insertEventCustomRequestSc
 
 export type VoiceLog = typeof voiceLogs.$inferSelect;
 export type InsertVoiceLog = z.infer<typeof insertVoiceLogSchema>;
+
+// ============================================
+// STYLIST PORTFOLIOS & PERSONAL AI PAGES
+// ============================================
+
+export const stylistApplications = pgTable("stylist_applications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  personalStatement: text("personal_statement").notNull(),
+  experience: text("experience").notNull(), // "beginner", "intermediate", "professional", "expert"
+  styleSpecialties: text("style_specialties").array().notNull(), // ["minimalist", "streetwear", "formal"]
+  portfolioLinks: text("portfolio_links").array(), // External portfolio URLs
+  instagramHandle: text("instagram_handle"),
+  tiktokHandle: text("tiktok_handle"),
+  websiteUrl: text("website_url"),
+  status: stylistApplicationStatusEnum("status").default("pending").notNull(),
+  reviewedBy: varchar("reviewed_by").references(() => adminUsers.id),
+  reviewNotes: text("review_notes"),
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+});
+
+export const stylistProfiles = pgTable("stylist_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
+  applicationId: varchar("application_id").references(() => stylistApplications.id),
+  handle: text("handle").notNull().unique(), // Unique URL slug: /stylists/[handle]
+  displayName: text("display_name").notNull(),
+  bio: text("bio"),
+  avatarUrl: text("avatar_url"),
+  coverImageUrl: text("cover_image_url"),
+  location: text("location"),
+  styleSpecialties: text("style_specialties").array(), // Inherited from application
+  instagramHandle: text("instagram_handle"),
+  tiktokHandle: text("tiktok_handle"),
+  websiteUrl: text("website_url"),
+  linkedPersonaId: text("linked_persona_id").references(() => aiPersonas.id), // Connected AI stylist
+  isVerified: boolean("is_verified").default(false),
+  isActive: boolean("is_active").default(true),
+  totalFollowers: integer("total_followers").default(0),
+  totalReviews: integer("total_reviews").default(0),
+  averageRating: decimal("average_rating", { precision: 3, scale: 2 }).default("0"),
+  profileViews: integer("profile_views").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const stylistPortfolioItems = pgTable("stylist_portfolio_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  imageUrl: text("image_url").notNull(), // Public S3 URL
+  s3Key: text("s3_key").notNull(), // For deletion
+  title: text("title"),
+  description: text("description"),
+  tags: text("tags").array(), // ["streetwear", "minimalist", "sustainable"]
+  collectionName: text("collection_name"),
+  season: text("season"), // "Spring 2025", "Fall/Winter 2024"
+  occasion: text("occasion"), // "Wedding", "Casual", "Business"
+  views: integer("views").default(0),
+  likes: integer("likes").default(0),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+});
+
+export const stylistRfqs = pgTable("stylist_rfqs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  eventType: text("event_type").notNull(), // "wedding", "prom", "business", "custom"
+  description: text("description").notNull(),
+  budgetMin: integer("budget_min").notNull(),
+  budgetMax: integer("budget_max").notNull(),
+  deadline: timestamp("deadline"),
+  status: rfqStatusEnum("status").default("open").notNull(),
+  stylistResponse: text("stylist_response"),
+  estimatedPrice: decimal("estimated_price", { precision: 10, scale: 2 }),
+  estimatedTimeline: text("estimated_timeline"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  respondedAt: timestamp("responded_at"),
+});
+
+export const stylistFollowers = pgTable("stylist_followers", {
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  followedAt: timestamp("followed_at").defaultNow().notNull(),
+}, (table) => ({
+  pk: sql`PRIMARY KEY (${table.userId}, ${table.stylistId})`,
+}));
+
+export const stylistReviews = pgTable("stylist_reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(), // 1-5
+  comment: text("comment"),
+  isVerifiedPurchase: boolean("is_verified_purchase").default(false), // Did they work together via RFQ?
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Insert schemas
+export const insertStylistApplicationSchema = createInsertSchema(stylistApplications).omit({
+  id: true,
+  submittedAt: true,
+  reviewedAt: true,
+});
+
+export const insertStylistProfileSchema = createInsertSchema(stylistProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStylistPortfolioItemSchema = createInsertSchema(stylistPortfolioItems).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export const insertStylistRfqSchema = createInsertSchema(stylistRfqs).omit({
+  id: true,
+  createdAt: true,
+  respondedAt: true,
+});
+
+export const insertStylistFollowerSchema = createInsertSchema(stylistFollowers).omit({
+  followedAt: true,
+});
+
+export const insertStylistReviewSchema = createInsertSchema(stylistReviews).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Types
+export type StylistApplication = typeof stylistApplications.$inferSelect;
+export type InsertStylistApplication = z.infer<typeof insertStylistApplicationSchema>;
+
+export type StylistProfile = typeof stylistProfiles.$inferSelect;
+export type InsertStylistProfile = z.infer<typeof insertStylistProfileSchema>;
+
+export type StylistPortfolioItem = typeof stylistPortfolioItems.$inferSelect;
+export type InsertStylistPortfolioItem = z.infer<typeof insertStylistPortfolioItemSchema>;
+
+export type StylistRfq = typeof stylistRfqs.$inferSelect;
+export type InsertStylistRfq = z.infer<typeof insertStylistRfqSchema>;
+
+export type StylistFollower = typeof stylistFollowers.$inferSelect;
+export type InsertStylistFollower = z.infer<typeof insertStylistFollowerSchema>;
+
+export type StylistReview = typeof stylistReviews.$inferSelect;
+export type InsertStylistReview = z.infer<typeof insertStylistReviewSchema>;
