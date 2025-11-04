@@ -64,6 +64,7 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 For integration testing and development, use these seeded test accounts:
 
 - **Supplier Account**: `supplier@example.com` / `password123`
+- **Designer Account**: `designer@seamxy.test` / `password123` (Pro tier, AI Stylist Onboarding enabled)
 - **Customer Account**: `customer@example.com` / `password123`
 - **Admin Account**: `admin@example.com` / `password123`
 

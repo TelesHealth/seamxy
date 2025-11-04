@@ -602,5 +602,32 @@ Always ask clarifying questions to understand their vision before making recomme
     console.log("ℹ️ Test customer account already exists or error:", error);
   }
 
+  // Seed Designer Account for Consultant Testing
+  try {
+    const hashedPassword = await bcrypt.hash("password123", 12);
+    
+    const [designerAccount] = await db.insert(supplierAccounts).values({
+      email: "designer@seamxy.test",
+      password: hashedPassword,
+      role: "designer",
+      tier: "pro",
+      businessName: "Luxe Design Studio",
+      ownerName: "Isabella Rodriguez",
+      phoneNumber: "+1-555-0200",
+      isVerified: true,
+      isActive: true,
+      onboardingCompleted: true,
+      stripeAccountId: null,
+    }).onConflictDoNothing().returning();
+
+    if (designerAccount) {
+      console.log("✅ Designer account created: designer@seamxy.test / password123");
+    } else {
+      console.log("ℹ️ Designer account already exists");
+    }
+  } catch (error) {
+    console.log("ℹ️ Designer account already exists or error:", error);
+  }
+
   console.log("🎉 Database seeding complete!");
 }
