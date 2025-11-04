@@ -43,6 +43,8 @@ export default function AiPortfolio() {
   const { toast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [formData, setFormData] = useState<PortfolioFormData>({
     imageUrl: "",
     s3Key: "",
@@ -114,8 +116,76 @@ export default function AiPortfolio() {
       styleNotes: "",
       tags: "",
     });
+    setSelectedFile(null);
     setIsAdding(false);
     setEditingId(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({ title: "Error", description: "Please select an image file", variant: "destructive" });
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ title: "Error", description: "Image must be less than 5MB", variant: "destructive" });
+        return;
+      }
+      setSelectedFile(file);
+    }
+  };
+
+  const handleUploadToS3 = async () => {
+    if (!selectedFile || !stylistProfile) {
+      toast({ title: "Error", description: "Please select a file first", variant: "destructive" });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      // Step 1: Get presigned URL from backend
+      const uploadData = await apiRequest('POST', '/api/v1/stylist/generate-upload-url', {
+        fileName: selectedFile.name,
+        contentType: selectedFile.type,
+        uploadType: 'portfolio'
+      }) as unknown as { uploadUrl: string; publicUrl: string; s3Key: string };
+
+      // Step 2: Upload file to S3 using presigned URL
+      const uploadResponse = await fetch(uploadData.uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': selectedFile.type,
+        },
+        body: selectedFile,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image to S3');
+      }
+
+      // Step 3: Update form with S3 URL and key
+      setFormData({
+        ...formData,
+        imageUrl: uploadData.publicUrl,
+        s3Key: uploadData.s3Key,
+      });
+
+      toast({ 
+        title: "Upload Successful", 
+        description: "Image uploaded to S3 successfully" 
+      });
+    } catch (error: any) {
+      toast({ 
+        title: "Upload Failed", 
+        description: error.message || "Failed to upload image", 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -198,32 +268,43 @@ export default function AiPortfolio() {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
+                  {/* File Upload Section */}
                   <div className="space-y-2">
-                    <Label htmlFor="imageUrl">Image URL *</Label>
-                    <Input
-                      id="imageUrl"
-                      data-testid="input-image-url"
-                      placeholder="https://example.com/image.jpg (upload to S3 first)"
-                      value={formData.imageUrl}
-                      onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Note: Image upload to S3 not yet implemented. Use an external image URL for now.
-                    </p>
+                    <Label htmlFor="file">Upload Image to S3 *</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="file"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        data-testid="input-file"
+                        className="flex-1"
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleUploadToS3}
+                        disabled={!selectedFile || isUploading}
+                        data-testid="button-upload-s3"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        {isUploading ? "Uploading..." : "Upload"}
+                      </Button>
+                    </div>
+                    {selectedFile && (
+                      <p className="text-xs text-muted-foreground">
+                        Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(1)}KB)
+                      </p>
+                    )}
+                    {formData.imageUrl && (
+                      <p className="text-xs text-green-600">
+                        ✓ Uploaded to S3: {formData.s3Key}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="s3Key">S3 Key *</Label>
-                    <Input
-                      id="s3Key"
-                      data-testid="input-s3-key"
-                      placeholder="portfolio/unique-filename.jpg"
-                      value={formData.s3Key}
-                      onChange={(e) => setFormData({ ...formData, s3Key: e.target.value })}
-                      required
-                    />
-                  </div>
+                  {/* Hidden fields auto-populated after upload */}
+                  <input type="hidden" value={formData.imageUrl} />
+                  <input type="hidden" value={formData.s3Key} />
 
                   <div className="space-y-2">
                     <Label htmlFor="title">Title *</Label>
