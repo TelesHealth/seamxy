@@ -47,6 +47,7 @@ export default function AiPreview() {
   const { data: prompt, isLoading, error } = useQuery<StylistPrompt>({
     queryKey: [`/api/v1/stylist/${stylistId}/prompt`],
     enabled: !!stylistId,
+    retry: false, // Don't retry on 404
   });
   
   // Test AI mutation
@@ -77,23 +78,23 @@ export default function AiPreview() {
     }
   });
   
-  // Regenerate prompt mutation
-  const regeneratePromptMutation = useMutation({
+  // Generate/Regenerate prompt mutation
+  const generatePromptMutation = useMutation({
     mutationFn: async () => {
       return apiRequest('POST', `/api/v1/stylist/${stylistId}/generate-prompt`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [`/api/v1/stylist/${stylistId}/prompt`] });
       toast({
-        title: "Prompt Regenerated",
-        description: "Your AI clone has been updated with the latest training data.",
+        title: "AI Clone Generated!",
+        description: "Your AI clone has been created and is ready to test.",
       });
       setMessages([]);
     },
     onError: (error: any) => {
       toast({
-        title: "Regeneration Failed",
-        description: error.message || "Failed to regenerate prompt",
+        title: "Generation Failed",
+        description: error.message || "Failed to generate AI clone",
         variant: "destructive"
       });
     }
@@ -159,16 +160,41 @@ export default function AiPreview() {
     );
   }
   
-  if (error || !prompt) {
+  // If prompt doesn't exist yet (404), show generate UI
+  if (!prompt && !isLoading) {
     return (
       <div className="container max-w-6xl mx-auto p-6">
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>AI Not Trained</AlertTitle>
-          <AlertDescription>
-            Please complete the training questionnaire first to generate your AI clone.
-          </AlertDescription>
-        </Alert>
+        <Card>
+          <CardHeader className="text-center">
+            <Sparkles className="w-12 h-12 mx-auto mb-4 text-primary" />
+            <CardTitle>Ready to Generate Your AI Clone?</CardTitle>
+            <CardDescription>
+              You've completed training. Click below to generate your personalized AI stylist.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              Your AI clone will be trained on your responses and will be able to provide styling advice that matches your unique approach.
+            </p>
+            <Button
+              size="lg"
+              onClick={() => generatePromptMutation.mutate()}
+              disabled={generatePromptMutation.isPending}
+              data-testid="button-generate-ai"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              {generatePromptMutation.isPending ? "Generating..." : "Generate AI Clone"}
+            </Button>
+            {error && (
+              <Alert variant="destructive" className="mt-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {(error as any)?.message || "Failed to generate AI clone. Please try again."}
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -217,12 +243,12 @@ export default function AiPreview() {
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={() => regeneratePromptMutation.mutate()}
-                disabled={regeneratePromptMutation.isPending}
+                onClick={() => generatePromptMutation.mutate()}
+                disabled={generatePromptMutation.isPending}
                 data-testid="button-regenerate"
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
-                {regeneratePromptMutation.isPending ? "Regenerating..." : "Regenerate AI"}
+                {generatePromptMutation.isPending ? "Regenerating..." : "Regenerate AI"}
               </Button>
               
               <Button

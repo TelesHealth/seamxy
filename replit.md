@@ -54,5 +54,45 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 
 - **Database**: Neon Serverless PostgreSQL.
 - **AI**: OpenAI GPT-5/GPT-4o.
+- **File Storage**: AWS S3 for portfolio images and media uploads.
 - **Retailer APIs**: Etsy Open API v3, Amazon Product Advertising API, eBay Browse API, Rakuten API.
 - **E-commerce Platforms (for Supplier Portal)**: Shopify, WooCommerce, BigCommerce.
+
+## Integration Testing
+
+### Test Credentials
+For integration testing and development, use these seeded test accounts:
+
+- **Supplier Account**: `supplier@example.com` / `password123`
+- **Customer Account**: `customer@example.com` / `password123`
+- **Admin Account**: `admin@example.com` / `password123`
+
+These accounts are automatically created by the seed script (`server/seed.ts`) on first run.
+
+### AI Stylist Onboarding Flow
+The complete supplier onboarding flow has been tested end-to-end:
+
+1. **Supplier Login** → Access supplier dashboard
+2. **AI Training** (`/supplier/ai-training`) → Answer 66 training questions across 4 sections (Style Philosophy, Client Approach, Expertise & Specialties, Personality & Voice)
+3. **AI Portfolio** (`/supplier/ai-portfolio`) → Upload portfolio items with context (images, descriptions, style notes, tags)
+4. **AI Preview** (`/supplier/ai-preview`) → Generate personalized AI clone and test chat responses
+5. **Customer Experience** → Customers can chat with AI stylist clones on `/ai-stylist` page
+
+### Known Technical Details
+
+**TanStack Query Key Format**: All query keys must use singular string URLs for the default queryFn to work correctly:
+```typescript
+// ✅ CORRECT
+const { data } = useQuery({ 
+  queryKey: [`/api/v1/supplier/${supplierId}/stylist-profile`] 
+});
+
+// ❌ INCORRECT (causes malformed URLs)
+const { data } = useQuery({ 
+  queryKey: ["/api/v1/supplier/:supplierId/stylist-profile", supplierId] 
+});
+```
+
+**Loading State Handling**: All supplier AI pages (training, portfolio, preview) check `isLoadingProfile` before showing "Profile Required" errors to prevent race conditions.
+
+**Auto-Creation**: Stylist profiles are automatically created on first access via the API endpoints.
