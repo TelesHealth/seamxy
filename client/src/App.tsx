@@ -40,6 +40,7 @@ import SupplierPortfolio from "@/pages/supplier/portfolio";
 import SupplierCollections from "@/pages/supplier/collections";
 import SupplierRequests from "@/pages/supplier/requests";
 import SupplierAiTraining from "@/pages/supplier/ai-training";
+import SupplierAiPortfolio from "@/pages/supplier/ai-portfolio";
 import SupplierAiPreview from "@/pages/supplier/ai-preview";
 import { SupplierLayout } from "@/pages/supplier/layout";
 
@@ -99,6 +100,9 @@ function Router() {
       </Route>
       <Route path="/supplier/ai-training">
         <SupplierLayout><SupplierAiTraining /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/ai-portfolio">
+        <SupplierLayout><SupplierAiPortfolio /></SupplierLayout>
       </Route>
       <Route path="/supplier/ai-preview">
         <SupplierLayout><SupplierAiPreview /></SupplierLayout>

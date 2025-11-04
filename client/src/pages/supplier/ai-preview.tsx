@@ -35,7 +35,7 @@ export default function AiPreview() {
   const [input, setInput] = useState("");
   
   // Load stylist profile to get handle
-  const { data: stylistProfile } = useQuery<any>({
+  const { data: stylistProfile, isLoading: isLoadingProfile } = useQuery<any>({
     queryKey: [`/api/v1/supplier/${supplier?.id}/stylist-profile`],
     enabled: !!supplier?.id,
   });
@@ -120,6 +120,18 @@ export default function AiPreview() {
       handleSendMessage();
     }
   };
+  
+  if (isLoadingProfile) {
+    return (
+      <div className="container max-w-6xl mx-auto p-6">
+        <Card>
+          <CardContent className="p-12 text-center">
+            <p className="text-muted-foreground">Loading stylist profile...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   
   if (!stylistId || !stylistHandle) {
     return (

@@ -55,13 +55,13 @@ export default function AiPortfolio() {
     tags: "",
   });
 
-  const { data: stylistProfile } = useQuery<{ id: string; handle: string; displayName: string }>({
-    queryKey: ["/api/v1/supplier/:supplierId/stylist-profile", supplier?.id],
+  const { data: stylistProfile, isLoading: isLoadingProfile } = useQuery<{ id: string; handle: string; displayName: string }>({
+    queryKey: [`/api/v1/supplier/${supplier?.id}/stylist-profile`],
     enabled: !!supplier?.id,
   });
 
-  const { data: portfolioItems = [], isLoading } = useQuery<PortfolioItem[]>({
-    queryKey: ["/api/v1/stylist/:stylistId/portfolio", stylistProfile?.id],
+  const { data: portfolioItems = [], isLoading: isLoadingPortfolio } = useQuery<PortfolioItem[]>({
+    queryKey: [`/api/v1/stylist/${stylistProfile?.id}/portfolio`],
     enabled: !!stylistProfile?.id,
   });
 
@@ -80,7 +80,7 @@ export default function AiPortfolio() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/v1/stylist/:stylistId/portfolio", stylistProfile?.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/v1/stylist/${stylistProfile?.id}/portfolio`] });
       toast({ title: "Portfolio item added successfully" });
       resetForm();
     },
@@ -94,7 +94,7 @@ export default function AiPortfolio() {
       return apiRequest('DELETE', `/api/v1/stylist/portfolio/${itemId}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/v1/stylist/:stylistId/portfolio", stylistProfile?.id] });
+      queryClient.invalidateQueries({ queryKey: [`/api/v1/stylist/${stylistProfile?.id}/portfolio`] });
       toast({ title: "Portfolio item deleted" });
     },
     onError: (error: any) => {
@@ -121,6 +121,11 @@ export default function AiPortfolio() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!stylistProfile) {
+      toast({ title: "Error", description: "Stylist profile not loaded", variant: "destructive" });
+      return;
+    }
+    
     if (!formData.imageUrl || !formData.title) {
       toast({ title: "Error", description: "Image URL and title are required", variant: "destructive" });
       return;
@@ -142,12 +147,13 @@ export default function AiPortfolio() {
     );
   }
 
-  if (isLoading) {
+  if (isLoadingProfile || isLoadingPortfolio) {
     return (
       <div className="container mx-auto p-6">
         <Card>
           <CardHeader>
-            <CardTitle>Loading...</CardTitle>
+            <CardTitle>Loading portfolio...</CardTitle>
+            <CardDescription>Please wait while we load your stylist profile and portfolio items.</CardDescription>
           </CardHeader>
         </Card>
       </div>

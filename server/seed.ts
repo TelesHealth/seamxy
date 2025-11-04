@@ -554,10 +554,10 @@ Always ask clarifying questions to understand their vision before making recomme
 
   // Seed Test Supplier Account for AI Stylist Testing
   try {
-    const hashedPassword = await bcrypt.hash("password", 12);
+    const hashedPassword = await bcrypt.hash("password123", 12);
     
     const [testSupplier] = await db.insert(supplierAccounts).values({
-      email: "supplier@test.com",
+      email: "supplier@example.com",
       password: hashedPassword,
       role: "designer",
       tier: "pro",
@@ -571,12 +571,35 @@ Always ask clarifying questions to understand their vision before making recomme
     }).onConflictDoNothing().returning();
 
     if (testSupplier) {
-      console.log("✅ Test supplier account created: supplier@test.com / password");
+      console.log("✅ Test supplier account created: supplier@example.com / password123");
     } else {
       console.log("ℹ️ Test supplier account already exists");
     }
   } catch (error) {
     console.log("ℹ️ Test supplier account already exists or error:", error);
+  }
+
+  // Seed Test Customer Account for AI Stylist Chat Testing
+  try {
+    const hashedPassword = await bcrypt.hash("password123", 12);
+    
+    const [testCustomer] = await db.insert(users).values({
+      email: "customer@example.com",
+      password: hashedPassword,
+      name: "Test Customer",
+      demographic: "men",
+      budgetMin: 100,
+      budgetMax: 1000,
+      styleTags: ["casual", "modern"],
+    }).onConflictDoNothing().returning();
+
+    if (testCustomer) {
+      console.log("✅ Test customer account created: customer@example.com / password123");
+    } else {
+      console.log("ℹ️ Test customer account already exists");
+    }
+  } catch (error) {
+    console.log("ℹ️ Test customer account already exists or error:", error);
   }
 
   console.log("🎉 Database seeding complete!");

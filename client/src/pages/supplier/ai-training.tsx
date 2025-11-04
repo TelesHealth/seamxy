@@ -51,7 +51,7 @@ export default function AiTraining() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   // Load stylist profile to get ID
-  const { data: stylistProfile } = useQuery<any>({
+  const { data: stylistProfile, isLoading: isLoadingProfile } = useQuery<any>({
     queryKey: [`/api/v1/supplier/${supplier?.id}/stylist-profile`],
     enabled: !!supplier?.id,
   });
@@ -59,7 +59,7 @@ export default function AiTraining() {
   const stylistId = stylistProfile?.id;
   
   // Load existing responses
-  const { data: existingResponses = [], isLoading } = useQuery<TrainingResponse[]>({
+  const { data: existingResponses = [], isLoading: isLoadingResponses } = useQuery<TrainingResponse[]>({
     queryKey: [`/api/v1/stylist/${stylistId}/training-responses`],
     enabled: !!stylistId,
   });
@@ -282,6 +282,18 @@ export default function AiTraining() {
     }
   };
   
+  if (isLoadingProfile) {
+    return (
+      <div className="container max-w-4xl mx-auto p-6">
+        <Card>
+          <CardContent className="p-12 text-center">
+            <p className="text-muted-foreground">Loading stylist profile...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   if (!stylistId) {
     return (
       <div className="container max-w-4xl mx-auto p-6">
@@ -295,7 +307,7 @@ export default function AiTraining() {
     );
   }
   
-  if (isLoading) {
+  if (isLoadingResponses) {
     return (
       <div className="container max-w-4xl mx-auto p-6">
         <Card>
