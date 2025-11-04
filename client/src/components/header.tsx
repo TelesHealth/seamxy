@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, User, Sparkles, Shield, Scissors, Package, LogOut, LogIn } from "lucide-react";
+import { ShoppingBag, User, Sparkles, Shield, Scissors, Package, LogOut, LogIn, Briefcase } from "lucide-react";
 import seamxyLogo from "@assets/Seamxy_1761527023424.png";
 import { useCustomerAuth } from "@/lib/customer-auth";
 
@@ -45,6 +45,12 @@ export function Header() {
 
           {/* User Actions */}
           <div className="flex items-center gap-2">
+            <Link href="/supplier/login">
+              <Button variant="ghost" size="sm" data-testid="nav-supplier">
+                <Briefcase className="w-4 h-4 mr-2" />
+                Supplier Portal
+              </Button>
+            </Link>
             <Link href="/admin/login">
               <Button variant="ghost" size="icon" data-testid="nav-admin">
                 <Shield className="w-5 h-5" />
