@@ -1249,8 +1249,8 @@ export function registerRoutes(app: Express) {
   
   // Generate S3 presigned upload URL for portfolio images
   app.post("/api/v1/stylist/generate-upload-url",
-    requireUser as any,
-    async (req: AuthenticatedRequest, res) => {
+    authenticateSupplier as any,
+    async (req, res) => {
       try {
         const { fileName, contentType, uploadType } = req.body;
         
@@ -1258,8 +1258,17 @@ export function registerRoutes(app: Express) {
           return res.status(400).json({ error: "fileName and contentType required" });
         }
         
-        // Get stylist profile
-        const stylistProfile = await storage.getStylistProfileByUserId(req.userId!);
+        // Get supplier and create stylist profile handle
+        const supplier = await storage.getSupplierAccount(req.supplierId!);
+        if (!supplier) {
+          return res.status(404).json({ error: "Supplier not found" });
+        }
+        
+        const handle = supplier.businessName?.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || 
+                       `supplier-${req.supplierId}`;
+        
+        // Get stylist profile by handle
+        const stylistProfile = await storage.getStylistProfileByHandle(handle);
         if (!stylistProfile) {
           return res.status(403).json({ error: "Must be an approved stylist to upload images" });
         }
