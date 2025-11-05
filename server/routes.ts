@@ -274,7 +274,11 @@ export function registerRoutes(app: Express) {
                   budgetMin: user.budgetMin || 0,
                   budgetMax: user.budgetMax || 500
                 },
-                product
+                {
+                  ...product,
+                  price: Number(product.price),
+                  styleTags: product.styleTags || []
+                }
               );
               return { ...product, ...scores };
             })
@@ -728,6 +732,10 @@ export function registerRoutes(app: Express) {
       const session = await storage.getAiChatSession(req.params.sessionId);
       if (!session) {
         return res.status(404).json({ error: "Session not found" });
+      }
+
+      if (!session.personaId) {
+        return res.status(400).json({ error: "Session has no persona assigned" });
       }
 
       const persona = await storage.getAiPersona(session.personaId);
