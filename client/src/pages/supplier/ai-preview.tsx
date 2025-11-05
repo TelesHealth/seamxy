@@ -199,6 +199,10 @@ export default function AiPreview() {
     );
   }
   
+  if (!prompt) {
+    return null;
+  }
+
   return (
     <div className="container max-w-6xl mx-auto p-6">
       <div className="grid gap-6 lg:grid-cols-3">
