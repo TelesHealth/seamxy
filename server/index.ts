@@ -8,6 +8,11 @@ import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
 
+// Trust proxy in production (required for HTTPS/secure cookies behind reverse proxy)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Session configuration for supplier portal, admin, and user authentication
 const PgSession = ConnectPgSimple(session);
 
@@ -28,7 +33,9 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-  }
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  },
+  proxy: process.env.NODE_ENV === 'production', // Trust proxy in production
 }));
 
 declare module 'http' {
