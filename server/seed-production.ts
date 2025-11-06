@@ -41,9 +41,11 @@ async function seedProduction() {
           email: "designer@seamxy.test",
           password: hashedPassword,
           businessName: "Luxe Design Studio",
+          ownerName: "Test Designer",
           role: "designer",
           tier: "pro",
           isVerified: true,
+          isActive: true,
         })
         .returning();
       
