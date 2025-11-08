@@ -50,6 +50,14 @@ import {
   type AiStylistPrompt, type InsertAiStylistPrompt,
   type ConversationCredit, type InsertConversationCredit,
   type AiSubscription, type InsertAiSubscription,
+  creatorTiers, creatorPosts, creatorSubscriptions, creatorTips, creatorCustomRequests, moderationFlags, creatorPayouts,
+  type CreatorTier, type InsertCreatorTier,
+  type CreatorPost, type InsertCreatorPost,
+  type CreatorSubscription, type InsertCreatorSubscription,
+  type CreatorTip, type InsertCreatorTip,
+  type CreatorCustomRequest, type InsertCreatorCustomRequest,
+  type ModerationFlag, type InsertModerationFlag,
+  type CreatorPayout, type InsertCreatorPayout,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
@@ -265,6 +273,52 @@ export interface IStorage {
   createAiSubscription(subscription: InsertAiSubscription): Promise<AiSubscription>;
   updateAiSubscription(id: string, updates: Partial<AiSubscription>): Promise<AiSubscription | undefined>;
   cancelAiSubscription(id: string): Promise<AiSubscription | undefined>;
+  
+  // Creator Studio - Tiers
+  getCreatorTiers(stylistId: string): Promise<CreatorTier[]>;
+  getCreatorTier(id: string): Promise<CreatorTier | undefined>;
+  createCreatorTier(tier: InsertCreatorTier): Promise<CreatorTier>;
+  updateCreatorTier(id: string, updates: Partial<InsertCreatorTier>): Promise<CreatorTier | undefined>;
+  deleteCreatorTier(id: string): Promise<void>;
+  
+  // Creator Studio - Posts
+  getCreatorPosts(stylistId: string, isPublic?: boolean): Promise<CreatorPost[]>;
+  getCreatorPost(id: string): Promise<CreatorPost | undefined>;
+  createCreatorPost(post: InsertCreatorPost): Promise<CreatorPost>;
+  updateCreatorPost(id: string, updates: Partial<InsertCreatorPost>): Promise<CreatorPost | undefined>;
+  deleteCreatorPost(id: string): Promise<void>;
+  incrementPostView(id: string): Promise<void>;
+  
+  // Creator Studio - Subscriptions
+  getCreatorSubscription(userId: string, stylistId: string): Promise<CreatorSubscription | undefined>;
+  getUserCreatorSubscriptions(userId: string): Promise<CreatorSubscription[]>;
+  getStylistCreatorSubscriptions(stylistId: string): Promise<CreatorSubscription[]>;
+  createCreatorSubscription(subscription: InsertCreatorSubscription): Promise<CreatorSubscription>;
+  updateCreatorSubscription(id: string, updates: Partial<CreatorSubscription>): Promise<CreatorSubscription | undefined>;
+  cancelCreatorSubscription(id: string): Promise<CreatorSubscription | undefined>;
+  
+  // Creator Studio - Tips
+  getCreatorTips(stylistId: string): Promise<CreatorTip[]>;
+  createCreatorTip(tip: InsertCreatorTip): Promise<CreatorTip>;
+  
+  // Creator Studio - Custom Requests (RFQ)
+  getCreatorCustomRequests(stylistId: string): Promise<CreatorCustomRequest[]>;
+  getUserCustomRequestsCreator(userId: string): Promise<CreatorCustomRequest[]>;
+  getCreatorCustomRequest(id: string): Promise<CreatorCustomRequest | undefined>;
+  createCreatorCustomRequest(request: InsertCreatorCustomRequest): Promise<CreatorCustomRequest>;
+  updateCreatorCustomRequest(id: string, updates: Partial<CreatorCustomRequest>): Promise<CreatorCustomRequest | undefined>;
+  
+  // Creator Studio - Moderation
+  getModerationFlags(status?: string): Promise<ModerationFlag[]>;
+  getModerationFlag(id: string): Promise<ModerationFlag | undefined>;
+  createModerationFlag(flag: InsertModerationFlag): Promise<ModerationFlag>;
+  updateModerationFlag(id: string, updates: Partial<ModerationFlag>): Promise<ModerationFlag | undefined>;
+  
+  // Creator Studio - Payouts
+  getCreatorPayouts(stylistId: string): Promise<CreatorPayout[]>;
+  getCreatorPayout(id: string): Promise<CreatorPayout | undefined>;
+  createCreatorPayout(payout: InsertCreatorPayout): Promise<CreatorPayout>;
+  updateCreatorPayout(id: string, updates: Partial<CreatorPayout>): Promise<CreatorPayout | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1165,6 +1219,218 @@ export class DatabaseStorage implements IStorage {
       .where(eq(aiSubscriptions.id, id))
       .returning();
     return cancelled || undefined;
+  }
+  
+  // Creator Studio - Tiers
+  async getCreatorTiers(stylistId: string): Promise<CreatorTier[]> {
+    return await db.select().from(creatorTiers).where(eq(creatorTiers.stylistId, stylistId));
+  }
+  
+  async getCreatorTier(id: string): Promise<CreatorTier | undefined> {
+    const [tier] = await db.select().from(creatorTiers).where(eq(creatorTiers.id, id));
+    return tier || undefined;
+  }
+  
+  async createCreatorTier(tier: InsertCreatorTier): Promise<CreatorTier> {
+    const [created] = await db.insert(creatorTiers).values(tier).returning();
+    return created;
+  }
+  
+  async updateCreatorTier(id: string, updates: Partial<InsertCreatorTier>): Promise<CreatorTier | undefined> {
+    const [updated] = await db.update(creatorTiers)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(creatorTiers.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  async deleteCreatorTier(id: string): Promise<void> {
+    await db.delete(creatorTiers).where(eq(creatorTiers.id, id));
+  }
+  
+  // Creator Studio - Posts
+  async getCreatorPosts(stylistId: string, isPublic?: boolean): Promise<CreatorPost[]> {
+    if (isPublic !== undefined) {
+      return await db.select().from(creatorPosts).where(
+        and(
+          eq(creatorPosts.stylistId, stylistId),
+          eq(creatorPosts.isPublic, isPublic)
+        )
+      ).orderBy(desc(creatorPosts.createdAt));
+    }
+    return await db.select().from(creatorPosts)
+      .where(eq(creatorPosts.stylistId, stylistId))
+      .orderBy(desc(creatorPosts.createdAt));
+  }
+  
+  async getCreatorPost(id: string): Promise<CreatorPost | undefined> {
+    const [post] = await db.select().from(creatorPosts).where(eq(creatorPosts.id, id));
+    return post || undefined;
+  }
+  
+  async createCreatorPost(post: InsertCreatorPost): Promise<CreatorPost> {
+    const [created] = await db.insert(creatorPosts).values(post).returning();
+    return created;
+  }
+  
+  async updateCreatorPost(id: string, updates: Partial<InsertCreatorPost>): Promise<CreatorPost | undefined> {
+    const [updated] = await db.update(creatorPosts)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(creatorPosts.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  async deleteCreatorPost(id: string): Promise<void> {
+    await db.delete(creatorPosts).where(eq(creatorPosts.id, id));
+  }
+  
+  async incrementPostView(id: string): Promise<void> {
+    await db.update(creatorPosts)
+      .set({ viewCount: sql`${creatorPosts.viewCount} + 1` })
+      .where(eq(creatorPosts.id, id));
+  }
+  
+  // Creator Studio - Subscriptions
+  async getCreatorSubscription(userId: string, stylistId: string): Promise<CreatorSubscription | undefined> {
+    const [subscription] = await db.select().from(creatorSubscriptions).where(
+      and(
+        eq(creatorSubscriptions.userId, userId),
+        eq(creatorSubscriptions.stylistId, stylistId),
+        eq(creatorSubscriptions.status, "active")
+      )
+    );
+    return subscription || undefined;
+  }
+  
+  async getUserCreatorSubscriptions(userId: string): Promise<CreatorSubscription[]> {
+    return await db.select().from(creatorSubscriptions).where(eq(creatorSubscriptions.userId, userId));
+  }
+  
+  async getStylistCreatorSubscriptions(stylistId: string): Promise<CreatorSubscription[]> {
+    return await db.select().from(creatorSubscriptions).where(
+      and(
+        eq(creatorSubscriptions.stylistId, stylistId),
+        eq(creatorSubscriptions.status, "active")
+      )
+    );
+  }
+  
+  async createCreatorSubscription(subscription: InsertCreatorSubscription): Promise<CreatorSubscription> {
+    const [created] = await db.insert(creatorSubscriptions).values(subscription).returning();
+    return created;
+  }
+  
+  async updateCreatorSubscription(id: string, updates: Partial<CreatorSubscription>): Promise<CreatorSubscription | undefined> {
+    const [updated] = await db.update(creatorSubscriptions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(creatorSubscriptions.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  async cancelCreatorSubscription(id: string): Promise<CreatorSubscription | undefined> {
+    const [cancelled] = await db.update(creatorSubscriptions)
+      .set({ status: "cancelled", cancelledAt: new Date(), updatedAt: new Date() })
+      .where(eq(creatorSubscriptions.id, id))
+      .returning();
+    return cancelled || undefined;
+  }
+  
+  // Creator Studio - Tips
+  async getCreatorTips(stylistId: string): Promise<CreatorTip[]> {
+    return await db.select().from(creatorTips)
+      .where(eq(creatorTips.stylistId, stylistId))
+      .orderBy(desc(creatorTips.createdAt));
+  }
+  
+  async createCreatorTip(tip: InsertCreatorTip): Promise<CreatorTip> {
+    const [created] = await db.insert(creatorTips).values(tip).returning();
+    return created;
+  }
+  
+  // Creator Studio - Custom Requests (RFQ)
+  async getCreatorCustomRequests(stylistId: string): Promise<CreatorCustomRequest[]> {
+    return await db.select().from(creatorCustomRequests)
+      .where(eq(creatorCustomRequests.stylistId, stylistId))
+      .orderBy(desc(creatorCustomRequests.createdAt));
+  }
+  
+  async getUserCustomRequestsCreator(userId: string): Promise<CreatorCustomRequest[]> {
+    return await db.select().from(creatorCustomRequests)
+      .where(eq(creatorCustomRequests.userId, userId))
+      .orderBy(desc(creatorCustomRequests.createdAt));
+  }
+  
+  async getCreatorCustomRequest(id: string): Promise<CreatorCustomRequest | undefined> {
+    const [request] = await db.select().from(creatorCustomRequests).where(eq(creatorCustomRequests.id, id));
+    return request || undefined;
+  }
+  
+  async createCreatorCustomRequest(request: InsertCreatorCustomRequest): Promise<CreatorCustomRequest> {
+    const [created] = await db.insert(creatorCustomRequests).values(request).returning();
+    return created;
+  }
+  
+  async updateCreatorCustomRequest(id: string, updates: Partial<CreatorCustomRequest>): Promise<CreatorCustomRequest | undefined> {
+    const [updated] = await db.update(creatorCustomRequests)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(creatorCustomRequests.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // Creator Studio - Moderation
+  async getModerationFlags(status?: string): Promise<ModerationFlag[]> {
+    if (status) {
+      return await db.select().from(moderationFlags)
+        .where(eq(moderationFlags.status, status as any))
+        .orderBy(desc(moderationFlags.createdAt));
+    }
+    return await db.select().from(moderationFlags).orderBy(desc(moderationFlags.createdAt));
+  }
+  
+  async getModerationFlag(id: string): Promise<ModerationFlag | undefined> {
+    const [flag] = await db.select().from(moderationFlags).where(eq(moderationFlags.id, id));
+    return flag || undefined;
+  }
+  
+  async createModerationFlag(flag: InsertModerationFlag): Promise<ModerationFlag> {
+    const [created] = await db.insert(moderationFlags).values(flag).returning();
+    return created;
+  }
+  
+  async updateModerationFlag(id: string, updates: Partial<ModerationFlag>): Promise<ModerationFlag | undefined> {
+    const [updated] = await db.update(moderationFlags)
+      .set(updates)
+      .where(eq(moderationFlags.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // Creator Studio - Payouts
+  async getCreatorPayouts(stylistId: string): Promise<CreatorPayout[]> {
+    return await db.select().from(creatorPayouts)
+      .where(eq(creatorPayouts.stylistId, stylistId))
+      .orderBy(desc(creatorPayouts.createdAt));
+  }
+  
+  async getCreatorPayout(id: string): Promise<CreatorPayout | undefined> {
+    const [payout] = await db.select().from(creatorPayouts).where(eq(creatorPayouts.id, id));
+    return payout || undefined;
+  }
+  
+  async createCreatorPayout(payout: InsertCreatorPayout): Promise<CreatorPayout> {
+    const [created] = await db.insert(creatorPayouts).values(payout).returning();
+    return created;
+  }
+  
+  async updateCreatorPayout(id: string, updates: Partial<CreatorPayout>): Promise<CreatorPayout | undefined> {
+    const [updated] = await db.update(creatorPayouts)
+      .set(updates)
+      .where(eq(creatorPayouts.id, id))
+      .returning();
+    return updated || undefined;
   }
 }
 

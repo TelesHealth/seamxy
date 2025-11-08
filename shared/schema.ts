@@ -17,6 +17,11 @@ export const retailerEnum = pgEnum("retailer", ["amazon", "ebay", "rakuten", "sh
 export const priceAlertStatusEnum = pgEnum("price_alert_status", ["active", "triggered", "expired", "cancelled"]);
 export const stylistApplicationStatusEnum = pgEnum("stylist_application_status", ["pending", "approved", "rejected"]);
 export const rfqStatusEnum = pgEnum("rfq_status", ["open", "responded", "accepted", "declined", "completed"]);
+export const creatorSubscriptionStatusEnum = pgEnum("creator_subscription_status", ["active", "cancelled", "past_due", "expired"]);
+export const creatorPostContentTypeEnum = pgEnum("creator_post_content_type", ["text", "image", "video", "portfolio"]);
+export const moderationStatusEnum = pgEnum("moderation_status", ["pending", "approved", "rejected", "flagged"]);
+export const payoutStatusEnum = pgEnum("payout_status", ["pending", "processing", "completed", "failed"]);
+export const creatorRfqStatusEnum = pgEnum("creator_rfq_status", ["pending", "quoted", "accepted", "in_progress", "completed", "cancelled"]);
 
 // ============================================
 // CORE MARKETPLACE - USERS
@@ -1351,6 +1356,138 @@ export const aiSubscriptions = pgTable("ai_subscriptions", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ============================================
+// CREATOR STUDIO - SUBSCRIPTION TIERS
+// ============================================
+
+export const creatorTiers = pgTable("creator_tiers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  name: text("name").notNull(), // "Free", "Basic", "Premium"
+  description: text("description"),
+  priceCents: integer("price_cents").notNull().default(0), // $4.99 = 499, $9.99 = 999
+  perks: jsonb("perks"), // ["Exclusive posts", "AI chat access", "Custom requests"]
+  isPublic: boolean("is_public").default(true).notNull(),
+  isDefault: boolean("is_default").default(false).notNull(),
+  stripePriceId: text("stripe_price_id"), // Stripe Price ID for recurring billing
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ============================================
+// CREATOR STUDIO - POSTS
+// ============================================
+
+export const creatorPosts = pgTable("creator_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  tierId: varchar("tier_id").references(() => creatorTiers.id, { onDelete: "set null" }), // null = public post
+  contentType: creatorPostContentTypeEnum("content_type").notNull().default("text"),
+  title: text("title"),
+  content: text("content"),
+  mediaUrls: text("media_urls").array(), // S3 URLs for images/videos
+  tags: text("tags").array(), // ["streetwear", "summer", "lookbook"]
+  isPublic: boolean("is_public").default(false).notNull(), // true = everyone, false = subscribers only
+  viewCount: integer("view_count").default(0).notNull(),
+  likeCount: integer("like_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ============================================
+// CREATOR STUDIO - SUBSCRIPTIONS
+// ============================================
+
+export const creatorSubscriptions = pgTable("creator_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  tierId: varchar("tier_id").notNull().references(() => creatorTiers.id, { onDelete: "cascade" }),
+  status: creatorSubscriptionStatusEnum("status").default("active").notNull(),
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  stripeCustomerId: text("stripe_customer_id"),
+  currentPeriodStart: timestamp("current_period_start").defaultNow().notNull(),
+  currentPeriodEnd: timestamp("current_period_end").notNull(),
+  cancelledAt: timestamp("cancelled_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ============================================
+// CREATOR STUDIO - TIPS/DONATIONS
+// ============================================
+
+export const creatorTips = pgTable("creator_tips", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  amountCents: integer("amount_cents").notNull(), // $5.00 = 500
+  message: text("message"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ============================================
+// CREATOR STUDIO - CUSTOM REQUESTS (RFQ)
+// ============================================
+
+export const creatorCustomRequests = pgTable("creator_custom_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  brief: text("brief").notNull(), // Detailed description of what they want
+  eventType: text("event_type"), // "wedding", "prom", "photoshoot", "everyday"
+  budgetMinCents: integer("budget_min_cents").notNull(),
+  budgetMaxCents: integer("budget_max_cents").notNull(),
+  dueDate: timestamp("due_date"),
+  status: creatorRfqStatusEnum("status").default("pending").notNull(),
+  quotePriceCents: integer("quote_price_cents"), // Creator's quote
+  quoteMessage: text("quote_message"), // Creator's response
+  quoteLeadTimeDays: integer("quote_lead_time_days"),
+  quotedAt: timestamp("quoted_at"),
+  acceptedAt: timestamp("accepted_at"),
+  completedAt: timestamp("completed_at"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// ============================================
+// CREATOR STUDIO - MODERATION
+// ============================================
+
+export const moderationFlags = pgTable("moderation_flags", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  objectType: text("object_type").notNull(), // "post", "profile", "comment"
+  objectId: varchar("object_id").notNull(), // ID of the flagged content
+  reason: text("reason").notNull(), // "inappropriate", "spam", "copyright"
+  details: text("details"),
+  status: moderationStatusEnum("status").default("pending").notNull(),
+  reviewerId: varchar("reviewer_id").references(() => adminUsers.id), // Admin who reviewed
+  reviewNote: text("review_note"),
+  reviewedAt: timestamp("reviewed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ============================================
+// CREATOR STUDIO - PAYOUTS
+// ============================================
+
+export const creatorPayouts = pgTable("creator_payouts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stylistId: varchar("stylist_id").notNull().references(() => stylistProfiles.id, { onDelete: "cascade" }),
+  amountCents: integer("amount_cents").notNull(), // Total payout amount
+  periodStart: timestamp("period_start").notNull(),
+  periodEnd: timestamp("period_end").notNull(),
+  status: payoutStatusEnum("status").default("pending").notNull(),
+  stripeTransferId: text("stripe_transfer_id"), // Stripe Connect transfer ID
+  breakdown: jsonb("breakdown"), // { subscriptions: 5000, tips: 500, rfqs: 1000 }
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
 // Insert schemas
 export const insertStylistApplicationSchema = createInsertSchema(stylistApplications).omit({
   id: true,
@@ -1440,3 +1577,74 @@ export type InsertConversationCredit = z.infer<typeof insertConversationCreditSc
 
 export type AiSubscription = typeof aiSubscriptions.$inferSelect;
 export type InsertAiSubscription = z.infer<typeof insertAiSubscriptionSchema>;
+
+// Creator Studio insert schemas
+export const insertCreatorTierSchema = createInsertSchema(creatorTiers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCreatorPostSchema = createInsertSchema(creatorPosts).omit({
+  id: true,
+  viewCount: true,
+  likeCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCreatorSubscriptionSchema = createInsertSchema(creatorSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCreatorTipSchema = createInsertSchema(creatorTips).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCreatorCustomRequestSchema = createInsertSchema(creatorCustomRequests).omit({
+  id: true,
+  quotePriceCents: true,
+  quoteMessage: true,
+  quoteLeadTimeDays: true,
+  quotedAt: true,
+  acceptedAt: true,
+  completedAt: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertModerationFlagSchema = createInsertSchema(moderationFlags).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertCreatorPayoutSchema = createInsertSchema(creatorPayouts).omit({
+  id: true,
+  createdAt: true,
+  completedAt: true,
+});
+
+// Creator Studio types
+export type CreatorTier = typeof creatorTiers.$inferSelect;
+export type InsertCreatorTier = z.infer<typeof insertCreatorTierSchema>;
+
+export type CreatorPost = typeof creatorPosts.$inferSelect;
+export type InsertCreatorPost = z.infer<typeof insertCreatorPostSchema>;
+
+export type CreatorSubscription = typeof creatorSubscriptions.$inferSelect;
+export type InsertCreatorSubscription = z.infer<typeof insertCreatorSubscriptionSchema>;
+
+export type CreatorTip = typeof creatorTips.$inferSelect;
+export type InsertCreatorTip = z.infer<typeof insertCreatorTipSchema>;
+
+export type CreatorCustomRequest = typeof creatorCustomRequests.$inferSelect;
+export type InsertCreatorCustomRequest = z.infer<typeof insertCreatorCustomRequestSchema>;
+
+export type ModerationFlag = typeof moderationFlags.$inferSelect;
+export type InsertModerationFlag = z.infer<typeof insertModerationFlagSchema>;
+
+export type CreatorPayout = typeof creatorPayouts.$inferSelect;
+export type InsertCreatorPayout = z.infer<typeof insertCreatorPayoutSchema>;
