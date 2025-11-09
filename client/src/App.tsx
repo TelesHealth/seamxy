@@ -48,6 +48,7 @@ import { SupplierLayout } from "@/pages/supplier/layout";
 // Stylist Public Profile
 import StylistProfile from "@/pages/stylist-profile";
 import CreatorProfile from "@/pages/creator-profile";
+import CreatorsDirectory from "@/pages/creators-directory";
 
 function Router() {
   return (
@@ -116,7 +117,8 @@ function Router() {
       {/* Stylist Public Profile */}
       <Route path="/stylists/:handle" component={StylistProfile} />
       
-      {/* Creator Profile */}
+      {/* Creator Studio */}
+      <Route path="/creators" component={CreatorsDirectory} />
       <Route path="/creator/:handle" component={CreatorProfile} />
       
       <Route component={NotFound} />

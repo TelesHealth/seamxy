@@ -46,7 +46,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2024-11-20.acacia",
+  apiVersion: "2024-11-20.acacia" as any,
 });
 
 export function registerRoutes(app: Express) {
@@ -1911,7 +1911,7 @@ export function registerRoutes(app: Express) {
     }
   });
   
-  // Chat with stylist AI (with credit deduction)
+  // Chat with stylist AI (with credit deduction and Creator Studio subscription gating)
   app.post("/api/v1/stylists/:handle/chat", async (req, res) => {
     try {
       const { userId, message } = req.body;
@@ -1930,7 +1930,26 @@ export function registerRoutes(app: Express) {
         return res.status(404).json({ error: "Stylist AI not trained yet" });
       }
       
-      // Check credits and subscription
+      // Check if stylist requires Creator Studio subscription
+      let hasAccess = true;
+      let creatorSubscription = null;
+      
+      if (stylist.requiresSubscription && stylist.supplierId) {
+        // Check for active Creator Studio subscription
+        creatorSubscription = await storage.getCreatorSubscription(userId, stylist.supplierId);
+        
+        if (!creatorSubscription || creatorSubscription.status !== 'active') {
+          return res.status(402).json({
+            error: "Subscription required",
+            requiresCreatorSubscription: true,
+            supplierId: stylist.supplierId,
+            message: "This AI stylist requires an active Creator Studio subscription. Please subscribe to continue chatting.",
+            currentStatus: creatorSubscription?.status || 'none'
+          });
+        }
+      }
+      
+      // Check credits and AI subscription (legacy system for non-Creator Studio stylists)
       let credit = await storage.getConversationCredit(userId, stylist.id);
       const subscription = await storage.getAiSubscription(userId, stylist.id);
       
@@ -1978,8 +1997,8 @@ export function registerRoutes(app: Express) {
         message
       );
       
-      // Deduct credit (only if not subscribed)
-      if (!subscription && credit) {
+      // Deduct credit (only if not subscribed to either Creator Studio or AI subscription)
+      if (!subscription && !creatorSubscription && credit) {
         const deduction = creditManager.deductCredit(credit);
         if (deduction.success) {
           await storage.updateConversationCredit(credit.id, {
@@ -1999,7 +2018,8 @@ export function registerRoutes(app: Express) {
           role: "assistant",
           content: aiResponse,
           timestamp: new Date(),
-          isSubscribed: true
+          isSubscribed: true,
+          subscriptionType: creatorSubscription ? "creator_studio" : "ai_subscription"
         });
       }
     } catch (error: any) {
@@ -2142,6 +2162,83 @@ export function registerRoutes(app: Express) {
     }
   );
 
+  // ============================================
+  // CREATOR STUDIO - PUBLIC DIRECTORY
+  // ============================================
+  
+  // Get all creators for public directory with search and filters
+  app.get("/api/v1/creators", async (req, res) => {
+    try {
+      const { search, category, sortBy } = req.query;
+      
+      // Get all supplier accounts with designer role (creators)
+      const designers = await storage.getSuppliersByRole("designer");
+      const activeDesigners = designers.filter(s => s.isActive);
+      
+      // Get profiles, tiers, posts, and subscriber counts for each creator
+      const creatorsWithStats = await Promise.all(
+        activeDesigners.map(async (supplier: any) => {
+          const profile = await storage.getSupplierProfile(supplier.id);
+          const tiers = await storage.getCreatorTiers(supplier.id);
+          const posts = await storage.getCreatorPosts(supplier.id);
+          const subscriptions = await storage.getStylistCreatorSubscriptions(supplier.id);
+          
+          const publicPostCount = posts.filter((p: any) => p.isPublic).length;
+          const totalSubscribers = subscriptions.filter((s: any) => s.status === 'active').length;
+          
+          // Generate handle from business name if not in profile
+          const handle = supplier.businessName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+          
+          return {
+            id: supplier.id,
+            handle,
+            displayName: supplier.businessName,
+            bio: profile?.description || '',
+            avatarUrl: profile?.logoUrl || null,
+            coverImageUrl: null,
+            category: 'Fashion',
+            tierCount: tiers.length,
+            lowestTierPrice: tiers.length > 0 ? Math.min(...tiers.map((t: any) => t.priceCents)) : null,
+            postCount: posts.length,
+            publicPostCount,
+            subscriberCount: totalSubscribers,
+            createdAt: supplier.createdAt,
+          };
+        })
+      );
+      
+      // Filter by search query
+      let filtered = creatorsWithStats;
+      if (search && typeof search === 'string') {
+        const searchLower = search.toLowerCase();
+        filtered = filtered.filter((c: any) =>
+          c.displayName.toLowerCase().includes(searchLower) ||
+          c.bio.toLowerCase().includes(searchLower)
+        );
+      }
+      
+      // Filter by category
+      if (category && typeof category === 'string') {
+        filtered = filtered.filter((c: any) => c.category === category);
+      }
+      
+      // Sort results
+      if (sortBy === 'popular') {
+        filtered.sort((a: any, b: any) => b.subscriberCount - a.subscriberCount);
+      } else if (sortBy === 'newest') {
+        filtered.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      } else if (sortBy === 'price-low') {
+        filtered.sort((a: any, b: any) => (a.lowestTierPrice || 9999) - (b.lowestTierPrice || 9999));
+      } else if (sortBy === 'price-high') {
+        filtered.sort((a: any, b: any) => (b.lowestTierPrice || 0) - (a.lowestTierPrice || 0));
+      }
+      
+      res.json(filtered);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
   // ============================================
   // CREATOR STUDIO - SUBSCRIPTION TIERS
   // ============================================
@@ -2710,6 +2807,123 @@ export function registerRoutes(app: Express) {
       }
     }
   );
+
+  // ============================================
+  // STRIPE WEBHOOKS FOR CREATOR STUDIO
+  // ============================================
+  
+  // Stripe webhook handler for subscription lifecycle events
+  app.post("/api/v1/webhooks/stripe", async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    
+    if (!sig) {
+      return res.status(400).send('No signature');
+    }
+    
+    let event;
+    
+    try {
+      // Verify webhook signature (in production, use STRIPE_WEBHOOK_SECRET)
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+      if (webhookSecret) {
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+      } else {
+        // In development, just parse the body
+        event = req.body;
+      }
+    } catch (err: any) {
+      console.error('Webhook signature verification failed:', err.message);
+      return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+    
+    // Handle the event
+    try {
+      switch (event.type) {
+        case 'customer.subscription.created':
+        case 'customer.subscription.updated': {
+          const subscription = event.data.object;
+          
+          // Extract metadata to identify the creator subscription
+          const stylistId = subscription.metadata?.stylistId;
+          const userId = subscription.metadata?.userId;
+          const tierId = subscription.metadata?.tierId;
+          
+          if (stylistId && userId && tierId) {
+            // Update or create creator subscription
+            const existing = await storage.getCreatorSubscription(userId, stylistId);
+            
+            if (existing) {
+              await storage.updateCreatorSubscription(existing.id, {
+                status: subscription.status === 'active' ? 'active' : 
+                       subscription.status === 'canceled' ? 'cancelled' :
+                       subscription.status === 'past_due' ? 'past_due' : 'active',
+                stripeSubscriptionId: subscription.id,
+                currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              });
+            }
+          }
+          break;
+        }
+        
+        case 'customer.subscription.deleted': {
+          const subscription = event.data.object;
+          const stripeSubscriptionId = subscription.id;
+          
+          // Find and cancel the creator subscription
+          const subscriptions = await storage.getUserCreatorSubscriptions(subscription.metadata?.userId || '');
+          const existing = subscriptions.find((s: any) => s.stripeSubscriptionId === stripeSubscriptionId);
+          
+          if (existing) {
+            await storage.updateCreatorSubscription(existing.id, {
+              status: 'cancelled',
+              cancelledAt: new Date(),
+            });
+          }
+          break;
+        }
+        
+        case 'invoice.payment_succeeded': {
+          const invoice = event.data.object;
+          const subscriptionId = invoice.subscription;
+          
+          // Update subscription status to active on successful payment
+          const allSubscriptions = await storage.getUserCreatorSubscriptions(invoice.customer_email || '');
+          const existing = allSubscriptions.find((s: any) => s.stripeSubscriptionId === subscriptionId);
+          
+          if (existing) {
+            await storage.updateCreatorSubscription(existing.id, {
+              status: 'active',
+            });
+          }
+          break;
+        }
+        
+        case 'invoice.payment_failed': {
+          const invoice = event.data.object;
+          const subscriptionId = invoice.subscription;
+          
+          // Update subscription status to past_due on failed payment
+          const allSubscriptions = await storage.getUserCreatorSubscriptions(invoice.customer_email || '');
+          const existing = allSubscriptions.find((s: any) => s.stripeSubscriptionId === subscriptionId);
+          
+          if (existing) {
+            await storage.updateCreatorSubscription(existing.id, {
+              status: 'past_due',
+            });
+          }
+          break;
+        }
+        
+        default:
+          console.log(`Unhandled event type: ${event.type}`);
+      }
+      
+      res.json({ received: true });
+    } catch (error: any) {
+      console.error('Error handling webhook:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // ============================================
   // WEDDING & PROM CONCIERGE ROUTES

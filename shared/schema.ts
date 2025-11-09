@@ -1227,6 +1227,7 @@ export const stylistProfiles = pgTable("stylist_profiles", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().unique().references(() => users.id, { onDelete: "cascade" }),
   applicationId: varchar("application_id").references(() => stylistApplications.id),
+  supplierId: varchar("supplier_id").references(() => supplierAccounts.id, { onDelete: "set null" }), // Link to Creator Studio
   handle: text("handle").notNull().unique(), // Unique URL slug: /stylists/[handle]
   displayName: text("display_name").notNull(),
   bio: text("bio"),
@@ -1238,6 +1239,7 @@ export const stylistProfiles = pgTable("stylist_profiles", {
   tiktokHandle: text("tiktok_handle"),
   websiteUrl: text("website_url"),
   linkedPersonaId: text("linked_persona_id").references(() => aiPersonas.id), // Connected AI stylist
+  requiresSubscription: boolean("requires_subscription").default(false), // Requires Creator Studio subscription
   isVerified: boolean("is_verified").default(false),
   isActive: boolean("is_active").default(true),
   totalFollowers: integer("total_followers").default(0),
