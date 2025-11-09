@@ -41,6 +41,8 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
       - Tips: `POST /api/v1/creators/:stylistId/tip`, `GET /api/v1/creators/:stylistId/tips`
       - Custom Requests: `POST /api/v1/creators/:stylistId/request`, `GET /api/v1/creators/:stylistId/requests`, `GET/PATCH /api/v1/requests/:id`
       - Moderation: `POST /api/v1/moderation/flag`, `GET/PATCH /api/v1/admin/moderation/flags`
+      - Directory: `GET /api/v1/creators/directory` (search, category filters, sorting)
+      - Webhooks: `POST /api/v1/webhooks/stripe` (subscription lifecycle automation)
 - **Scoring Algorithm**: Products are scored based on Fit (50%), Style (30%), and Budget (20%).
 - **Monetization Model**: Affiliate commissions (4-10%), bespoke platform fee (10%), tiered maker subscriptions, AI Stylist Pro subscriptions, and **Creator Studio** (80/20 revenue split - 80% to creator, 20% to platform) via subscription tiers ($4.99-$14.99/mo), tips, and custom requests.
 - **Security**: Bcrypt for password hashing, AES-256-CBC for token encryption, RBAC middleware for supplier authentication.
@@ -64,6 +66,9 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
   - View analytics (subscribers, revenue, views, engagement)
   - Access via `/supplier/studio` dashboard and public profile at `/creator/:handle`
   - 80/20 revenue split favoring creators
+  - **AI Stylist Subscription Gating**: Creators can require active subscriptions for AI chat access (stylist_profiles.requiresSubscription + supplierId)
+  - **Public Creator Directory**: Browse all designers at `/creators` with search, category filters, and sorting
+  - **Automated Subscription Management**: Stripe webhooks handle subscription lifecycle events (renewals, cancellations, payment success/failure)
 
 ## External Dependencies
 
