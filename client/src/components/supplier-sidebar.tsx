@@ -1,4 +1,4 @@
-import { Home, Package, Palette, Scissors, Plug, MessageSquare, ShoppingCart, BarChart3, LogOut, User, Brain, Images, Sparkles } from 'lucide-react';
+import { Home, Package, Palette, Scissors, Plug, MessageSquare, ShoppingCart, BarChart3, LogOut, User, Brain, Images, Sparkles, Crown } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import {
   Sidebar,
@@ -44,6 +44,7 @@ export function SupplierSidebar() {
     { title: 'AI Training', url: '/supplier/ai-training', icon: Brain },
     { title: 'AI Portfolio', url: '/supplier/ai-portfolio', icon: Images },
     { title: 'AI Preview', url: '/supplier/ai-preview', icon: Sparkles },
+    { title: 'Creator Studio', url: '/supplier/studio', icon: Crown },
     { title: 'Orders', url: '/supplier/orders', icon: ShoppingCart },
     { title: 'Analytics', url: '/supplier/analytics', icon: BarChart3 },
     { title: 'Messages', url: '/supplier/messages', icon: MessageSquare }

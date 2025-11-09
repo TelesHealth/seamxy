@@ -40,6 +40,7 @@ export const users = pgTable("users", {
   budgetMax: integer("budget_max").default(500),
   budgetTier: budgetTierEnum("budget_tier"),
   preferredBrands: text("preferred_brands").array(),
+  stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

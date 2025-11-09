@@ -26,7 +26,9 @@ import {
   insertMessageThreadSchema, insertSupplierMessageSchema, insertSupplierOrderSchema,
   insertPriceAlertSchema, insertAffiliateClickSchema, insertAffiliateConversionSchema,
   insertStylistApplicationSchema, insertStylistProfileSchema, insertStylistPortfolioItemSchema,
-  insertStylistRfqSchema, insertStylistReviewSchema
+  insertStylistRfqSchema, insertStylistReviewSchema,
+  insertCreatorTierSchema, insertCreatorPostSchema, insertCreatorSubscriptionSchema,
+  insertCreatorTipSchema, insertCreatorCustomRequestSchema, insertModerationFlagSchema
 } from "@shared/schema";
 import { priceComparisonService } from "./services/price-comparison";
 import { aiProductMatcher } from "./services/ai-product-matcher";
@@ -37,6 +39,15 @@ import {
   generateStylistCoverUploadUrl,
   deleteS3Object
 } from "./services/s3";
+import Stripe from "stripe";
+
+// Initialize Stripe - blueprint reference: javascript_stripe
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+}
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+  apiVersion: "2024-11-20.acacia",
+});
 
 export function registerRoutes(app: Express) {
   
@@ -2124,6 +2135,575 @@ export function registerRoutes(app: Express) {
           reviewNotes: req.body.reviewNotes
         });
         
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // CREATOR STUDIO - SUBSCRIPTION TIERS
+  // ============================================
+  
+  // Get all tiers for a creator
+  app.get("/api/v1/creators/:stylistId/tiers", async (req, res) => {
+    try {
+      const tiers = await storage.getCreatorTiers(req.params.stylistId);
+      res.json(tiers);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Create a new tier (creator only)
+  app.post("/api/v1/creators/:stylistId/tiers",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        // Verify the user owns this stylist profile
+        const profile = await storage.getStylistProfileById(req.params.stylistId);
+        if (!profile || profile.userId !== req.userId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        const tierData = insertCreatorTierSchema.parse({
+          ...req.body,
+          stylistId: req.params.stylistId
+        });
+        
+        const tier = await storage.createCreatorTier(tierData);
+        res.json(tier);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Update a tier
+  app.patch("/api/v1/creators/tiers/:tierId",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const tier = await storage.getCreatorTier(req.params.tierId);
+        if (!tier) {
+          return res.status(404).json({ error: "Tier not found" });
+        }
+        
+        // Verify ownership
+        const profile = await storage.getStylistProfileById(tier.stylistId);
+        if (!profile || profile.userId !== req.userId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        const updated = await storage.updateCreatorTier(req.params.tierId, req.body);
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Delete a tier
+  app.delete("/api/v1/creators/tiers/:tierId",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const tier = await storage.getCreatorTier(req.params.tierId);
+        if (!tier) {
+          return res.status(404).json({ error: "Tier not found" });
+        }
+        
+        // Verify ownership
+        const profile = await storage.getStylistProfileById(tier.stylistId);
+        if (!profile || profile.userId !== req.userId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        await storage.deleteCreatorTier(req.params.tierId);
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // CREATOR STUDIO - POSTS
+  // ============================================
+  
+  // Get posts for a creator (public or subscriber-only based on auth)
+  app.get("/api/v1/creators/:stylistId/posts", async (req: AuthenticatedRequest, res) => {
+    try {
+      const stylistId = req.params.stylistId;
+      const userId = req.userId;
+      
+      // Check if user is subscribed
+      let hasAccess = false;
+      if (userId) {
+        const subscription = await storage.getCreatorSubscription(userId, stylistId);
+        hasAccess = !!subscription && subscription.status === 'active';
+      }
+      
+      // Get posts (public only if not subscribed)
+      const posts = await storage.getCreatorPosts(stylistId, hasAccess ? undefined : true);
+      res.json(posts);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Create a post (creator only)
+  app.post("/api/v1/creators/:stylistId/posts",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        // Verify ownership
+        const profile = await storage.getStylistProfileById(req.params.stylistId);
+        if (!profile || profile.userId !== req.userId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        const postData = insertCreatorPostSchema.parse({
+          ...req.body,
+          stylistId: req.params.stylistId
+        });
+        
+        const post = await storage.createCreatorPost(postData);
+        res.json(post);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Update a post
+  app.patch("/api/v1/creators/posts/:postId",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const post = await storage.getCreatorPost(req.params.postId);
+        if (!post) {
+          return res.status(404).json({ error: "Post not found" });
+        }
+        
+        // Verify ownership
+        const profile = await storage.getStylistProfileById(post.stylistId);
+        if (!profile || profile.userId !== req.userId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        const updated = await storage.updateCreatorPost(req.params.postId, req.body);
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Delete a post
+  app.delete("/api/v1/creators/posts/:postId",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const post = await storage.getCreatorPost(req.params.postId);
+        if (!post) {
+          return res.status(404).json({ error: "Post not found" });
+        }
+        
+        // Verify ownership
+        const profile = await storage.getStylistProfileById(post.stylistId);
+        if (!profile || profile.userId !== req.userId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        await storage.deleteCreatorPost(req.params.postId);
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Increment post view count
+  app.post("/api/v1/creators/posts/:postId/view", async (req, res) => {
+    try {
+      await storage.incrementPostView(req.params.postId);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // ============================================
+  // CREATOR STUDIO - SUBSCRIPTIONS
+  // ============================================
+  
+  // Subscribe to a creator tier - blueprint reference: javascript_stripe
+  app.post("/api/v1/creators/:stylistId/subscribe",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { tierId } = req.body;
+        const userId = req.userId!;
+        const stylistId = req.params.stylistId;
+        
+        // Get tier details
+        const tier = await storage.getCreatorTier(tierId);
+        if (!tier || tier.stylistId !== stylistId) {
+          return res.status(404).json({ error: "Tier not found" });
+        }
+        
+        // Check if already subscribed
+        const existing = await storage.getCreatorSubscription(userId, stylistId);
+        if (existing && existing.status === 'active') {
+          return res.status(400).json({ error: "Already subscribed" });
+        }
+        
+        // Get or create Stripe customer
+        const user = await storage.getUser(userId);
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+        
+        let customerId = user.stripeCustomerId;
+        if (!customerId) {
+          const customer = await stripe.customers.create({
+            email: user.email,
+            name: user.name,
+            metadata: { userId }
+          });
+          customerId = customer.id;
+        }
+        
+        // Create or get Stripe Price for this tier
+        const price = await stripe.prices.create({
+          currency: 'usd',
+          unit_amount: tier.priceCents,
+          recurring: {
+            interval: 'month',
+          },
+          product_data: {
+            name: `${tier.name} - Creator Subscription`,
+            metadata: {
+              tierId: tier.id,
+              stylistId,
+            },
+          },
+        });
+        
+        // Create Stripe subscription
+        const subscription = await stripe.subscriptions.create({
+          customer: customerId,
+          items: [{
+            price: price.id,
+          }],
+          payment_behavior: 'default_incomplete',
+          expand: ['latest_invoice.payment_intent'],
+        });
+        
+        // Calculate revenue split (80% creator, 20% platform)
+        const creatorShare = Math.floor(tier.priceCents * 0.80);
+        const platformShare = tier.priceCents - creatorShare;
+        
+        // Save subscription in database
+        const periodEnd = new Date();
+        periodEnd.setMonth(periodEnd.getMonth() + 1);
+        
+        const dbSubscription = await storage.createCreatorSubscription({
+          userId,
+          stylistId,
+          tierId,
+          status: 'active',
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId: customerId,
+          currentPeriodStart: new Date(),
+          currentPeriodEnd: periodEnd,
+        });
+        
+        res.json({
+          subscription: dbSubscription,
+          clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
+        });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get user's creator subscriptions
+  app.get("/api/v1/my-subscriptions",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const subscriptions = await storage.getUserCreatorSubscriptions(req.userId!);
+        res.json(subscriptions);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Cancel subscription
+  app.post("/api/v1/subscriptions/:subscriptionId/cancel",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const subscription = await storage.getCreatorSubscription(req.userId!, req.params.subscriptionId);
+        if (!subscription) {
+          return res.status(404).json({ error: "Subscription not found" });
+        }
+        
+        // Cancel in Stripe
+        if (subscription.stripeSubscriptionId) {
+          await stripe.subscriptions.cancel(subscription.stripeSubscriptionId);
+        }
+        
+        // Update in database
+        const updated = await storage.cancelCreatorSubscription(subscription.id);
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // CREATOR STUDIO - TIPS/DONATIONS
+  // ============================================
+  
+  // Send a tip to creator - blueprint reference: javascript_stripe
+  app.post("/api/v1/creators/:stylistId/tip",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { amountCents, message } = req.body;
+        const userId = req.userId!;
+        const stylistId = req.params.stylistId;
+        
+        if (!amountCents || amountCents < 100) {
+          return res.status(400).json({ error: "Minimum tip is $1.00" });
+        }
+        
+        // Create Stripe PaymentIntent
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amountCents,
+          currency: 'usd',
+          metadata: { userId, stylistId, type: 'tip' }
+        });
+        
+        // Save tip in database
+        const tip = await storage.createCreatorTip({
+          userId,
+          stylistId,
+          amountCents,
+          message,
+          stripePaymentIntentId: paymentIntent.id,
+        });
+        
+        res.json({
+          tip,
+          clientSecret: paymentIntent.client_secret,
+        });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get tips for a creator
+  app.get("/api/v1/creators/:stylistId/tips",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        // Verify ownership
+        const profile = await storage.getStylistProfileById(req.params.stylistId);
+        if (!profile || profile.userId !== req.userId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        const tips = await storage.getCreatorTips(req.params.stylistId);
+        res.json(tips);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // CREATOR STUDIO - CUSTOM REQUESTS (RFQ)
+  // ============================================
+  
+  // Create a custom request
+  app.post("/api/v1/creators/:stylistId/request",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const requestData = insertCreatorCustomRequestSchema.parse({
+          ...req.body,
+          userId: req.userId,
+          stylistId: req.params.stylistId
+        });
+        
+        const request = await storage.createCreatorCustomRequest(requestData);
+        res.json(request);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get custom requests for a creator
+  app.get("/api/v1/creators/:stylistId/requests",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        // Verify ownership
+        const profile = await storage.getStylistProfileById(req.params.stylistId);
+        if (!profile || profile.userId !== req.userId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        const requests = await storage.getCreatorCustomRequests(req.params.stylistId);
+        res.json(requests);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get user's custom requests
+  app.get("/api/v1/my-requests",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const requests = await storage.getUserCustomRequestsCreator(req.userId!);
+        res.json(requests);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get a single custom request
+  app.get("/api/v1/requests/:requestId",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const request = await storage.getCreatorCustomRequest(req.params.requestId);
+        if (!request) {
+          return res.status(404).json({ error: "Request not found" });
+        }
+        
+        // Verify access (owner or creator)
+        const profile = await storage.getStylistProfileById(request.stylistId);
+        if (request.userId !== req.userId && profile?.userId !== req.userId) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        res.json(request);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Update custom request (quote, accept, complete)
+  app.patch("/api/v1/requests/:requestId",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const request = await storage.getCreatorCustomRequest(req.params.requestId);
+        if (!request) {
+          return res.status(404).json({ error: "Request not found" });
+        }
+        
+        // Verify access
+        const profile = await storage.getStylistProfileById(request.stylistId);
+        const isCreator = profile?.userId === req.userId;
+        const isRequester = request.userId === req.userId;
+        
+        if (!isCreator && !isRequester) {
+          return res.status(403).json({ error: "Unauthorized" });
+        }
+        
+        // Handle different status transitions
+        const updates: any = { ...req.body };
+        
+        // Creator submitting quote
+        if (isCreator && req.body.quotePriceCents) {
+          updates.status = 'quoted';
+          updates.quotedAt = new Date();
+        }
+        
+        // Customer accepting quote
+        if (isRequester && req.body.status === 'accepted') {
+          // Create Stripe PaymentIntent for 10% platform fee
+          const platformFee = Math.floor(request.quotePriceCents! * 0.10);
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount: request.quotePriceCents!,
+            currency: 'usd',
+            metadata: { requestId: request.id, type: 'custom_request' }
+          });
+          
+          updates.acceptedAt = new Date();
+          updates.stripePaymentIntentId = paymentIntent.id;
+        }
+        
+        const updated = await storage.updateCreatorCustomRequest(req.params.requestId, updates);
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // CREATOR STUDIO - MODERATION
+  // ============================================
+  
+  // Flag content for moderation
+  app.post("/api/v1/moderation/flag",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const flagData = insertModerationFlagSchema.parse({
+          ...req.body,
+          reporterId: req.userId
+        });
+        
+        const flag = await storage.createModerationFlag(flagData);
+        res.json(flag);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get moderation flags (admin only)
+  app.get("/api/v1/admin/moderation/flags",
+    requireAdmin as any,
+    async (req, res) => {
+      try {
+        const status = req.query.status as string | undefined;
+        const flags = await storage.getModerationFlags(status);
+        res.json(flags);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Review moderation flag (admin only)
+  app.patch("/api/v1/admin/moderation/flags/:flagId",
+    requireAdmin as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const updated = await storage.updateModerationFlag(req.params.flagId, {
+          ...req.body,
+          reviewerId: req.userId,
+          reviewedAt: new Date()
+        });
         res.json(updated);
       } catch (error: any) {
         res.status(500).json({ error: error.message });

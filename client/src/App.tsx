@@ -42,10 +42,12 @@ import SupplierRequests from "@/pages/supplier/requests";
 import SupplierAiTraining from "@/pages/supplier/ai-training";
 import SupplierAiPortfolio from "@/pages/supplier/ai-portfolio";
 import SupplierAiPreview from "@/pages/supplier/ai-preview";
+import SupplierStudio from "@/pages/supplier/studio";
 import { SupplierLayout } from "@/pages/supplier/layout";
 
 // Stylist Public Profile
 import StylistProfile from "@/pages/stylist-profile";
+import CreatorProfile from "@/pages/creator-profile";
 
 function Router() {
   return (
@@ -107,9 +109,15 @@ function Router() {
       <Route path="/supplier/ai-preview">
         <SupplierLayout><SupplierAiPreview /></SupplierLayout>
       </Route>
+      <Route path="/supplier/studio">
+        <SupplierLayout><SupplierStudio /></SupplierLayout>
+      </Route>
       
       {/* Stylist Public Profile */}
       <Route path="/stylists/:handle" component={StylistProfile} />
+      
+      {/* Creator Profile */}
+      <Route path="/creator/:handle" component={CreatorProfile} />
       
       <Route component={NotFound} />
     </Switch>
