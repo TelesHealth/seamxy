@@ -49,6 +49,7 @@ import { SupplierLayout } from "@/pages/supplier/layout";
 import StylistProfile from "@/pages/stylist-profile";
 import CreatorProfile from "@/pages/creator-profile";
 import CreatorsDirectory from "@/pages/creators-directory";
+import ForCreators from "@/pages/for-creators";
 
 function Router() {
   return (
@@ -118,6 +119,7 @@ function Router() {
       <Route path="/stylists/:handle" component={StylistProfile} />
       
       {/* Creator Studio */}
+      <Route path="/for-creators" component={ForCreators} />
       <Route path="/creators" component={CreatorsDirectory} />
       <Route path="/creator/:handle" component={CreatorProfile} />
       

@@ -12,6 +12,7 @@ export function Header() {
     { href: "/", label: "Home", icon: null },
     { href: "/shop", label: "Shop", icon: <ShoppingBag className="w-4 h-4 mr-2" /> },
     { href: "/makers", label: "Makers", icon: <Scissors className="w-4 h-4 mr-2" /> },
+    { href: "/for-creators", label: "For Creators", icon: <Sparkles className="w-4 h-4 mr-2" /> },
     { href: "/my-requests", label: "My Requests", icon: <Package className="w-4 h-4 mr-2" /> },
     { href: "/ai-stylist", label: "AI Stylist", icon: <Sparkles className="w-4 h-4 mr-2" /> },
   ];
