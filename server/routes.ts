@@ -1979,19 +1979,20 @@ export function registerRoutes(app: Express) {
         });
       }
       
-      // Generate AI response
-      const { generateAiStylistResponse } = await import("./services/openai");
+      // Generate AI response with product recommendations
+      const { generateAIStylistResponseWithProducts } = await import("./services/ai-stylist-with-products");
       
       const user = await storage.getUser(userId);
       const measurements = await storage.getUserMeasurements(userId);
       
-      const aiResponse = await generateAiStylistResponse(
+      const aiResponseWithProducts = await generateAIStylistResponseWithProducts(
         prompt.systemPrompt,
         {
           measurements: measurements || {},
           styleTags: user?.styleTags || [],
           budgetMin: user?.budgetMin || 0,
-          budgetMax: user?.budgetMax || 500
+          budgetMax: user?.budgetMax || 500,
+          demographic: user?.demographic
         },
         [], // Empty chat history for now - TODO: add session management
         message
@@ -2008,7 +2009,8 @@ export function registerRoutes(app: Express) {
         
         res.json({
           role: "assistant",
-          content: aiResponse,
+          content: aiResponseWithProducts.message,
+          productRecommendations: aiResponseWithProducts.productRecommendations,
           timestamp: new Date(),
           creditsRemaining: deduction.newCreditsRemaining,
           creditMessage: deduction.message
@@ -2016,7 +2018,8 @@ export function registerRoutes(app: Express) {
       } else {
         res.json({
           role: "assistant",
-          content: aiResponse,
+          content: aiResponseWithProducts.message,
+          productRecommendations: aiResponseWithProducts.productRecommendations,
           timestamp: new Date(),
           isSubscribed: true,
           subscriptionType: creatorSubscription ? "creator_studio" : "ai_subscription"

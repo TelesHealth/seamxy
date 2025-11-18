@@ -1,4 +1,5 @@
 import { RetailerClient, RetailerProduct, SearchCriteria } from './types';
+import { searchMockProducts, getMockProductById } from './mock-products';
 
 /**
  * Amazon Product Advertising API 5.0 Client
@@ -9,7 +10,7 @@ import { RetailerClient, RetailerProduct, SearchCriteria } from './types';
  * 3. Associate Tag (Partner ID)
  * 4. Access Key & Secret Key
  * 
- * For MVP, we'll return mock data that simulates the API structure.
+ * For MVP, we return mock data that simulates the API structure.
  * In production, integrate the official amazon-paapi SDK.
  */
 
@@ -21,47 +22,50 @@ export class AmazonClient implements RetailerClient {
   private isEnabled: boolean;
 
   constructor(config: { partnerTag?: string; accessKey?: string; secretKey?: string; isActive?: boolean }) {
-    this.partnerTag = config.partnerTag || '';
+    this.partnerTag = config.partnerTag || 'seamxy-20'; // Default demo tag
     this.accessKey = config.accessKey || '';
     this.secretKey = config.secretKey || '';
-    this.isEnabled = config.isActive ?? false;
+    this.isEnabled = config.isActive ?? true; // Enable by default for demo
   }
 
   isAvailable(): boolean {
-    return this.isEnabled && !!this.partnerTag && !!this.accessKey && !!this.secretKey;
+    // Return true if enabled OR if we're in demo mode (no keys configured)
+    return this.isEnabled;
   }
 
   async search(criteria: SearchCriteria): Promise<RetailerProduct[]> {
-    if (!this.isAvailable()) {
-      console.warn('Amazon API not configured. Returning empty results.');
+    // If API keys are configured, use real API (TODO: implement)
+    if (this.accessKey && this.secretKey) {
+      console.log('Amazon API keys configured - would call real API');
+      // TODO: Implement actual Amazon PAA5 API call
       return [];
     }
 
-    // TODO: Implement actual Amazon PAA5 API call
-    // This requires:
-    // 1. Install amazon-paapi package
-    // 2. Create signed request with AWS Signature V4
-    // 3. Call SearchItems operation
-    // 4. Parse and normalize response
+    // Otherwise, return mock data for demo
+    console.log('🔧 Amazon: Using mock data (API keys not configured)');
+    const mockResults = searchMockProducts({
+      query: criteria.query,
+      category: criteria.category,
+      minPrice: criteria.minPrice,
+      maxPrice: criteria.maxPrice,
+      limit: criteria.limit,
+    });
 
-    console.log('Amazon search criteria:', criteria);
-    
-    // For now, return empty results
-    // In production, this would call the actual Amazon API
-    return [];
+    // Filter to only Amazon products
+    return mockResults.filter(p => p.retailer === 'amazon');
   }
 
   async getProduct(asin: string): Promise<RetailerProduct | null> {
-    if (!this.isAvailable()) {
+    // If API keys are configured, use real API (TODO: implement)
+    if (this.accessKey && this.secretKey) {
+      console.log('Amazon API keys configured - would call real API');
+      // TODO: Implement actual Amazon PAA5 API call
       return null;
     }
 
-    // TODO: Implement actual Amazon PAA5 API call
-    // This requires GetItems operation with the ASIN
-
-    console.log('Amazon get product:', asin);
-    
-    return null;
+    // Otherwise, return mock data
+    const product = getMockProductById(asin);
+    return product?.retailer === 'amazon' ? product : null;
   }
 
   /**

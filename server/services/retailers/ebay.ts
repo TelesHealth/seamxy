@@ -1,4 +1,5 @@
 import { RetailerClient, RetailerProduct, SearchCriteria } from './types';
+import { searchMockProducts, getMockProductById } from './mock-products';
 
 /**
  * eBay Browse API Client
@@ -19,44 +20,50 @@ export class EbayClient implements RetailerClient {
   constructor(config: { clientId?: string; clientSecret?: string; partnerNetworkId?: string; isActive?: boolean }) {
     this.clientId = config.clientId || '';
     this.clientSecret = config.clientSecret || '';
-    this.partnerNetworkId = config.partnerNetworkId || '';
-    this.isEnabled = config.isActive ?? false;
+    this.partnerNetworkId = config.partnerNetworkId || '9';
+    this.isEnabled = config.isActive ?? true; // Enable by default for demo
   }
 
   isAvailable(): boolean {
-    return this.isEnabled && !!this.clientId && !!this.clientSecret;
+    // Return true if enabled OR if we're in demo mode
+    return this.isEnabled;
   }
 
   async search(criteria: SearchCriteria): Promise<RetailerProduct[]> {
-    if (!this.isAvailable()) {
-      console.warn('eBay API not configured. Returning empty results.');
+    // If API keys are configured, use real API (TODO: implement)
+    if (this.clientId && this.clientSecret) {
+      console.log('eBay API keys configured - would call real API');
+      await this.ensureToken();
+      // TODO: Implement actual eBay Browse API call
       return [];
     }
 
-    await this.ensureToken();
+    // Otherwise, return mock data for demo
+    console.log('🔧 eBay: Using mock data (API keys not configured)');
+    const mockResults = searchMockProducts({
+      query: criteria.query,
+      category: criteria.category,
+      minPrice: criteria.minPrice,
+      maxPrice: criteria.maxPrice,
+      limit: criteria.limit,
+    });
 
-    // TODO: Implement actual eBay Browse API call
-    // Endpoint: https://api.ebay.com/buy/browse/v1/item_summary/search
-    // Query params: q, category_ids, filter (price, itemLocationCountry), limit
-
-    console.log('eBay search criteria:', criteria);
-
-    return [];
+    // Filter to only eBay products
+    return mockResults.filter(p => p.retailer === 'ebay');
   }
 
   async getProduct(itemId: string): Promise<RetailerProduct | null> {
-    if (!this.isAvailable()) {
+    // If API keys are configured, use real API (TODO: implement)
+    if (this.clientId && this.clientSecret) {
+      console.log('eBay API keys configured - would call real API');
+      await this.ensureToken();
+      // TODO: Implement actual eBay Browse API call
       return null;
     }
 
-    await this.ensureToken();
-
-    // TODO: Implement actual eBay Browse API call
-    // Endpoint: https://api.ebay.com/buy/browse/v1/item/{item_id}
-
-    console.log('eBay get product:', itemId);
-
-    return null;
+    // Otherwise, return mock data
+    const product = getMockProductById(itemId);
+    return product?.retailer === 'ebay' ? product : null;
   }
 
   /**

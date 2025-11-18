@@ -10,10 +10,11 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { MessageCircle, Star, MapPin, Calendar, Send, Sparkles, Crown, Zap } from "lucide-react";
+import { MessageCircle, Star, MapPin, Calendar, Send, Sparkles, Crown, Zap, ShoppingBag } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCustomerAuth } from "@/lib/customer-auth";
+import { AffiliateProductCard } from "@/components/affiliate-product-card";
 
 interface StylistProfile {
   id: string;
@@ -30,6 +31,21 @@ interface StylistProfile {
   portfolioImages: string[];
 }
 
+interface RetailerProduct {
+  externalId: string;
+  retailer: 'amazon' | 'ebay' | 'rakuten';
+  title: string;
+  brand?: string;
+  currentPrice: number;
+  originalPrice?: number;
+  currency: string;
+  imageUrl?: string;
+  productUrl: string;
+  affiliateUrl?: string;
+  shippingCost?: number;
+  deliveryDays?: number;
+}
+
 interface Message {
   role: "user" | "assistant";
   content: string;
@@ -37,6 +53,7 @@ interface Message {
   creditsRemaining?: number;
   creditMessage?: string;
   isSubscribed?: boolean;
+  productRecommendations?: RetailerProduct[];
 }
 
 interface CreditInfo {
@@ -83,7 +100,8 @@ export default function StylistProfile() {
         timestamp: new Date(data.timestamp),
         creditsRemaining: data.creditsRemaining,
         creditMessage: data.creditMessage,
-        isSubscribed: data.isSubscribed
+        isSubscribed: data.isSubscribed,
+        productRecommendations: data.productRecommendations || []
       }]);
       refetchCredits();
     },
@@ -332,31 +350,52 @@ export default function StylistProfile() {
                       </p>
                     </div>
                   ) : (
-                    <div className="space-y-4" data-testid="chat-messages">
+                    <div className="space-y-6" data-testid="chat-messages">
                       {messages.map((msg, idx) => (
-                        <div key={idx} className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          {msg.role === 'assistant' && (
-                            <Avatar className="w-8 h-8">
-                              <AvatarImage src={stylist.avatar} />
-                              <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                                AI
-                              </AvatarFallback>
-                            </Avatar>
-                          )}
-                          
-                          <div className={`max-w-[80%] rounded-lg p-3 ${
-                            msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
-                          }`}>
-                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                            <div className="flex items-center gap-2 mt-1 text-xs opacity-70">
-                              <span>{msg.timestamp.toLocaleTimeString()}</span>
-                              {msg.creditMessage && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {msg.creditsRemaining} left
-                                </Badge>
-                              )}
+                        <div key={idx}>
+                          <div className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            {msg.role === 'assistant' && (
+                              <Avatar className="w-8 h-8">
+                                <AvatarImage src={stylist.avatar} />
+                                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                  AI
+                                </AvatarFallback>
+                              </Avatar>
+                            )}
+                            
+                            <div className={`max-w-[80%] rounded-lg p-3 ${
+                              msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'
+                            }`}>
+                              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                              <div className="flex items-center gap-2 mt-1 text-xs opacity-70">
+                                <span>{msg.timestamp.toLocaleTimeString()}</span>
+                                {msg.creditMessage && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {msg.creditsRemaining} left
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
+
+                          {/* Product Recommendations */}
+                          {msg.role === 'assistant' && msg.productRecommendations && msg.productRecommendations.length > 0 && (
+                            <div className="ml-11 mt-3 space-y-3">
+                              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                <ShoppingBag className="w-4 h-4" />
+                                <span>Recommended Products ({msg.productRecommendations.length})</span>
+                              </div>
+                              <div className="space-y-2">
+                                {msg.productRecommendations.map((product) => (
+                                  <AffiliateProductCard
+                                    key={product.externalId}
+                                    {...product}
+                                    userId={userId}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
                       

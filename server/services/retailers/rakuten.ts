@@ -1,4 +1,5 @@
 import { RetailerClient, RetailerProduct, SearchCriteria } from './types';
+import { searchMockProducts, getMockProductById } from './mock-products';
 
 /**
  * Rakuten Advertising API Client
@@ -17,39 +18,47 @@ export class RakutenClient implements RetailerClient {
   constructor(config: { apiKey?: string; affiliateId?: string; isActive?: boolean }) {
     this.apiKey = config.apiKey || '';
     this.affiliateId = config.affiliateId || '';
-    this.isEnabled = config.isActive ?? false;
+    this.isEnabled = config.isActive ?? true; // Enable by default for demo
   }
 
   isAvailable(): boolean {
-    return this.isEnabled && !!this.apiKey;
+    // Return true if enabled OR if we're in demo mode
+    return this.isEnabled;
   }
 
   async search(criteria: SearchCriteria): Promise<RetailerProduct[]> {
-    if (!this.isAvailable()) {
-      console.warn('Rakuten API not configured. Returning empty results.');
+    // If API key is configured, use real API (TODO: implement)
+    if (this.apiKey) {
+      console.log('Rakuten API key configured - would call real API');
+      // TODO: Implement actual Rakuten API call
       return [];
     }
 
-    // TODO: Implement actual Rakuten API call
-    // Endpoint: https://api.rakuten.net/rws/3.0/rest?developerId={apiKey}&operation=ItemSearch&keyword={query}
-    // Additional params: genreId, minPrice, maxPrice, sort, hits
+    // Otherwise, return mock data for demo
+    console.log('🔧 Rakuten: Using mock data (API key not configured)');
+    const mockResults = searchMockProducts({
+      query: criteria.query,
+      category: criteria.category,
+      minPrice: criteria.minPrice,
+      maxPrice: criteria.maxPrice,
+      limit: criteria.limit,
+    });
 
-    console.log('Rakuten search criteria:', criteria);
-
-    return [];
+    // Filter to only Rakuten products
+    return mockResults.filter(p => p.retailer === 'rakuten');
   }
 
   async getProduct(itemCode: string): Promise<RetailerProduct | null> {
-    if (!this.isAvailable()) {
+    // If API key is configured, use real API (TODO: implement)
+    if (this.apiKey) {
+      console.log('Rakuten API key configured - would call real API');
+      // TODO: Implement actual Rakuten API call
       return null;
     }
 
-    // TODO: Implement actual Rakuten API call
-    // Endpoint: https://api.rakuten.net/rws/3.0/rest?developerId={apiKey}&operation=ItemGet&itemCode={itemCode}
-
-    console.log('Rakuten get product:', itemCode);
-
-    return null;
+    // Otherwise, return mock data
+    const product = getMockProductById(itemCode);
+    return product?.retailer === 'rakuten' ? product : null;
   }
 
   private normalizeProduct(rakutenProduct: any): RetailerProduct {
