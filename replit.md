@@ -58,6 +58,16 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 - **Smart Price Compare**: Real-time comparison across Amazon, eBay, Rakuten with AI product matching.
 - **Wedding & Prom Concierge**: AI-powered conversational stylist for event shopping, combining retail with custom tailor quotes.
 - **AI Stylist Onboarding System**: Allows stylists to create personalized AI clones via training questions, generating custom OpenAI prompts reflecting their style and expertise. Offers free and premium tiers with revenue sharing.
+- **AI-Powered Affiliate Product Recommendations** (NEW): AI stylists now recommend shoppable products during conversations:
+  - **OpenAI Function Calling**: AI autonomously decides when to search for products based on user requests
+  - **Multi-Retailer Search**: Searches mock product databases for Amazon, eBay, and Rakuten
+  - **Smart Product Matching**: AI calls `search_products` function with query, category, price range based on user budget
+  - **Inline Shopping**: Product cards display below AI messages with images, prices, retailer badges, and "Shop Now" buttons
+  - **Affiliate Tracking**: Clicks tracked via `POST /api/v1/affiliate-click` for commission attribution
+  - **Revenue Stream**: 4-10% commission on purchases through affiliate links
+  - **Components**: `AffiliateProductCard` with retailer color-coding, discount badges, shipping info
+  - **Mock Data**: 15+ realistic products across blazers, shirts, pants, shoes, dresses, accessories for testing
+  - **Implementation**: `server/services/ai-stylist-with-products.ts`, `client/src/components/affiliate-product-card.tsx`
 - **Creator Studio** ("OnlyFans for Fashion"): Transforms platform into a creator monetization ecosystem where stylists can:
   - Create subscription tiers ($4.99-$14.99/mo) with custom features and benefits
   - Post exclusive content (text, images, videos, portfolio items) for subscribers
@@ -86,10 +96,11 @@ For integration testing and development, use these seeded test accounts:
 
 - **Supplier Account**: `supplier@example.com` / `password123`
 - **Designer Account**: `designer@seamxy.test` / `password123` (Pro tier, AI Stylist Onboarding enabled)
+- **Stylist Profile**: `isabella-luxe` at `/stylists/isabella-luxe` (Isabella Rodriguez, luxury fashion consultant with AI training and product recommendations)
 - **Customer Account**: `customer@example.com` / `password123`
 - **Admin Account**: `admin@example.com` / `password123`
 
-These accounts are automatically created by the seed script (`server/seed.ts`) on first run.
+These accounts are automatically created by the seed script (`server/seed.ts`) on first run. The `isabella-luxe` stylist profile was created for testing AI chat with product recommendations.
 
 ### AI Stylist Onboarding Flow
 The complete supplier onboarding flow has been tested end-to-end:

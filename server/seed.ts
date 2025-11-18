@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { aiPersonas, subscriptionPlans, pricingConfigs, products, makers, users, measurements, supplierAccounts } from "@shared/schema";
+import { aiPersonas, subscriptionPlans, pricingConfigs, products, makers, users, measurements, supplierAccounts, stylistProfiles, aiTrainingResponses, aiStylistPrompts } from "@shared/schema";
 import bcrypt from "bcrypt";
 
 export async function seedDatabase() {
@@ -622,6 +622,76 @@ Always ask clarifying questions to understand their vision before making recomme
 
     if (designerAccount) {
       console.log("✅ Designer account created: designer@seamxy.test / password123");
+      
+      // Create stylist profile with AI training
+      const [stylistProfile] = await db.insert(stylistProfiles).values({
+        userId: designerAccount.id,
+        handle: "isabella-luxe",
+        bio: "Luxury fashion consultant specializing in timeless elegance and professional wardrobes. 10+ years of experience styling executives and creative professionals.",
+        specialties: ["Professional Wear", "Luxury Fashion", "Wardrobe Planning"],
+        yearsExperience: 10,
+        hourlyRate: 150,
+        location: "New York, NY",
+        avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80",
+        portfolioImages: [
+          "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80",
+          "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80"
+        ],
+        requiresSubscription: false,
+        supplierId: designerAccount.id
+      }).onConflictDoNothing().returning();
+
+      if (stylistProfile) {
+        // Create AI training responses
+        await db.insert(aiTrainingResponses).values([
+          {
+            supplierId: designerAccount.id,
+            question: "What is your styling philosophy?",
+            response: "I believe in investment dressing - choosing timeless, high-quality pieces that elevate your wardrobe for years to come. My approach blends classic elegance with modern sophistication.",
+            section: "style_philosophy"
+          },
+          {
+            supplierId: designerAccount.id,
+            question: "How do you work with clients?",
+            response: "I start by understanding my client's lifestyle, career goals, and personal style preferences. Then I curate a wardrobe that makes them feel confident and polished every day.",
+            section: "client_approach"
+          },
+          {
+            supplierId: designerAccount.id,
+            question: "What are your specialties?",
+            response: "Professional wardrobes, luxury brands, tailored pieces, and creating cohesive capsule wardrobes. I have deep expertise with brands like Theory, Armani, and Ralph Lauren.",
+            section: "expertise"
+          }
+        ]).onConflictDoNothing();
+
+        // Create AI stylist prompt
+        await db.insert(aiStylistPrompts).values({
+          stylistId: stylistProfile.id,
+          systemPrompt: `You are Isabella Rodriguez from Luxe Design Studio, a luxury fashion consultant with 10+ years of experience.
+
+STYLING PHILOSOPHY:
+- Investment dressing with timeless, high-quality pieces
+- Blend classic elegance with modern sophistication
+- Focus on professional wardrobes and luxury brands
+
+CLIENT APPROACH:
+- Understand lifestyle, career goals, and personal preferences
+- Create confidence through polished, cohesive wardrobes
+- Expert with Theory, Armani, Ralph Lauren, and luxury brands
+
+SPECIALTIES:
+- Professional and business attire
+- Luxury fashion curation
+- Tailored pieces and fit
+- Capsule wardrobe creation
+
+TONE: Sophisticated, warm, knowledgeable, encouraging
+
+When recommending products, prioritize quality over quantity and suggest classic pieces that will last.`
+        }).onConflictDoNothing();
+
+        console.log("✅ Designer stylist profile created with handle: isabella-luxe");
+      }
     } else {
       console.log("ℹ️ Designer account already exists");
     }

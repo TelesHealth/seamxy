@@ -20,15 +20,16 @@ interface StylistProfile {
   id: string;
   userId: string;
   handle: string;
+  displayName: string;
   bio: string;
-  specialties: string[];
-  yearsExperience: number;
-  hourlyRate: number;
-  averageRating: string;
-  totalReviews: number;
+  styleSpecialties: string[];
+  avatarUrl: string;
   location: string;
-  avatar: string;
-  portfolioImages: string[];
+  portfolioImages?: string[];
+  totalReviews: number;
+  averageRating: string;
+  yearsExperience?: number;
+  hourlyRate?: number;
 }
 
 interface RetailerProduct {
@@ -183,7 +184,7 @@ export default function StylistProfile() {
         <CardContent className="relative -mt-20 pb-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
             <Avatar className="w-32 h-32 border-4 border-background shadow-lg">
-              <AvatarImage src={stylist.avatar} alt={stylist.handle} />
+              <AvatarImage src={stylist.avatarUrl} alt={stylist.handle} />
               <AvatarFallback className="text-3xl">
                 {stylist.handle.substring(0, 2).toUpperCase()}
               </AvatarFallback>
@@ -208,25 +209,29 @@ export default function StylistProfile() {
                   <MapPin className="w-4 h-4" />
                   <span>{stylist.location}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="w-4 h-4" />
-                  <span>{stylist.yearsExperience} years experience</span>
-                </div>
+                {stylist.yearsExperience && (
+                  <div className="flex items-center gap-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>{stylist.yearsExperience} years experience</span>
+                  </div>
+                )}
               </div>
               
               <p className="text-base mb-4">{stylist.bio}</p>
               
               <div className="flex flex-wrap gap-2 mb-4">
-                {stylist.specialties.map((specialty, idx) => (
+                {(stylist.styleSpecialties || []).map((specialty, idx) => (
                   <Badge key={idx} variant="secondary">{specialty}</Badge>
                 ))}
               </div>
               
               <div className="flex gap-3">
-                <Button size="lg" data-testid="button-book-consultation">
-                  Book Consultation
-                  <span className="ml-2">${stylist.hourlyRate}/hr</span>
-                </Button>
+                {stylist.hourlyRate && (
+                  <Button size="lg" data-testid="button-book-consultation">
+                    Book Consultation
+                    <span className="ml-2">${stylist.hourlyRate}/hr</span>
+                  </Button>
+                )}
                 <Button size="lg" variant="outline" onClick={() => document.getElementById('ai-chat-tab')?.click()} data-testid="button-chat-ai">
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Chat with AI
@@ -247,7 +252,7 @@ export default function StylistProfile() {
         
         <TabsContent value="portfolio" className="mt-6">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-            {stylist.portfolioImages.map((img, idx) => (
+            {(stylist.portfolioImages || []).map((img, idx) => (
               <div key={idx} className="aspect-square rounded-lg overflow-hidden bg-muted">
                 <img
                   src={img}
@@ -273,7 +278,7 @@ export default function StylistProfile() {
               <div>
                 <h3 className="font-medium mb-2">Specialties</h3>
                 <div className="flex flex-wrap gap-2">
-                  {stylist.specialties.map((specialty, idx) => (
+                  {(stylist.styleSpecialties || []).map((specialty, idx) => (
                     <Badge key={idx} variant="secondary">{specialty}</Badge>
                   ))}
                 </div>
