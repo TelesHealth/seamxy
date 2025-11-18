@@ -1262,6 +1262,31 @@ export function registerRoutes(app: Express) {
     }
   );
 
+  // Get affiliate marketing analytics for stylist
+  app.get("/api/v1/supplier/affiliate-analytics",
+    authenticateSupplier as any,
+    async (req, res) => {
+      try {
+        // For now, return mock data until we implement full affiliate tracking
+        // TODO: Implement proper affiliate analytics aggregation
+        res.json({
+          totalClicks: 0,
+          totalConversions: 0,
+          totalRevenue: "0.00",
+          conversionRate: "0.00",
+          topProducts: [],
+          clicksByRetailer: {
+            amazon: 0,
+            ebay: 0,
+            rakuten: 0
+          }
+        });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
   // ============================================
   // STYLIST PORTFOLIOS & PERSONAL AI PAGES
   // ============================================

@@ -18,6 +18,7 @@ interface AffiliateProductCardProps {
   shippingCost?: number;
   deliveryDays?: number;
   userId?: string;
+  stylistId?: string; // Track which AI stylist recommended this product
 }
 
 const retailerColors = {
@@ -46,6 +47,7 @@ export function AffiliateProductCard({
   shippingCost,
   deliveryDays,
   userId,
+  stylistId,
 }: AffiliateProductCardProps) {
   const hasDiscount = originalPrice && originalPrice > currentPrice;
   const discountPercent = hasDiscount 
@@ -58,6 +60,7 @@ export function AffiliateProductCard({
       try {
         await apiRequest('POST', '/api/v1/affiliate-click', {
           userId,
+          stylistId, // Track which AI stylist recommended this product
           externalProductId: externalId,
           retailer,
           affiliateUrl: affiliateUrl || productUrl,

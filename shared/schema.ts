@@ -561,6 +561,7 @@ export const priceAlerts = pgTable("price_alerts", {
 export const affiliateClicks = pgTable("affiliate_clicks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  stylistId: varchar("stylist_id").references(() => stylistProfiles.id, { onDelete: "set null" }), // Track which AI stylist recommended this product
   externalProductId: varchar("external_product_id").notNull().references(() => externalProducts.id, { onDelete: "cascade" }),
   retailer: retailerEnum("retailer").notNull(),
   clickedUrl: text("clicked_url").notNull(),

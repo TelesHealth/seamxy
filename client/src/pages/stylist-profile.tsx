@@ -396,6 +396,7 @@ export default function StylistProfile() {
                                     key={product.externalId}
                                     {...product}
                                     userId={userId}
+                                    stylistId={stylist.id}
                                   />
                                 ))}
                               </div>
