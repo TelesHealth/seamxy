@@ -1262,9 +1262,10 @@ export function registerRoutes(app: Express) {
     }
   );
 
-  // Get affiliate marketing analytics for stylist
+  // Get affiliate marketing analytics for stylist (designers only)
   app.get("/api/v1/supplier/affiliate-analytics",
     authenticateSupplier as any,
+    requireSupplierRole('designer') as any,
     async (req, res) => {
       try {
         // For now, return mock data until we implement full affiliate tracking
