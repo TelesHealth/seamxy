@@ -1,6 +1,8 @@
 import { useSupplierAuth } from '@/lib/supplier-auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Package, ShoppingCart, MessageSquare, TrendingUp, DollarSign, Users, MousePointerClick, CheckCircle2 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Package, ShoppingCart, MessageSquare, TrendingUp, DollarSign, Users, MousePointerClick, CheckCircle2, ExternalLink } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 
 export default function SupplierDashboard() {
@@ -195,6 +197,79 @@ export default function SupplierDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Top Performing Products Table */}
+          {affiliateAnalytics.topProducts && affiliateAnalytics.topProducts.length > 0 && (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Top Recommended Products</CardTitle>
+                <CardDescription>
+                  Your AI stylist's most clicked product recommendations
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Product</TableHead>
+                      <TableHead>Retailer</TableHead>
+                      <TableHead className="text-right">Price</TableHead>
+                      <TableHead className="text-right">Clicks</TableHead>
+                      <TableHead className="text-right">Conversions</TableHead>
+                      <TableHead className="text-right">CVR</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {affiliateAnalytics.topProducts.map((product: any) => (
+                      <TableRow key={product.id} data-testid={`row-product-${product.id}`}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            {product.imageUrl && (
+                              <img 
+                                src={product.imageUrl} 
+                                alt={product.name}
+                                className="w-10 h-10 rounded-md object-cover"
+                              />
+                            )}
+                            <div>
+                              <div className="line-clamp-1">{product.name}</div>
+                              {product.category && (
+                                <div className="text-xs text-muted-foreground">
+                                  {product.category}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={
+                            product.retailer === 'amazon' ? 'border-orange-500 text-orange-700' :
+                            product.retailer === 'ebay' ? 'border-blue-500 text-blue-700' :
+                            product.retailer === 'rakuten' ? 'border-red-500 text-red-700' :
+                            ''
+                          }>
+                            {product.retailer}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ${product.priceCents ? (product.priceCents / 100).toFixed(2) : '0.00'}
+                        </TableCell>
+                        <TableCell className="text-right" data-testid={`text-clicks-${product.id}`}>
+                          {product.clicks || 0}
+                        </TableCell>
+                        <TableCell className="text-right" data-testid={`text-conversions-${product.id}`}>
+                          {product.conversions || 0}
+                        </TableCell>
+                        <TableCell className="text-right" data-testid={`text-cvr-${product.id}`}>
+                          {product.conversionRate ? product.conversionRate.toFixed(1) : '0.0'}%
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
 
