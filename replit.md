@@ -58,7 +58,7 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 - **Smart Price Compare**: Real-time comparison across Amazon, eBay, Rakuten with AI product matching.
 - **Wedding & Prom Concierge**: AI-powered conversational stylist for event shopping, combining retail with custom tailor quotes.
 - **AI Stylist Onboarding System**: Allows stylists to create personalized AI clones via training questions, generating custom OpenAI prompts reflecting their style and expertise. Offers free and premium tiers with revenue sharing.
-- **AI-Powered Affiliate Product Recommendations** (NEW): AI stylists now recommend shoppable products during conversations:
+- **AI-Powered Affiliate Product Recommendations**: AI stylists now recommend shoppable products during conversations:
   - **OpenAI Function Calling**: AI autonomously decides when to search for products based on user requests
   - **Multi-Retailer Search**: Searches mock product databases for Amazon, eBay, and Rakuten
   - **Smart Product Matching**: AI calls `search_products` function with query, category, price range based on user budget
@@ -68,6 +68,18 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
   - **Components**: `AffiliateProductCard` with retailer color-coding, discount badges, shipping info
   - **Mock Data**: 15+ realistic products across blazers, shirts, pants, shoes, dresses, accessories for testing
   - **Implementation**: `server/services/ai-stylist-with-products.ts`, `client/src/components/affiliate-product-card.tsx`
+- **Affiliate Marketing Analytics Dashboard**: Creator Studio dashboard now includes comprehensive affiliate performance tracking for designers:
+  - **API Endpoint**: `GET /api/v1/supplier/affiliate-analytics` (designer-only access with role-based authentication)
+  - **Key Metrics Display**:
+    - Total Clicks: Product recommendations clicked by users
+    - Conversions: Purchases completed through affiliate links
+    - Commission Revenue: Total earnings from affiliate sales (4-10% commission)
+    - Conversion Rate: Click-to-purchase conversion percentage
+  - **Product Performance Table**: Shows top recommended products with individual metrics (clicks, conversions, CVR)
+  - **Access Control**: Backend enforces designer-only access via `requireSupplierRole('designer')` middleware
+  - **UI Location**: `/supplier/dashboard` - visible only to suppliers with role="designer"
+  - **Data Flow**: React Query fetches analytics → shadcn Card components render metrics → conditional display based on supplier role
+  - **Implementation**: `server/routes.ts` (API), `client/src/pages/supplier/dashboard.tsx` (UI)
 - **Creator Studio** ("OnlyFans for Fashion"): Transforms platform into a creator monetization ecosystem where stylists can:
   - Create subscription tiers ($4.99-$14.99/mo) with custom features and benefits
   - Post exclusive content (text, images, videos, portfolio items) for subscribers
