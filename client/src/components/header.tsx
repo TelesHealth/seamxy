@@ -1,12 +1,21 @@
+import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, User, Sparkles, Shield, Scissors, Package, LogOut, LogIn, Briefcase } from "lucide-react";
+import { ShoppingBag, User, Sparkles, Shield, Scissors, Package, LogOut, LogIn, Briefcase, Menu, X } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import seamxyLogo from "@assets/Seamxy_1761527023424.png";
 import { useCustomerAuth } from "@/lib/customer-auth";
 
 export function Header() {
   const [location] = useLocation();
   const { customer, logout } = useCustomerAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
     { href: "/", label: "Home", icon: null },
@@ -16,6 +25,10 @@ export function Header() {
     { href: "/my-requests", label: "My Requests", icon: <Package className="w-4 h-4 mr-2" /> },
     { href: "/ai-stylist", label: "AI Stylist", icon: <Sparkles className="w-4 h-4 mr-2" /> },
   ];
+
+  const handleNavClick = () => {
+    setMobileMenuOpen(false);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -28,7 +41,7 @@ export function Header() {
             </span>
           </Link>
 
-          {/* Navigation */}
+          {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-1">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
@@ -44,8 +57,8 @@ export function Header() {
             ))}
           </nav>
 
-          {/* User Actions */}
-          <div className="flex items-center gap-2">
+          {/* Desktop User Actions */}
+          <div className="hidden md:flex items-center gap-2">
             <Link href="/supplier/login">
               <Button variant="ghost" size="sm" data-testid="nav-supplier">
                 <Briefcase className="w-4 h-4 mr-2" />
@@ -90,6 +103,99 @@ export function Header() {
                 </Link>
               </>
             )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" data-testid="button-mobile-menu">
+                  <Menu className="h-6 w-6" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetHeader>
+                  <SheetTitle>Menu</SheetTitle>
+                </SheetHeader>
+                <div className="flex flex-col gap-4 mt-6">
+                  {/* Mobile Navigation Links */}
+                  <div className="flex flex-col gap-2">
+                    {navItems.map((item) => (
+                      <Link key={item.href} href={item.href} onClick={handleNavClick}>
+                        <Button
+                          variant={location === item.href ? "secondary" : "ghost"}
+                          className="w-full justify-start gap-2"
+                          data-testid={`nav-mobile-${item.label.toLowerCase().replace(' ', '-')}`}
+                        >
+                          {item.icon}
+                          {item.label}
+                        </Button>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t" />
+
+                  {/* Mobile Auth & Portal Links */}
+                  <div className="flex flex-col gap-2">
+                    <Link href="/supplier/login" onClick={handleNavClick}>
+                      <Button variant="ghost" className="w-full justify-start" data-testid="nav-mobile-supplier">
+                        <Briefcase className="w-4 h-4 mr-2" />
+                        Supplier Portal
+                      </Button>
+                    </Link>
+                    <Link href="/admin/login" onClick={handleNavClick}>
+                      <Button variant="ghost" className="w-full justify-start" data-testid="nav-mobile-admin">
+                        <Shield className="w-4 h-4 mr-2" />
+                        Admin Portal
+                      </Button>
+                    </Link>
+                  </div>
+
+                  {/* Divider */}
+                  <div className="border-t" />
+
+                  {/* Mobile User Actions */}
+                  {customer ? (
+                    <div className="flex flex-col gap-2">
+                      <Link href="/onboarding" onClick={handleNavClick}>
+                        <Button variant="outline" className="w-full justify-start" data-testid="nav-mobile-profile">
+                          <User className="w-4 h-4 mr-2" />
+                          {customer.name}
+                        </Button>
+                      </Link>
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => {
+                          logout();
+                          handleNavClick();
+                        }}
+                        className="w-full justify-start"
+                        data-testid="button-mobile-logout"
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Logout
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col gap-2">
+                      <Link href="/login" onClick={handleNavClick}>
+                        <Button variant="ghost" className="w-full justify-start" data-testid="button-mobile-login">
+                          <LogIn className="w-4 h-4 mr-2" />
+                          Login
+                        </Button>
+                      </Link>
+                      <Link href="/signup" onClick={handleNavClick}>
+                        <Button variant="default" className="w-full" data-testid="button-mobile-signup">
+                          Sign Up
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </div>
