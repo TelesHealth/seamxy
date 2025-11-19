@@ -121,10 +121,11 @@ export function Header() {
                   {/* Mobile Navigation Links */}
                   <div className="flex flex-col gap-2">
                     {navItems.map((item) => (
-                      <Link key={item.href} href={item.href} onClick={handleNavClick}>
+                      <Link key={item.href} href={item.href}>
                         <Button
                           variant={location === item.href ? "secondary" : "ghost"}
                           className="w-full justify-start gap-2"
+                          onClick={handleNavClick}
                           data-testid={`nav-mobile-${item.label.toLowerCase().replace(' ', '-')}`}
                         >
                           {item.icon}
@@ -139,14 +140,14 @@ export function Header() {
 
                   {/* Mobile Auth & Portal Links */}
                   <div className="flex flex-col gap-2">
-                    <Link href="/supplier/login" onClick={handleNavClick}>
-                      <Button variant="ghost" className="w-full justify-start" data-testid="nav-mobile-supplier">
+                    <Link href="/supplier/login">
+                      <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-supplier">
                         <Briefcase className="w-4 h-4 mr-2" />
                         Supplier Portal
                       </Button>
                     </Link>
-                    <Link href="/admin/login" onClick={handleNavClick}>
-                      <Button variant="ghost" className="w-full justify-start" data-testid="nav-mobile-admin">
+                    <Link href="/admin/login">
+                      <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-admin">
                         <Shield className="w-4 h-4 mr-2" />
                         Admin Portal
                       </Button>
@@ -159,8 +160,8 @@ export function Header() {
                   {/* Mobile User Actions */}
                   {customer ? (
                     <div className="flex flex-col gap-2">
-                      <Link href="/onboarding" onClick={handleNavClick}>
-                        <Button variant="outline" className="w-full justify-start" data-testid="nav-mobile-profile">
+                      <Link href="/onboarding">
+                        <Button variant="outline" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-profile">
                           <User className="w-4 h-4 mr-2" />
                           {customer.name}
                         </Button>
@@ -180,14 +181,14 @@ export function Header() {
                     </div>
                   ) : (
                     <div className="flex flex-col gap-2">
-                      <Link href="/login" onClick={handleNavClick}>
-                        <Button variant="ghost" className="w-full justify-start" data-testid="button-mobile-login">
+                      <Link href="/login">
+                        <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="button-mobile-login">
                           <LogIn className="w-4 h-4 mr-2" />
                           Login
                         </Button>
                       </Link>
-                      <Link href="/signup" onClick={handleNavClick}>
-                        <Button variant="default" className="w-full" data-testid="button-mobile-signup">
+                      <Link href="/signup">
+                        <Button variant="default" className="w-full" onClick={handleNavClick} data-testid="button-mobile-signup">
                           Sign Up
                         </Button>
                       </Link>
