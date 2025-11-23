@@ -630,6 +630,89 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(supplierAccounts).where(eq(supplierAccounts.tier, tier as any));
   }
 
+  async getCreatorsWithStats(): Promise<any[]> {
+    // Fetch all suppliers with role="designer"
+    const creators = await db
+      .select()
+      .from(supplierAccounts)
+      .where(eq(supplierAccounts.role, 'designer'));
+
+    // Fetch stylist profiles for these creators
+    const creatorIds = creators.map((c: SupplierAccount) => c.id);
+    const stylistProfilesData = creatorIds.length > 0
+      ? await db
+          .select()
+          .from(stylistProfiles)
+          .where(sql`${stylistProfiles.supplierId} = ANY(${creatorIds})`)
+      : [];
+
+    // Fetch aggregated stats for each creator
+    const creatorStats = await Promise.all(
+      creators.map(async (creator: SupplierAccount) => {
+        const profile = stylistProfilesData.find((p: any) => p.supplierId === creator.id);
+        
+        if (!profile) {
+          return {
+            ...creator,
+            stylistProfile: null,
+            stats: {
+              subscribers: 0,
+              totalRevenue: 0,
+              posts: 0,
+              totalViews: 0,
+            },
+          };
+        }
+
+        // Count active subscriptions
+        const [subResult] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(creatorSubscriptions)
+          .where(
+            and(
+              eq(creatorSubscriptions.stylistId, profile.id),
+              eq(creatorSubscriptions.status, 'active')
+            )
+          );
+        const subscriptionCount = subResult?.count || 0;
+
+        // Sum total tips revenue
+        const [tipsResult] = await db
+          .select({ sum: sql<number>`COALESCE(SUM(amount_cents), 0)::int` })
+          .from(creatorTips)
+          .where(eq(creatorTips.stylistId, profile.id));
+        const totalTips = tipsResult?.sum || 0;
+
+        // Count total posts
+        const [postsResult] = await db
+          .select({ count: sql<number>`count(*)::int` })
+          .from(creatorPosts)
+          .where(eq(creatorPosts.stylistId, profile.id));
+        const postCount = postsResult?.count || 0;
+
+        // Count total views across all posts
+        const [viewsResult] = await db
+          .select({ sum: sql<number>`COALESCE(SUM(view_count), 0)::int` })
+          .from(creatorPosts)
+          .where(eq(creatorPosts.stylistId, profile.id));
+        const totalViews = viewsResult?.sum || 0;
+
+        return {
+          ...creator,
+          stylistProfile: profile,
+          stats: {
+            subscribers: subscriptionCount,
+            totalRevenue: totalTips,
+            posts: postCount,
+            totalViews: totalViews,
+          },
+        };
+      })
+    );
+
+    return creatorStats;
+  }
+
   // Supplier Profiles
   async getSupplierProfile(supplierId: string): Promise<SupplierProfile | undefined> {
     const [profile] = await db.select().from(supplierProfiles).where(eq(supplierProfiles.supplierId, supplierId));

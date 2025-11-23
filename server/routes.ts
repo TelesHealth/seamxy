@@ -2838,6 +2838,23 @@ export function registerRoutes(app: Express) {
   );
 
   // ============================================
+  // ADMIN - CREATORS MANAGEMENT
+  // ============================================
+  
+  // Get all creators with stats (admin only)
+  app.get("/api/v1/admin/creators",
+    requireAdmin as any,
+    async (req, res) => {
+      try {
+        const creators = await storage.getCreatorsWithStats();
+        res.json({ creators });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
   // STRIPE WEBHOOKS FOR CREATOR STUDIO
   // ============================================
   
