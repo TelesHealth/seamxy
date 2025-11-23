@@ -2,9 +2,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Users, ShoppingBag, Scissors, DollarSign, Settings, Sparkles, Eye, FileText, Heart } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { TrendingUp, Users, ShoppingBag, Scissors, DollarSign, Settings, Sparkles, Eye, FileText, Heart, Edit } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 interface CreatorStats {
   subscribers: number;
@@ -87,34 +97,7 @@ export default function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>View and manage platform users</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {/* User table placeholder */}
-                  {[
-                    { name: "John Smith", email: "john@example.com", orders: 12, status: "Active" },
-                    { name: "Sarah Johnson", email: "sarah@example.com", orders: 7, status: "Active" },
-                    { name: "Mike Chen", email: "mike@example.com", orders: 3, status: "Active" },
-                  ].map((user, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 rounded-lg border hover-elevate">
-                      <div className="flex-1">
-                        <p className="font-600">{user.name}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                      </div>
-                      <div className="text-sm text-muted-foreground mr-4">{user.orders} orders</div>
-                      <Badge variant="secondary">{user.status}</Badge>
-                      <Button variant="ghost" size="sm" className="ml-4">
-                        View
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <UserManagement />
           </TabsContent>
 
           <TabsContent value="makers">
@@ -242,6 +225,346 @@ export default function AdminDashboard() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+// User editing schema - matches backend adminUpdateUserSchema
+const editUserSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  demographic: z.enum(["men", "women", "young_adults", "children"]),
+  age: z.number().int().positive().optional(),
+  lifestyle: z.string().optional(),
+  budgetMin: z.number().int().min(0).optional(),
+  budgetMax: z.number().int().min(0).optional(),
+  budgetTier: z.enum(["affordable", "mid_range", "premium", "luxury"]).optional(),
+});
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  demographic: string;
+  age: number | null;
+  lifestyle: string | null;
+  budgetMin: number | null;
+  budgetMax: number | null;
+  budgetTier: string | null;
+  createdAt: string;
+}
+
+interface UsersResponse {
+  users: User[];
+  total: number;
+}
+
+function UserManagement() {
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const { toast } = useToast();
+
+  const { data, isLoading, error } = useQuery<UsersResponse>({
+    queryKey: ['/api/v1/admin/users'],
+  });
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>User Management</CardTitle>
+          <CardDescription>View and manage platform users</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-destructive">
+            Error loading users: {(error as Error).message}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>User Management</CardTitle>
+              <CardDescription>View and manage platform users</CardDescription>
+            </div>
+            <Badge variant="secondary">
+              <Users className="w-3 h-3 mr-1" />
+              {isLoading ? '...' : data?.total || 0} Users
+            </Badge>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-64" />
+                  </div>
+                  <Skeleton className="h-10 w-20" />
+                </div>
+              ))}
+            </div>
+          ) : !data?.users || data.users.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-500">No users found</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {data.users.map((user, i) => (
+                <div 
+                  key={user.id} 
+                  className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-lg border hover-elevate"
+                  data-testid={`user-item-${i}`}
+                >
+                  <div className="flex-1">
+                    <p className="font-600" data-testid={`text-user-name-${i}`}>{user.name}</p>
+                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                    <div className="flex gap-2 mt-1">
+                      <Badge variant="outline" className="text-xs">{user.demographic}</Badge>
+                      {user.budgetTier && (
+                        <Badge variant="secondary" className="text-xs">{user.budgetTier}</Badge>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setEditingUser(user)}
+                      data-testid={`button-edit-user-${i}`}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {editingUser && (
+        <EditUserDialog 
+          user={editingUser} 
+          onClose={() => setEditingUser(null)} 
+        />
+      )}
+    </>
+  );
+}
+
+interface EditUserDialogProps {
+  user: User;
+  onClose: () => void;
+}
+
+function EditUserDialog({ user, onClose }: EditUserDialogProps) {
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof editUserSchema>>({
+    resolver: zodResolver(editUserSchema),
+    defaultValues: {
+      name: user.name,
+      email: user.email,
+      demographic: user.demographic as any,
+      age: user.age || undefined,
+      lifestyle: user.lifestyle || undefined,
+      budgetMin: user.budgetMin || undefined,
+      budgetMax: user.budgetMax || undefined,
+      budgetTier: user.budgetTier as any || undefined,
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof editUserSchema>) => {
+      return apiRequest('PATCH', `/api/v1/admin/users/${user.id}`, values);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/users'] });
+      toast({
+        title: "User updated",
+        description: "User has been successfully updated.",
+      });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof editUserSchema>) => {
+    updateMutation.mutate(values);
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[500px]" data-testid="dialog-edit-user">
+        <DialogHeader>
+          <DialogTitle>Edit User</DialogTitle>
+          <DialogDescription>
+            Update user information. Changes will be logged for audit purposes.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-edit-name" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <Input type="email" {...field} data-testid="input-edit-email" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="demographic"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Demographic</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-edit-demographic">
+                        <SelectValue placeholder="Select demographic" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="men">Men</SelectItem>
+                      <SelectItem value="women">Women</SelectItem>
+                      <SelectItem value="young_adults">Young Adults</SelectItem>
+                      <SelectItem value="children">Children</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="budgetMin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Min ($)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        value={field.value || ''}
+                        data-testid="input-edit-budget-min"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="budgetMax"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Max ($)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value) : undefined)}
+                        value={field.value || ''}
+                        data-testid="input-edit-budget-max"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="budgetTier"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Budget Tier (Optional)</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-edit-budget-tier">
+                        <SelectValue placeholder="Select budget tier" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="affordable">Affordable</SelectItem>
+                      <SelectItem value="mid_range">Mid Range</SelectItem>
+                      <SelectItem value="premium">Premium</SelectItem>
+                      <SelectItem value="luxury">Luxury</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="lifestyle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lifestyle (Optional)</FormLabel>
+                  <FormControl>
+                    <Input {...field} value={field.value || ''} data-testid="input-edit-lifestyle" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={updateMutation.isPending} data-testid="button-submit-edit">
+                {updateMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
 
