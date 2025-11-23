@@ -28,7 +28,8 @@ import {
   insertStylistApplicationSchema, insertStylistProfileSchema, insertStylistPortfolioItemSchema,
   insertStylistRfqSchema, insertStylistReviewSchema,
   insertCreatorTierSchema, insertCreatorPostSchema, insertCreatorSubscriptionSchema,
-  insertCreatorTipSchema, insertCreatorCustomRequestSchema, insertModerationFlagSchema
+  insertCreatorTipSchema, insertCreatorCustomRequestSchema, insertModerationFlagSchema,
+  adminUpdateUserSchema
 } from "@shared/schema";
 import { priceComparisonService } from "./services/price-comparison";
 import { aiProductMatcher } from "./services/ai-product-matcher";
@@ -614,8 +615,54 @@ export function registerRoutes(app: Express) {
 
   // Get all users (admin only)
   app.get("/api/v1/admin/users", requireAdmin as any, async (req, res) => {
-    // In production, implement pagination
-    res.json({ users: [], total: 0 });
+    try {
+      const users = await storage.getUsers();
+      res.json({ users, total: users.length });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  // Update user (admin only)
+  app.patch("/api/v1/admin/users/:id", requireAdmin as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Validate the request body
+      const updates = adminUpdateUserSchema.parse(req.body);
+      
+      // If email is being updated, check if it's already in use by another user
+      if (updates.email) {
+        const existingUser = await storage.getUserByEmail(updates.email);
+        if (existingUser && existingUser.id !== req.params.id) {
+          return res.status(400).json({ error: "Email already in use" });
+        }
+      }
+      
+      // Update the user
+      const user = await storage.updateUser(req.params.id, updates);
+      
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Create audit log
+      if (req.user) {
+        await storage.createAuditLog({
+          adminId: req.user.id,
+          action: "update_user",
+          targetType: "user",
+          targetId: req.params.id,
+          changes: updates,
+          ipAddress: req.ip || null
+        });
+      }
+      
+      res.json(user);
+    } catch (error: any) {
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ error: "Invalid user data", details: error.errors });
+      }
+      res.status(500).json({ error: error.message });
+    }
   });
 
   // ============================================

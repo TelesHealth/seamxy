@@ -848,6 +848,20 @@ export const insertUserSchema = createInsertSchema(users).omit({
   updatedAt: true,
 });
 
+// Admin-specific schema for updating users - only allows safe fields to be edited
+export const adminUpdateUserSchema = z.object({
+  name: z.string().min(1).optional(),
+  email: z.string().email().optional(),
+  demographic: z.enum(["men", "women", "young_adults", "children"]).optional(),
+  age: z.number().int().positive().optional(),
+  lifestyle: z.string().optional(),
+  styleTags: z.array(z.string()).optional(),
+  budgetMin: z.number().int().min(0).optional(),
+  budgetMax: z.number().int().min(0).optional(),
+  budgetTier: z.enum(["affordable", "mid_range", "premium", "luxury"]).optional(),
+  preferredBrands: z.array(z.string()).optional(),
+});
+
 export const insertMeasurementSchema = createInsertSchema(measurements).omit({
   id: true,
   createdAt: true,
