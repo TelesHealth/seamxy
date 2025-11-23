@@ -2,7 +2,36 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Users, ShoppingBag, Scissors, DollarSign, Settings } from "lucide-react";
+import { TrendingUp, Users, ShoppingBag, Scissors, DollarSign, Settings, Sparkles, Eye, FileText, Heart } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface CreatorStats {
+  subscribers: number;
+  totalRevenue: number;
+  posts: number;
+  totalViews: number;
+}
+
+interface CreatorData {
+  id: string;
+  email: string;
+  businessName: string | null;
+  ownerName: string | null;
+  tier: string;
+  isActive: boolean;
+  isVerified: boolean;
+  stylistProfile: {
+    id: string;
+    handle: string;
+    tier: string;
+  } | null;
+  stats: CreatorStats;
+}
+
+interface CreatorsResponse {
+  creators: CreatorData[];
+}
 
 export default function AdminDashboard() {
   return (
@@ -54,6 +83,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="makers" data-testid="tab-makers">Makers</TabsTrigger>
             <TabsTrigger value="transactions" data-testid="tab-transactions">Transactions</TabsTrigger>
             <TabsTrigger value="monetization" data-testid="tab-monetization">Monetization</TabsTrigger>
+            <TabsTrigger value="creators" data-testid="tab-creators">Creators</TabsTrigger>
           </TabsList>
 
           <TabsContent value="users">
@@ -205,8 +235,168 @@ export default function AdminDashboard() {
               </Card>
             </div>
           </TabsContent>
+
+          <TabsContent value="creators">
+            <CreatorsManagement />
+          </TabsContent>
         </Tabs>
       </div>
     </div>
+  );
+}
+
+function CreatorsManagement() {
+  const { data, isLoading, error } = useQuery<CreatorsResponse>({
+    queryKey: ['/api/v1/admin/creators'],
+  });
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Creator Management</CardTitle>
+          <CardDescription>Manage Creator Studio accounts</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-destructive">
+            Error loading creators: {(error as Error).message}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle>Creator Management</CardTitle>
+            <CardDescription>Manage Creator Studio accounts and analytics</CardDescription>
+          </div>
+          <Badge variant="secondary">
+            <Sparkles className="w-3 h-3 mr-1" />
+            {isLoading ? '...' : data?.creators?.length || 0} Creators
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center justify-between p-4 rounded-lg border">
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-5 w-48" />
+                  <Skeleton className="h-4 w-64" />
+                </div>
+                <Skeleton className="h-10 w-20" />
+              </div>
+            ))}
+          </div>
+        ) : !data?.creators || data.creators.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <Sparkles className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p className="text-lg font-500">No creators found</p>
+            <p className="text-sm">Designers with AI Stylist profiles will appear here</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {data.creators.map((creator: any, i: number) => (
+              <div 
+                key={creator.id} 
+                className="flex flex-col md:flex-row md:items-center gap-4 p-4 rounded-lg border hover-elevate"
+                data-testid={`creator-item-${i}`}
+              >
+                {/* Creator Info */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-600" data-testid={`text-creator-name-${i}`}>
+                      {creator.businessName || creator.ownerName || 'Unnamed Creator'}
+                    </p>
+                    {creator.isVerified && (
+                      <Badge variant="secondary" className="text-xs">Verified</Badge>
+                    )}
+                    {!creator.isActive && (
+                      <Badge variant="outline" className="text-xs">Inactive</Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-2">{creator.email}</p>
+                  
+                  {creator.stylistProfile && (
+                    <p className="text-xs text-muted-foreground">
+                      @{creator.stylistProfile.handle} • {creator.stylistProfile.tier} tier
+                    </p>
+                  )}
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Users className="w-3 h-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Subscribers</p>
+                    </div>
+                    <p className="font-600" data-testid={`text-subscribers-${i}`}>
+                      {creator.stats.subscribers}
+                    </p>
+                  </div>
+
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Heart className="w-3 h-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Tips</p>
+                    </div>
+                    <p className="font-600" data-testid={`text-revenue-${i}`}>
+                      ${(creator.stats.totalRevenue / 100).toFixed(2)}
+                    </p>
+                  </div>
+
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <FileText className="w-3 h-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Posts</p>
+                    </div>
+                    <p className="font-600" data-testid={`text-posts-${i}`}>
+                      {creator.stats.posts}
+                    </p>
+                  </div>
+
+                  <div className="text-center p-2 rounded-lg bg-muted/50">
+                    <div className="flex items-center justify-center gap-1 mb-1">
+                      <Eye className="w-3 h-3 text-muted-foreground" />
+                      <p className="text-xs text-muted-foreground">Views</p>
+                    </div>
+                    <p className="font-600" data-testid={`text-views-${i}`}>
+                      {creator.stats.totalViews}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-2">
+                  {creator.stylistProfile && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => window.open(`/creator/${creator.stylistProfile.handle}`, '_blank')}
+                      data-testid={`button-view-profile-${i}`}
+                    >
+                      View Profile
+                    </Button>
+                  )}
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    data-testid={`button-manage-${i}`}
+                  >
+                    Manage
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
