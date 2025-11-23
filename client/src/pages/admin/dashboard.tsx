@@ -238,6 +238,7 @@ const editUserSchema = z.object({
   budgetMin: z.number().int().min(0).optional(),
   budgetMax: z.number().int().min(0).optional(),
   budgetTier: z.enum(["affordable", "mid_range", "premium", "luxury"]).optional(),
+  preferredBrands: z.array(z.string()).optional(),
 });
 
 interface User {
@@ -250,6 +251,7 @@ interface User {
   budgetMin: number | null;
   budgetMax: number | null;
   budgetTier: string | null;
+  preferredBrands: string[] | null;
   createdAt: string;
 }
 
@@ -381,6 +383,7 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
       budgetMin: user.budgetMin || undefined,
       budgetMax: user.budgetMax || undefined,
       budgetTier: user.budgetTier as any || undefined,
+      preferredBrands: user.preferredBrands || undefined,
     },
   });
 
@@ -548,6 +551,33 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
                   <FormControl>
                     <Input {...field} value={field.value || ''} data-testid="input-edit-lifestyle" />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="preferredBrands"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Preferred Brands (Optional)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field}
+                      value={field.value?.join(', ') || ''}
+                      onChange={(e) => {
+                        const brands = e.target.value
+                          .split(',')
+                          .map(b => b.trim())
+                          .filter(b => b.length > 0);
+                        field.onChange(brands.length > 0 ? brands : undefined);
+                      }}
+                      placeholder="e.g. Nike, Adidas, Zara"
+                      data-testid="input-edit-preferred-brands"
+                    />
+                  </FormControl>
+                  <p className="text-xs text-muted-foreground">Enter comma-separated brand names</p>
                   <FormMessage />
                 </FormItem>
               )}
