@@ -2142,6 +2142,9 @@ function CreateMakerDialog({ onClose, onSuccess }: CreateMakerDialogProps) {
 }
 
 function CreatorsManagement({ isAuthReady }: { isAuthReady: boolean }) {
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null);
+
   const { data, isLoading, error } = useQuery<CreatorsResponse>({
     queryKey: ['/api/v1/admin/creators'],
     queryFn: adminQueryFn,
@@ -2165,19 +2168,20 @@ function CreatorsManagement({ isAuthReady }: { isAuthReady: boolean }) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle>Creator Management</CardTitle>
-            <CardDescription>Manage Creator Studio accounts and analytics</CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Creator Management</CardTitle>
+              <CardDescription>Create and manage Creator Studio accounts</CardDescription>
+            </div>
+            <Button onClick={() => setShowCreateDialog(true)} data-testid="button-create-creator">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Creator
+            </Button>
           </div>
-          <Badge variant="secondary">
-            <Sparkles className="w-3 h-3 mr-1" />
-            {isLoading ? '...' : data?.creators?.length || 0} Creators
-          </Badge>
-        </div>
-      </CardHeader>
+        </CardHeader>
       <CardContent>
         {isLoading ? (
           <div className="space-y-4">
@@ -2296,5 +2300,237 @@ function CreatorsManagement({ isAuthReady }: { isAuthReady: boolean }) {
         )}
       </CardContent>
     </Card>
+
+    {showCreateDialog && (
+      <CreateCreatorDialog 
+        onClose={() => setShowCreateDialog(false)}
+        onSuccess={(credentials) => {
+          setShowCreateDialog(false);
+          setCreatedCredentials(credentials);
+        }}
+      />
+    )}
+
+    {createdCredentials && (
+      <CredentialsDisplayDialog 
+        credentials={createdCredentials}
+        onClose={() => setCreatedCredentials(null)}
+      />
+    )}
+  </>
+  );
+}
+
+// Creator creation schema
+const createCreatorSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  fullName: z.string().min(1, "Full name is required"),
+  handle: z.string().min(3, "Handle must be at least 3 characters").regex(/^[a-zA-Z0-9_-]+$/, "Handle can only contain letters, numbers, underscores, and hyphens"),
+  displayName: z.string().min(1, "Display name is required"),
+  bio: z.string().optional(),
+  location: z.string().optional(),
+});
+
+interface CreateCreatorDialogProps {
+  onClose: () => void;
+  onSuccess: (credentials: { email: string; password: string }) => void;
+}
+
+function CreateCreatorDialog({ onClose, onSuccess }: CreateCreatorDialogProps) {
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof createCreatorSchema>>({
+    resolver: zodResolver(createCreatorSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      fullName: '',
+      handle: '',
+      displayName: '',
+      bio: '',
+      location: '',
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof createCreatorSchema>) => {
+      const response = await adminApiRequest('POST', '/api/v1/admin/creators', values);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create creator');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/creators'] });
+      toast({
+        title: "Creator created successfully",
+        description: `Creator account created for ${data.credentials.email}`,
+      });
+      onSuccess(data.credentials);
+    },
+    onError: (error: Error) => {
+      const isEmailConflict = error.message.includes("Email already in use") || error.message.includes("already exists");
+      const isHandleConflict = error.message.includes("Handle already in use");
+      
+      toast({
+        title: isEmailConflict ? "Email already exists" : isHandleConflict ? "Handle already taken" : "Failed to create creator",
+        description: isEmailConflict 
+          ? "This email is already registered. Please use a different email address."
+          : isHandleConflict 
+            ? "This handle is already taken. Please choose a different handle."
+            : error.message,
+        variant: "destructive",
+      });
+      
+      if (isEmailConflict) {
+        form.setError("email", {
+          type: "manual",
+          message: "This email is already registered"
+        });
+      }
+      if (isHandleConflict) {
+        form.setError("handle", {
+          type: "manual",
+          message: "This handle is already taken"
+        });
+      }
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof createCreatorSchema>) => {
+    createMutation.mutate(values);
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-create-creator">
+        <DialogHeader>
+          <DialogTitle>Create New Creator</DialogTitle>
+          <DialogDescription>
+            Create a new Creator Studio account with AI stylist profile.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="fullName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Full Name *</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-create-creator-full-name" placeholder="Jane Doe" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="displayName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Display Name *</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-create-creator-display-name" placeholder="Jane's Style Studio" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email *</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} data-testid="input-create-creator-email" placeholder="jane@example.com" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password *</FormLabel>
+                    <FormControl>
+                      <Input type="text" {...field} data-testid="input-create-creator-password" placeholder="Minimum 8 characters" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="handle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Handle *</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-create-creator-handle" placeholder="jane-style" />
+                  </FormControl>
+                  <FormDescription>
+                    Unique identifier for the creator profile URL (e.g., /creator/jane-style)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="bio"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Bio</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-create-creator-bio" placeholder="Fashion stylist specializing in..." />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-create-creator-location" placeholder="New York, USA" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose} disabled={createMutation.isPending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-create-creator">
+                {createMutation.isPending ? "Creating..." : "Create Creator"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }
