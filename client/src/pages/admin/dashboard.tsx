@@ -44,6 +44,19 @@ interface CreatorsResponse {
 }
 
 export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState("users");
+  const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
+  const [selectedMaker, setSelectedMaker] = useState<any>(null);
+  const [selectedAffiliateRate, setSelectedAffiliateRate] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+
+  const kpiCards = [
+    { label: "Total Users", value: "2,543", icon: <Users className="w-5 h-5" />, trend: "+12%", tab: "users" },
+    { label: "Active Makers", value: "127", icon: <Scissors className="w-5 h-5" />, trend: "+8%", tab: "makers" },
+    { label: "Orders (30d)", value: "1,891", icon: <ShoppingBag className="w-5 h-5" />, trend: "+23%", tab: "transactions" },
+    { label: "Revenue (30d)", value: "$47,892", icon: <DollarSign className="w-5 h-5" />, trend: "+18%", tab: "monetization" },
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -62,13 +75,13 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-8">
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {[
-            { label: "Total Users", value: "2,543", icon: <Users className="w-5 h-5" />, trend: "+12%" },
-            { label: "Active Makers", value: "127", icon: <Scissors className="w-5 h-5" />, trend: "+8%" },
-            { label: "Orders (30d)", value: "1,891", icon: <ShoppingBag className="w-5 h-5" />, trend: "+23%" },
-            { label: "Revenue (30d)", value: "$47,892", icon: <DollarSign className="w-5 h-5" />, trend: "+18%" },
-          ].map((kpi, i) => (
-            <Card key={i}>
+          {kpiCards.map((kpi, i) => (
+            <Card 
+              key={i} 
+              className="cursor-pointer hover-elevate active-elevate-2"
+              onClick={() => setActiveTab(kpi.tab)}
+              data-testid={`card-kpi-${kpi.tab}`}
+            >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="p-2 rounded-lg bg-primary/10 text-primary">
@@ -87,7 +100,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Management Tabs */}
-        <Tabs defaultValue="users" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList>
             <TabsTrigger value="users" data-testid="tab-users">Users</TabsTrigger>
             <TabsTrigger value="makers" data-testid="tab-makers">Makers</TabsTrigger>
@@ -109,9 +122,9 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { name: "Savile Modern Tailors", location: "London, UK", status: "Verified", pending: false },
-                    { name: "Urban Stitch Co.", location: "Los Angeles, USA", status: "Verified", pending: false },
-                    { name: "Minimal Atelier", location: "Lisbon, PT", status: "Pending Review", pending: true },
+                    { id: "1", name: "Savile Modern Tailors", location: "London, UK", status: "Verified", pending: false, email: "savile@tailors.com", rating: "4.9", totalOrders: 156 },
+                    { id: "2", name: "Urban Stitch Co.", location: "Los Angeles, USA", status: "Verified", pending: false, email: "urban@stitch.com", rating: "4.7", totalOrders: 89 },
+                    { id: "3", name: "Minimal Atelier", location: "Lisbon, PT", status: "Pending Review", pending: true, email: "minimal@atelier.pt", rating: "N/A", totalOrders: 0 },
                   ].map((maker, i) => (
                     <div key={i} className="flex items-center justify-between p-4 rounded-lg border hover-elevate">
                       <div className="flex-1">
@@ -123,6 +136,7 @@ export default function AdminDashboard() {
                         variant={maker.pending ? "default" : "ghost"}
                         size="sm" 
                         className="ml-4"
+                        onClick={() => setSelectedMaker(maker)}
                         data-testid={`button-maker-action-${i}`}
                       >
                         {maker.pending ? "Review" : "Manage"}
@@ -143,9 +157,9 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="space-y-4">
                   {[
-                    { type: "Retail", amount: "$128.00", commission: "$6.40", user: "John S.", date: "Today" },
-                    { type: "Bespoke", amount: "$890.00", commission: "$89.00", user: "Sarah J.", date: "Today" },
-                    { type: "Retail", amount: "$49.00", commission: "$2.45", user: "Mike C.", date: "Yesterday" },
+                    { id: "TX001", type: "Retail", amount: "$128.00", commission: "$6.40", user: "John S.", email: "john@example.com", date: "Today", status: "Completed", paymentMethod: "Visa ****1234" },
+                    { id: "TX002", type: "Bespoke", amount: "$890.00", commission: "$89.00", user: "Sarah J.", email: "sarah@example.com", date: "Today", status: "Completed", paymentMethod: "Mastercard ****5678" },
+                    { id: "TX003", type: "Retail", amount: "$49.00", commission: "$2.45", user: "Mike C.", email: "mike@example.com", date: "Yesterday", status: "Completed", paymentMethod: "Amex ****9012" },
                   ].map((tx, i) => (
                     <div key={i} className="flex items-center justify-between p-4 rounded-lg border">
                       <div className="flex-1">
@@ -156,7 +170,12 @@ export default function AdminDashboard() {
                         <p className="font-600">{tx.amount}</p>
                         <p className="text-xs text-muted-foreground">Commission: {tx.commission}</p>
                       </div>
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setSelectedTransaction(tx)}
+                        data-testid={`button-transaction-details-${i}`}
+                      >
                         Details
                       </Button>
                     </div>
@@ -175,15 +194,20 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    { partner: "Default Rate", rate: "5%" },
-                    { partner: "Premium Partners", rate: "7%" },
-                    { partner: "Luxury Brands", rate: "4%" },
+                    { id: "default", partner: "Default Rate", rate: "5%", description: "Standard commission for all retailers" },
+                    { id: "premium", partner: "Premium Partners", rate: "7%", description: "Higher rate for premium retail partners" },
+                    { id: "luxury", partner: "Luxury Brands", rate: "4%", description: "Specialized rate for luxury brand partnerships" },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                       <span className="font-500">{item.partner}</span>
                       <div className="flex items-center gap-2">
                         <span className="font-600">{item.rate}</span>
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => setSelectedAffiliateRate(item)}
+                          data-testid={`button-affiliate-settings-${i}`}
+                        >
                           <Settings className="w-4 h-4" />
                         </Button>
                       </div>
@@ -199,12 +223,17 @@ export default function AdminDashboard() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    { plan: "Maker Basic", price: "$0/mo", active: 47 },
-                    { plan: "Maker Pro", price: "$29/mo", active: 53 },
-                    { plan: "Maker Elite", price: "$99/mo", active: 27 },
-                    { plan: "AI Stylist Pro", price: "$9.99/mo", active: 312 },
+                    { id: "basic", plan: "Maker Basic", price: "$0/mo", active: 47, features: ["Basic listing", "Up to 10 products", "Email support"] },
+                    { id: "pro", plan: "Maker Pro", price: "$29/mo", active: 53, features: ["Unlimited listings", "Priority support", "Analytics dashboard"] },
+                    { id: "elite", plan: "Maker Elite", price: "$99/mo", active: 27, features: ["All Pro features", "Premium placement", "Dedicated account manager"] },
+                    { id: "ai-pro", plan: "AI Stylist Pro", price: "$9.99/mo", active: 312, features: ["Access to AI stylists", "Personalized recommendations", "Style consultations"] },
                   ].map((item, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                    <div 
+                      key={i} 
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 cursor-pointer hover-elevate"
+                      onClick={() => setSelectedPlan(item)}
+                      data-testid={`card-subscription-plan-${i}`}
+                    >
                       <div>
                         <p className="font-500">{item.plan}</p>
                         <p className="text-sm text-muted-foreground">{item.active} active</p>
@@ -223,6 +252,186 @@ export default function AdminDashboard() {
             <CreatorsManagement />
           </TabsContent>
         </Tabs>
+
+        {/* Transaction Details Dialog */}
+        {selectedTransaction && (
+          <Dialog open={true} onOpenChange={() => setSelectedTransaction(null)}>
+            <DialogContent data-testid="dialog-transaction-details">
+              <DialogHeader>
+                <DialogTitle>Transaction Details</DialogTitle>
+                <DialogDescription>Full transaction information</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Transaction ID</p>
+                    <p className="font-600">{selectedTransaction.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Type</p>
+                    <Badge>{selectedTransaction.type}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Customer</p>
+                    <p className="font-600">{selectedTransaction.user}</p>
+                    <p className="text-xs text-muted-foreground">{selectedTransaction.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Date</p>
+                    <p className="font-600">{selectedTransaction.date}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Amount</p>
+                    <p className="font-600 text-lg">{selectedTransaction.amount}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Commission</p>
+                    <p className="font-600 text-lg text-primary">{selectedTransaction.commission}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <Badge variant="secondary">{selectedTransaction.status}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Payment Method</p>
+                    <p className="font-600">{selectedTransaction.paymentMethod}</p>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedTransaction(null)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Maker Details Dialog */}
+        {selectedMaker && (
+          <Dialog open={true} onOpenChange={() => setSelectedMaker(null)}>
+            <DialogContent data-testid="dialog-maker-details">
+              <DialogHeader>
+                <DialogTitle>{selectedMaker.name}</DialogTitle>
+                <DialogDescription>Maker account details and management</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Business Name</p>
+                    <p className="font-600">{selectedMaker.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <Badge variant={selectedMaker.pending ? "outline" : "secondary"}>{selectedMaker.status}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Location</p>
+                    <p className="font-600">{selectedMaker.location}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-600 text-sm">{selectedMaker.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Rating</p>
+                    <p className="font-600">{selectedMaker.rating}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Orders</p>
+                    <p className="font-600">{selectedMaker.totalOrders}</p>
+                  </div>
+                </div>
+                {selectedMaker.pending && (
+                  <div className="flex gap-2 mt-4">
+                    <Button variant="default" className="flex-1">Approve Maker</Button>
+                    <Button variant="outline" className="flex-1">Reject</Button>
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedMaker(null)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Affiliate Rate Settings Dialog */}
+        {selectedAffiliateRate && (
+          <Dialog open={true} onOpenChange={() => setSelectedAffiliateRate(null)}>
+            <DialogContent data-testid="dialog-affiliate-settings">
+              <DialogHeader>
+                <DialogTitle>Edit Affiliate Rate</DialogTitle>
+                <DialogDescription>Configure commission rate for {selectedAffiliateRate.partner}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">{selectedAffiliateRate.description}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-500 mb-2 block">Commission Rate (%)</label>
+                  <Input 
+                    type="number" 
+                    defaultValue={selectedAffiliateRate.rate.replace('%', '')}
+                    placeholder="Enter rate"
+                    data-testid="input-affiliate-rate"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-500 mb-2 block">Description</label>
+                  <Input 
+                    defaultValue={selectedAffiliateRate.description}
+                    placeholder="Enter description"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedAffiliateRate(null)}>Cancel</Button>
+                <Button data-testid="button-save-affiliate-rate">Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Subscription Plan Details Dialog */}
+        {selectedPlan && (
+          <Dialog open={true} onOpenChange={() => setSelectedPlan(null)}>
+            <DialogContent data-testid="dialog-plan-details">
+              <DialogHeader>
+                <DialogTitle>{selectedPlan.plan}</DialogTitle>
+                <DialogDescription>Subscription plan details and management</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Price</p>
+                    <p className="font-600 text-2xl">{selectedPlan.price}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active Subscribers</p>
+                    <p className="font-600 text-2xl">{selectedPlan.active}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-500 mb-2">Features</p>
+                  <ul className="space-y-2">
+                    {selectedPlan.features.map((feature: string, i: number) => (
+                      <li key={i} className="flex items-center gap-2 text-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+                        {feature}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1">Edit Plan</Button>
+                  <Button variant="outline" className="flex-1">View Subscribers</Button>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedPlan(null)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   );
