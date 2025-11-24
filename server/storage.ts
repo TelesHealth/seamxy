@@ -60,7 +60,7 @@ import {
   type CreatorPayout, type InsertCreatorPayout,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, desc, sql } from "drizzle-orm";
+import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -636,37 +636,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCreatorsWithStats(): Promise<any[]> {
-    // Fetch all suppliers with role="designer"
-    const creators = await db
+    // Fetch all stylist profiles with their associated users
+    const stylistProfilesData = await db
       .select()
-      .from(supplierAccounts)
-      .where(eq(supplierAccounts.role, 'designer'));
+      .from(stylistProfiles);
 
-    // Fetch stylist profiles for these creators
-    const creatorIds = creators.map((c: SupplierAccount) => c.id);
-    const stylistProfilesData = creatorIds.length > 0
-      ? await db
-          .select()
-          .from(stylistProfiles)
-          .where(sql`${stylistProfiles.supplierId} = ANY(${creatorIds})`)
-      : [];
-
-    // Fetch aggregated stats for each creator
+    // For each stylist profile, fetch the associated user and stats
     const creatorStats = await Promise.all(
-      creators.map(async (creator: SupplierAccount) => {
-        const profile = stylistProfilesData.find((p: any) => p.supplierId === creator.id);
-        
-        if (!profile) {
-          return {
-            ...creator,
-            stylistProfile: null,
-            stats: {
-              subscribers: 0,
-              totalRevenue: 0,
-              posts: 0,
-              totalViews: 0,
-            },
-          };
+      stylistProfilesData.map(async (profile: any) => {
+        // Get the user account
+        let userAccount = null;
+        if (profile.userId) {
+          const [user] = await db
+            .select()
+            .from(users)
+            .where(eq(users.id, profile.userId));
+          userAccount = user;
+        } else if (profile.supplierId) {
+          const [supplier] = await db
+            .select()
+            .from(supplierAccounts)
+            .where(eq(supplierAccounts.id, profile.supplierId));
+          userAccount = supplier;
+        }
+
+        if (!userAccount) {
+          return null;
         }
 
         // Count active subscriptions
@@ -703,7 +698,11 @@ export class DatabaseStorage implements IStorage {
         const totalViews = viewsResult?.sum || 0;
 
         return {
-          ...creator,
+          id: userAccount.id,
+          email: userAccount.email,
+          name: userAccount.name,
+          isVerified: profile.isVerified,
+          isActive: profile.isActive,
           stylistProfile: profile,
           stats: {
             subscribers: subscriptionCount,
@@ -715,7 +714,8 @@ export class DatabaseStorage implements IStorage {
       })
     );
 
-    return creatorStats;
+    // Filter out nulls
+    return creatorStats.filter(c => c !== null);
   }
 
   // Supplier Profiles

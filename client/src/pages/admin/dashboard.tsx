@@ -2325,7 +2325,7 @@ function CreatorsManagement({ isAuthReady }: { isAuthReady: boolean }) {
 const createCreatorSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  fullName: z.string().min(1, "Full name is required"),
+  name: z.string().min(1, "Full name is required"),
   handle: z.string().min(3, "Handle must be at least 3 characters").regex(/^[a-zA-Z0-9_-]+$/, "Handle can only contain letters, numbers, underscores, and hyphens"),
   displayName: z.string().min(1, "Display name is required"),
   bio: z.string().optional(),
@@ -2345,7 +2345,7 @@ function CreateCreatorDialog({ onClose, onSuccess }: CreateCreatorDialogProps) {
     defaultValues: {
       email: '',
       password: '',
-      fullName: '',
+      name: '',
       handle: '',
       displayName: '',
       bio: '',
@@ -2418,7 +2418,7 @@ function CreateCreatorDialog({ onClose, onSuccess }: CreateCreatorDialogProps) {
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="fullName"
+                name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Full Name *</FormLabel>
