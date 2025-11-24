@@ -81,12 +81,14 @@ export default function AdminDashboard() {
     setShowMakerOrders(false);
     setShowMakerRatings(false);
     setShowMakerBusinessInfo(false);
+    setSelectedOrder(null); // Clear tertiary dialog state
   };
   
   const closePlanDialog = () => {
     setSelectedPlan(null);
     setShowEditPlan(false);
     setShowPlanSubscribers(false);
+    setSelectedSubscriber(null); // Clear tertiary dialog state
   };
 
   // Auto-login for development (in production, would redirect to login page)
