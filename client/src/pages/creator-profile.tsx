@@ -122,7 +122,7 @@ function SubscribeDialogContent({ tier, stylistId, onClose }: { tier: CreatorTie
         </div>
         
         <div className="space-y-2">
-          {tier.features.map((feature, idx) => (
+          {(tier.perks as string[] || []).map((feature, idx) => (
             <div key={idx} className="flex items-center gap-2 text-sm">
               <Crown className="w-4 h-4 text-primary" />
               <span>{feature}</span>
@@ -367,12 +367,12 @@ export default function CreatorProfile() {
                 <div className="flex flex-wrap gap-4 text-sm mb-4">
                   <div className="flex items-center gap-1">
                     <Heart className="w-4 h-4" />
-                    <span className="font-medium">{creator.totalLikes.toLocaleString()}</span>
+                    <span className="font-medium">{(creator.totalLikes || 0).toLocaleString()}</span>
                     <span className="text-muted-foreground">likes</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Crown className="w-4 h-4" />
-                    <span className="font-medium">{creator.totalFollowers.toLocaleString()}</span>
+                    <span className="font-medium">{(creator.totalFollowers || 0).toLocaleString()}</span>
                     <span className="text-muted-foreground">subscribers</span>
                   </div>
                   <div className="flex items-center gap-1">
@@ -416,13 +416,14 @@ export default function CreatorProfile() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {publicPosts.map((post: CreatorPost) => (
                 <Card key={post.id} className="overflow-hidden" data-testid={`card-post-${post.id}`}>
-                  {post.contentType === 'image' && (
+                  {post.contentType === 'image' && post.mediaUrls && post.mediaUrls.length > 0 && (
                     <div className="aspect-square bg-muted">
-                      <img src={post.content} alt={post.caption} className="w-full h-full object-cover" />
+                      <img src={post.mediaUrls[0]} alt={post.title || 'Post image'} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <CardContent className="p-4">
-                    <p className="text-sm mb-2">{post.caption}</p>
+                    {post.title && <h3 className="font-semibold mb-2" data-testid={`text-post-title-${post.id}`}>{post.title}</h3>}
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-3">{post.content}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Eye className="w-3 h-3" />
@@ -443,13 +444,14 @@ export default function CreatorProfile() {
                     <Lock className="w-3 h-3" />
                     <span>Subscriber Only</span>
                   </div>
-                  {post.contentType === 'image' && (
+                  {post.contentType === 'image' && post.mediaUrls && post.mediaUrls.length > 0 && (
                     <div className="aspect-square bg-muted">
-                      <img src={post.content} alt={post.caption} className="w-full h-full object-cover" />
+                      <img src={post.mediaUrls[0]} alt={post.title || 'Exclusive post image'} className="w-full h-full object-cover" />
                     </div>
                   )}
                   <CardContent className="p-4">
-                    <p className="text-sm mb-2">{post.caption}</p>
+                    {post.title && <h3 className="font-semibold mb-2">{post.title}</h3>}
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-3">{post.content}</p>
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Eye className="w-3 h-3" />
@@ -489,14 +491,14 @@ export default function CreatorProfile() {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {tier.features.map((feature: string, idx: number) => (
+                    {(tier.perks as string[] || []).map((feature: string, idx: number) => (
                       <div key={idx} className="flex items-center gap-2 text-sm">
                         <Crown className="w-4 h-4 text-primary" />
                         <span>{feature}</span>
                       </div>
                     ))}
                     <div className="text-xs text-muted-foreground pt-2 border-t">
-                      {tier.subscriberCount} subscribers
+                      {tier.subscriberCount || 0} subscribers
                     </div>
                   </CardContent>
                   <CardFooter>
