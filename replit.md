@@ -38,7 +38,7 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 - **Dual Marketplace**: Integrates retail quick-buy with a custom tailor network.
 - **Smart Onboarding**: Guides users through measurement, style description, and budget.
 - **AI Personality Stylists**: 8 GPT-5 powered personas for fashion advice.
-- **Admin Panel**: Role-based access, analytics, monetization controls, maker approval, and VIP user creation workflow.
+- **Admin Panel**: Role-based access, analytics, monetization controls, maker approval, VIP user creation workflow, Create Maker accounts, and Create Creator accounts directly from dashboard.
 - **Supplier Portal**: B2B platform for retailers, tailors, designers to manage products, custom requests, and communications.
 - **Smart Price Compare**: Real-time comparison across major e-commerce platforms with AI product matching.
 - **Wedding & Prom Concierge**: AI-powered conversational stylist for event shopping.
