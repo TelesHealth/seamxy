@@ -3,7 +3,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TrendingUp, Users, ShoppingBag, Scissors, DollarSign, Settings, Sparkles, Eye, FileText, Heart, Edit } from "lucide-react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, QueryFunction } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -14,7 +14,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { adminFetch, adminApiRequest, setAdminAuth, isAdminAuthenticated } from "@/lib/adminAuth";
 
 interface CreatorStats {
   subscribers: number;
@@ -43,12 +44,71 @@ interface CreatorsResponse {
   creators: CreatorData[];
 }
 
+// Custom query function for admin API calls
+const adminQueryFn: QueryFunction<any> = async ({ queryKey }) => {
+  const res = await adminFetch(queryKey.join("/") as string);
+  
+  if (!res.ok) {
+    const text = (await res.text()) || res.statusText;
+    throw new Error(`${res.status}: ${text}`);
+  }
+  
+  return await res.json();
+};
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("users");
   const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
   const [selectedMaker, setSelectedMaker] = useState<any>(null);
   const [selectedAffiliateRate, setSelectedAffiliateRate] = useState<any>(null);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+
+  // Auto-login for development (in production, would redirect to login page)
+  useEffect(() => {
+    async function ensureAdminAuth() {
+      if (!isAdminAuthenticated()) {
+        try {
+          // Auto-login with seeded admin account for development
+          const response = await fetch('/api/v1/admin/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: 'admin@example.com',
+              password: 'password123'
+            })
+          });
+
+          if (response.ok) {
+            const adminData = await response.json();
+            setAdminAuth(adminData);
+            setIsAuthReady(true);
+          } else {
+            console.error('Admin auto-login failed');
+            setIsAuthReady(true); // Still set to true to show error state
+          }
+        } catch (error) {
+          console.error('Admin auth error:', error);
+          setIsAuthReady(true);
+        }
+      } else {
+        setIsAuthReady(true);
+      }
+    }
+
+    ensureAdminAuth();
+  }, []);
+
+  if (!isAuthReady) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   const kpiCards = [
     { label: "Total Users", value: "2,543", icon: <Users className="w-5 h-5" />, trend: "+12%", tab: "users" },
@@ -475,6 +535,7 @@ function UserManagement() {
 
   const { data, isLoading, error } = useQuery<UsersResponse>({
     queryKey: ['/api/v1/admin/users'],
+    queryFn: adminQueryFn,
   });
 
   if (error) {
@@ -598,7 +659,7 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 
   const updateMutation = useMutation({
     mutationFn: async (values: z.infer<typeof editUserSchema>) => {
-      return apiRequest('PATCH', `/api/v1/admin/users/${user.id}`, values);
+      return adminApiRequest('PATCH', `/api/v1/admin/users/${user.id}`, values);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/users'] });
@@ -810,6 +871,7 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
 function CreatorsManagement() {
   const { data, isLoading, error } = useQuery<CreatorsResponse>({
     queryKey: ['/api/v1/admin/creators'],
+    queryFn: adminQueryFn,
   });
 
   if (error) {
