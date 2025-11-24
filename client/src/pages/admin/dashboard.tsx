@@ -68,10 +68,12 @@ export default function AdminDashboard() {
   const [showMakerOrders, setShowMakerOrders] = useState(false);
   const [showMakerRatings, setShowMakerRatings] = useState(false);
   const [showMakerBusinessInfo, setShowMakerBusinessInfo] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<any>(null);
   
   // Subscription plan drill-down states
   const [showEditPlan, setShowEditPlan] = useState(false);
   const [showPlanSubscribers, setShowPlanSubscribers] = useState(false);
+  const [selectedSubscriber, setSelectedSubscriber] = useState<any>(null);
   
   // Helper functions to close dialogs and reset sub-dialog states
   const closeMakerDialog = () => {
@@ -193,7 +195,7 @@ export default function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="users">
-            <UserManagement />
+            <UserManagement isAuthReady={isAuthReady} />
           </TabsContent>
 
           <TabsContent value="makers">
@@ -332,7 +334,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="creators">
-            <CreatorsManagement />
+            <CreatorsManagement isAuthReady={isAuthReady} />
           </TabsContent>
         </Tabs>
 
@@ -576,7 +578,14 @@ export default function AdminDashboard() {
                         <p className="font-600">{order.amount}</p>
                         <Badge variant="secondary" className="text-xs">{order.status}</Badge>
                       </div>
-                      <Button variant="ghost" size="sm">View</Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setSelectedOrder(order)}
+                        data-testid={`button-view-order-${i}`}
+                      >
+                        View
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -797,13 +806,210 @@ export default function AdminDashboard() {
                         </Badge>
                         <p className="text-xs text-muted-foreground mt-1">Next: {subscriber.nextBilling}</p>
                       </div>
-                      <Button variant="ghost" size="sm">Manage</Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => setSelectedSubscriber(subscriber)}
+                        data-testid={`button-manage-subscriber-${i}`}
+                      >
+                        Manage
+                      </Button>
                     </div>
                   ))}
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setShowPlanSubscribers(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Order Details Dialog */}
+        {selectedOrder && (
+          <Dialog open={true} onOpenChange={() => setSelectedOrder(null)}>
+            <DialogContent className="max-w-2xl" data-testid="dialog-order-details">
+              <DialogHeader>
+                <DialogTitle>Order Details - {selectedOrder.orderId}</DialogTitle>
+                <DialogDescription>Complete order information and status</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Order ID</p>
+                    <p className="font-600">{selectedOrder.orderId}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <Badge variant="secondary">{selectedOrder.status}</Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Customer</p>
+                    <p className="font-600">{selectedOrder.customer}</p>
+                    <p className="text-sm">sarah.j@email.com</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Order Date</p>
+                    <p className="font-600">{selectedOrder.date}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Item</p>
+                    <p className="font-600">{selectedOrder.item}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Amount</p>
+                    <p className="font-600 text-lg">{selectedOrder.amount}</p>
+                  </div>
+                </div>
+                
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Shipping Address</p>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="font-600">{selectedOrder.customer}</p>
+                    <p className="text-sm">123 Main Street, Apt 4B</p>
+                    <p className="text-sm">New York, NY 10001</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Payment Information</p>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-sm">Method: Credit Card (**** 4242)</p>
+                    <p className="text-sm">Transaction ID: TXN-20241215-8934</p>
+                    <p className="text-sm">Paid: {selectedOrder.amount}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Order Timeline</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-500">Order Placed</p>
+                        <p className="text-xs text-muted-foreground">{selectedOrder.date}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full bg-primary"></div>
+                      <div className="flex-1">
+                        <p className="text-sm font-500">Payment Confirmed</p>
+                        <p className="text-xs text-muted-foreground">{selectedOrder.date}</p>
+                      </div>
+                    </div>
+                    {selectedOrder.status !== "In Progress" && (
+                      <>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-primary"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-500">Processing Complete</p>
+                            <p className="text-xs text-muted-foreground">Dec 16, 2024</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 rounded-full bg-primary"></div>
+                          <div className="flex-1">
+                            <p className="text-sm font-500">{selectedOrder.status}</p>
+                            <p className="text-xs text-muted-foreground">Dec 17, 2024</p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedOrder(null)}>Close</Button>
+                <Button variant="default">Contact Customer</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Subscriber Management Dialog */}
+        {selectedSubscriber && (
+          <Dialog open={true} onOpenChange={() => setSelectedSubscriber(null)}>
+            <DialogContent data-testid="dialog-subscriber-management">
+              <DialogHeader>
+                <DialogTitle>Manage Subscriber - {selectedSubscriber.name}</DialogTitle>
+                <DialogDescription>Subscription management and billing</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Business Name</p>
+                    <p className="font-600">{selectedSubscriber.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <Badge variant={selectedSubscriber.status === "Expiring Soon" ? "outline" : "secondary"}>
+                      {selectedSubscriber.status}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-600 text-sm">{selectedSubscriber.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Joined</p>
+                    <p className="font-600">{selectedSubscriber.joined}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Current Plan</p>
+                    <p className="font-600">{selectedPlan?.plan || "Maker Basic"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Next Billing</p>
+                    <p className="font-600">{selectedSubscriber.nextBilling}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Payment Method</p>
+                  <div className="p-3 bg-muted/50 rounded-lg">
+                    <p className="text-sm">Credit Card ending in 4242</p>
+                    <p className="text-xs text-muted-foreground">Expires 12/2025</p>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Subscription Actions</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" data-testid="button-change-plan">
+                      Change Plan
+                    </Button>
+                    <Button variant="outline" data-testid="button-pause-subscription">
+                      Pause Subscription
+                    </Button>
+                    <Button variant="outline" data-testid="button-update-billing">
+                      Update Billing
+                    </Button>
+                    <Button variant="outline" data-testid="button-cancel-subscription">
+                      Cancel Subscription
+                    </Button>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Billing History</p>
+                  <div className="space-y-2 max-h-[150px] overflow-y-auto">
+                    {[
+                      { date: "Dec 1, 2024", amount: "$0/mo", status: "Paid" },
+                      { date: "Nov 1, 2024", amount: "$0/mo", status: "Paid" },
+                      { date: "Oct 1, 2024", amount: "$0/mo", status: "Paid" },
+                    ].map((bill, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 rounded border text-sm">
+                        <span>{bill.date}</span>
+                        <span>{bill.amount}</span>
+                        <Badge variant="secondary" className="text-xs">{bill.status}</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setSelectedSubscriber(null)}>Close</Button>
+                <Button variant="default">Send Message</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -845,13 +1051,14 @@ interface UsersResponse {
   total: number;
 }
 
-function UserManagement() {
+function UserManagement({ isAuthReady }: { isAuthReady: boolean }) {
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   const { data, isLoading, error } = useQuery<UsersResponse>({
     queryKey: ['/api/v1/admin/users'],
     queryFn: adminQueryFn,
+    enabled: isAuthReady,
   });
 
   if (error) {
@@ -1184,10 +1391,11 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
   );
 }
 
-function CreatorsManagement() {
+function CreatorsManagement({ isAuthReady }: { isAuthReady: boolean }) {
   const { data, isLoading, error } = useQuery<CreatorsResponse>({
     queryKey: ['/api/v1/admin/creators'],
     queryFn: adminQueryFn,
+    enabled: isAuthReady,
   });
 
   if (error) {
