@@ -1460,6 +1460,10 @@ function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) {
   const createMutation = useMutation({
     mutationFn: async (values: z.infer<typeof createUserSchema>) => {
       const response = await adminApiRequest('POST', '/api/v1/admin/users', values);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create user');
+      }
       return response.json();
     },
     onSuccess: (data) => {
@@ -1471,11 +1475,22 @@ function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) {
       onSuccess(data.credentials);
     },
     onError: (error: Error) => {
+      const isEmailConflict = error.message.includes("Email already in use");
       toast({
-        title: "Failed to create user",
-        description: error.message,
+        title: isEmailConflict ? "Email already exists" : "Failed to create user",
+        description: isEmailConflict 
+          ? "This email is already registered. Please use a different email address."
+          : error.message,
         variant: "destructive",
       });
+      
+      // Set form error for email field if it's a duplicate email error
+      if (isEmailConflict) {
+        form.setError("email", {
+          type: "manual",
+          message: "This email is already registered"
+        });
+      }
     },
   });
 

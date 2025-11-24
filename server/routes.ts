@@ -632,20 +632,17 @@ export function registerRoutes(app: Express) {
   // Create user (admin only)
   app.post("/api/v1/admin/users", requireAdmin as any, async (req: AuthenticatedRequest, res) => {
     try {
-      const { password, ...userData } = req.body;
-      
-      // Validate required fields
-      if (!userData.email || !password || !userData.name) {
-        return res.status(400).json({ error: "Email, password, and name are required" });
-      }
+      // Validate request body using Zod schema for regular users
+      const validatedData = insertUserSchema.parse(req.body);
+      const { password, ...userData } = validatedData;
 
       // Check if email already exists
       const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
-        return res.status(400).json({ error: "Email already in use" });
+        return res.status(409).json({ error: "Email already in use" });
       }
 
-      // Hash password
+      // Hash password with bcrypt (12 rounds)
       const hashedPassword = await bcrypt.hash(password, 12);
 
       // Create user with hashed password
@@ -676,6 +673,13 @@ export function registerRoutes(app: Express) {
         }
       });
     } catch (error: any) {
+      // Handle Zod validation errors
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: error.errors 
+        });
+      }
       res.status(500).json({ error: error.message });
     }
   });
