@@ -63,6 +63,15 @@ export default function AdminDashboard() {
   const [selectedAffiliateRate, setSelectedAffiliateRate] = useState<any>(null);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [isAuthReady, setIsAuthReady] = useState(false);
+  
+  // Maker drill-down states
+  const [showMakerOrders, setShowMakerOrders] = useState(false);
+  const [showMakerRatings, setShowMakerRatings] = useState(false);
+  const [showMakerBusinessInfo, setShowMakerBusinessInfo] = useState(false);
+  
+  // Subscription plan drill-down states
+  const [showEditPlan, setShowEditPlan] = useState(false);
+  const [showPlanSubscribers, setShowPlanSubscribers] = useState(false);
 
   // Auto-login for development (in production, would redirect to login page)
   useEffect(() => {
@@ -375,29 +384,49 @@ export default function AdminDashboard() {
               </DialogHeader>
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
+                  <div 
+                    className="p-3 rounded-lg hover-elevate cursor-pointer border"
+                    onClick={() => setShowMakerBusinessInfo(true)}
+                    data-testid="section-business-name"
+                  >
                     <p className="text-sm text-muted-foreground">Business Name</p>
                     <p className="font-600">{selectedMaker.name}</p>
+                    <p className="text-xs text-primary mt-1">Click for contact details →</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
                     <Badge variant={selectedMaker.pending ? "outline" : "secondary"}>{selectedMaker.status}</Badge>
                   </div>
-                  <div>
+                  <div 
+                    className="p-3 rounded-lg hover-elevate cursor-pointer border"
+                    onClick={() => setShowMakerBusinessInfo(true)}
+                    data-testid="section-location"
+                  >
                     <p className="text-sm text-muted-foreground">Location</p>
                     <p className="font-600">{selectedMaker.location}</p>
+                    <p className="text-xs text-primary mt-1">Click for full address →</p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Email</p>
                     <p className="font-600 text-sm">{selectedMaker.email}</p>
                   </div>
-                  <div>
+                  <div 
+                    className="p-3 rounded-lg hover-elevate cursor-pointer border"
+                    onClick={() => setShowMakerRatings(true)}
+                    data-testid="section-rating"
+                  >
                     <p className="text-sm text-muted-foreground">Rating</p>
                     <p className="font-600">{selectedMaker.rating}</p>
+                    <p className="text-xs text-primary mt-1">Click for reviews →</p>
                   </div>
-                  <div>
+                  <div 
+                    className="p-3 rounded-lg hover-elevate cursor-pointer border"
+                    onClick={() => setShowMakerOrders(true)}
+                    data-testid="section-total-orders"
+                  >
                     <p className="text-sm text-muted-foreground">Total Orders</p>
                     <p className="font-600">{selectedMaker.totalOrders}</p>
+                    <p className="text-xs text-primary mt-1">Click for order details →</p>
                   </div>
                 </div>
                 {selectedMaker.pending && (
@@ -482,12 +511,285 @@ export default function AdminDashboard() {
                   </ul>
                 </div>
                 <div className="flex gap-2">
-                  <Button variant="outline" className="flex-1">Edit Plan</Button>
-                  <Button variant="outline" className="flex-1">View Subscribers</Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setShowEditPlan(true)}
+                    data-testid="button-edit-plan"
+                  >
+                    Edit Plan
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1"
+                    onClick={() => setShowPlanSubscribers(true)}
+                    data-testid="button-view-subscribers"
+                  >
+                    View Subscribers
+                  </Button>
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setSelectedPlan(null)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Maker Orders Sub-Dialog */}
+        {showMakerOrders && selectedMaker && (
+          <Dialog open={true} onOpenChange={() => setShowMakerOrders(false)}>
+            <DialogContent className="max-w-3xl" data-testid="dialog-maker-orders">
+              <DialogHeader>
+                <DialogTitle>Order History - {selectedMaker.name}</DialogTitle>
+                <DialogDescription>All orders placed with this maker</DialogDescription>
+              </DialogHeader>
+              <div className="max-h-[60vh] overflow-y-auto">
+                <div className="space-y-3">
+                  {[
+                    { orderId: "#ORD-1234", customer: "Sarah Johnson", item: "Custom Navy Suit", date: "Dec 15, 2024", amount: "$890", status: "Delivered" },
+                    { orderId: "#ORD-1189", customer: "Michael Chen", item: "Tailored Shirt", date: "Dec 12, 2024", amount: "$165", status: "In Progress" },
+                    { orderId: "#ORD-1156", customer: "Emma Davis", item: "Business Dress", date: "Dec 8, 2024", amount: "$445", status: "Delivered" },
+                    { orderId: "#ORD-1098", customer: "Robert Smith", item: "Tuxedo Rental", date: "Nov 28, 2024", amount: "$320", status: "Completed" },
+                    { orderId: "#ORD-1034", customer: "Lisa Williams", item: "Custom Blazer", date: "Nov 22, 2024", amount: "$580", status: "Delivered" },
+                  ].map((order, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 rounded-lg border hover-elevate">
+                      <div className="flex-1">
+                        <p className="font-600">{order.orderId} - {order.item}</p>
+                        <p className="text-sm text-muted-foreground">{order.customer} • {order.date}</p>
+                      </div>
+                      <div className="text-right mr-4">
+                        <p className="font-600">{order.amount}</p>
+                        <Badge variant="secondary" className="text-xs">{order.status}</Badge>
+                      </div>
+                      <Button variant="ghost" size="sm">View</Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowMakerOrders(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Maker Ratings Sub-Dialog */}
+        {showMakerRatings && selectedMaker && (
+          <Dialog open={true} onOpenChange={() => setShowMakerRatings(false)}>
+            <DialogContent className="max-w-2xl" data-testid="dialog-maker-ratings">
+              <DialogHeader>
+                <DialogTitle>Ratings & Reviews - {selectedMaker.name}</DialogTitle>
+                <DialogDescription>Customer feedback and ratings</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+                  <div className="text-center">
+                    <p className="text-3xl font-700">{selectedMaker.rating}</p>
+                    <p className="text-sm text-muted-foreground">Average Rating</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-3xl font-700">142</p>
+                    <p className="text-sm text-muted-foreground">Total Reviews</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-3xl font-700">98%</p>
+                    <p className="text-sm text-muted-foreground">Satisfaction</p>
+                  </div>
+                </div>
+                <div className="max-h-[40vh] overflow-y-auto space-y-3">
+                  {[
+                    { reviewer: "Sarah J.", rating: 5, comment: "Excellent craftsmanship! The suit fits perfectly.", date: "2 days ago" },
+                    { reviewer: "Michael C.", rating: 5, comment: "Great attention to detail. Very professional service.", date: "1 week ago" },
+                    { reviewer: "Emma D.", rating: 4, comment: "Beautiful work, slight delay but worth the wait.", date: "2 weeks ago" },
+                    { reviewer: "Robert S.", rating: 5, comment: "Best tailor in the area. Highly recommended!", date: "3 weeks ago" },
+                  ].map((review, i) => (
+                    <div key={i} className="p-4 rounded-lg border">
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="font-600">{review.reviewer}</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex">
+                            {[...Array(review.rating)].map((_, j) => (
+                              <span key={j} className="text-yellow-500">★</span>
+                            ))}
+                          </div>
+                          <span className="text-xs text-muted-foreground">{review.date}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowMakerRatings(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Maker Business Info Sub-Dialog */}
+        {showMakerBusinessInfo && selectedMaker && (
+          <Dialog open={true} onOpenChange={() => setShowMakerBusinessInfo(false)}>
+            <DialogContent data-testid="dialog-maker-business-info">
+              <DialogHeader>
+                <DialogTitle>Business Information - {selectedMaker.name}</DialogTitle>
+                <DialogDescription>Complete contact and business details</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Business Name</p>
+                    <p className="font-600">{selectedMaker.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Business Type</p>
+                    <p className="font-600">Custom Tailoring</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Full Address</p>
+                    <p className="font-600">123 Savile Row</p>
+                    <p className="text-sm">{selectedMaker.location}</p>
+                    <p className="text-sm">W1S 3PJ</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Contact Phone</p>
+                    <p className="font-600">+44 20 7234 5678</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Email</p>
+                    <p className="font-600 text-sm">{selectedMaker.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Website</p>
+                    <p className="font-600 text-sm text-primary">www.savilemodern.com</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Business Hours</p>
+                    <p className="text-sm">Mon-Fri: 9am - 6pm</p>
+                    <p className="text-sm">Sat: 10am - 4pm</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Member Since</p>
+                    <p className="font-600">March 2023</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground mb-2">Verification Documents</p>
+                  <div className="flex gap-2">
+                    <Badge variant="secondary">Business License ✓</Badge>
+                    <Badge variant="secondary">Tax ID ✓</Badge>
+                    <Badge variant="secondary">Insurance ✓</Badge>
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowMakerBusinessInfo(false)}>Close</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Edit Plan Sub-Dialog */}
+        {showEditPlan && selectedPlan && (
+          <Dialog open={true} onOpenChange={() => setShowEditPlan(false)}>
+            <DialogContent data-testid="dialog-edit-plan">
+              <DialogHeader>
+                <DialogTitle>Edit Subscription Plan</DialogTitle>
+                <DialogDescription>Modify plan pricing and features for {selectedPlan.plan}</DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-500 mb-2 block">Plan Name</label>
+                  <Input defaultValue={selectedPlan.plan} data-testid="input-plan-name" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-500 mb-2 block">Monthly Price ($)</label>
+                    <Input 
+                      type="number" 
+                      defaultValue={selectedPlan.price.replace(/[^0-9.]/g, '')}
+                      data-testid="input-plan-price"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-500 mb-2 block">Billing Cycle</label>
+                    <Select defaultValue="monthly">
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-500 mb-2 block">Features (one per line)</label>
+                  <textarea 
+                    className="w-full min-h-[120px] rounded-md border p-2 text-sm"
+                    defaultValue={selectedPlan.features.join('\n')}
+                    data-testid="input-plan-features"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-500 mb-2 block">Status</label>
+                  <Select defaultValue="active">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="deprecated">Deprecated</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowEditPlan(false)}>Cancel</Button>
+                <Button data-testid="button-save-plan">Save Changes</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* View Subscribers Sub-Dialog */}
+        {showPlanSubscribers && selectedPlan && (
+          <Dialog open={true} onOpenChange={() => setShowPlanSubscribers(false)}>
+            <DialogContent className="max-w-3xl" data-testid="dialog-plan-subscribers">
+              <DialogHeader>
+                <DialogTitle>Subscribers - {selectedPlan.plan}</DialogTitle>
+                <DialogDescription>{selectedPlan.active} active subscribers</DialogDescription>
+              </DialogHeader>
+              <div className="max-h-[60vh] overflow-y-auto">
+                <div className="space-y-3">
+                  {[
+                    { name: "Urban Stitch Co.", email: "urban@stitch.com", joined: "Dec 1, 2024", status: "Active", nextBilling: "Jan 1, 2025" },
+                    { name: "Modern Threads", email: "modern@threads.com", joined: "Nov 28, 2024", status: "Active", nextBilling: "Dec 28, 2024" },
+                    { name: "Artisan Apparel", email: "artisan@apparel.com", joined: "Nov 15, 2024", status: "Active", nextBilling: "Dec 15, 2024" },
+                    { name: "Elite Tailoring", email: "elite@tailoring.com", joined: "Nov 10, 2024", status: "Expiring Soon", nextBilling: "Dec 10, 2024" },
+                    { name: "Fashion Forward", email: "fashion@forward.com", joined: "Nov 5, 2024", status: "Active", nextBilling: "Dec 5, 2024" },
+                  ].map((subscriber, i) => (
+                    <div key={i} className="flex items-center justify-between p-4 rounded-lg border hover-elevate">
+                      <div className="flex-1">
+                        <p className="font-600">{subscriber.name}</p>
+                        <p className="text-sm text-muted-foreground">{subscriber.email} • Joined {subscriber.joined}</p>
+                      </div>
+                      <div className="text-right mr-4">
+                        <Badge variant={subscriber.status === "Expiring Soon" ? "outline" : "secondary"}>
+                          {subscriber.status}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">Next: {subscriber.nextBilling}</p>
+                      </div>
+                      <Button variant="ghost" size="sm">Manage</Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowPlanSubscribers(false)}>Close</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
