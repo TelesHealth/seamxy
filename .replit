@@ -27,10 +27,6 @@ localPort = 36511
 externalPort = 5000
 
 [[ports]]
-localPort = 37443
-externalPort = 8099
-
-[[ports]]
 localPort = 38215
 externalPort = 8000
 
@@ -100,3 +96,9 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_openai_ai_integrations:1.0.0", "javascript_database:1.0.0", "javascript_stripe:1.0.0"]
+
+[userenv]
+
+[userenv.shared]
+TESTING_VITE_STRIPE_PUBLIC_KEY = "sk_test_51SRM6IJm3OmqJSfCSMEvC1k4HBpraGNqodd9HL8Up48dBj7X9Bbk3ovtPgOR4VFfD0DN4n11fPOjz2rqUfbqeJ3U00T5nbhsuQ"
+TESTING_STRIPE_SECRET_KEY = "pk_test_51SRM6IJm3OmqJSfCh0YvDFMIa0RKz3oyhLBe7jxk4X376RqscEWUiHdT6CHbzR1Df1QIN7iG90Bok1TFPcXe5oof00sG5D3Z2P"
