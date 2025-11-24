@@ -730,6 +730,61 @@ export function registerRoutes(app: Express) {
   // ADMIN PANEL - MAKER MANAGEMENT
   // ============================================
 
+  // Create maker (admin only)
+  app.post("/api/v1/admin/makers", requireAdmin as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      // Validate request body using Zod schema
+      const validatedData = insertMakerSchema.parse(req.body);
+      const { password, ...makerData } = validatedData;
+
+      // Check if email already exists
+      const existingMaker = await storage.getMakerByEmail(makerData.email);
+      if (existingMaker) {
+        return res.status(409).json({ error: "Email already in use" });
+      }
+
+      // Hash password with bcrypt (12 rounds)
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Create maker with hashed password
+      const newMaker = await storage.createMaker({
+        ...makerData,
+        password: hashedPassword,
+      });
+
+      // Create audit log
+      if (req.user) {
+        await storage.createAuditLog({
+          adminId: req.user.id,
+          action: "create_maker",
+          targetType: "maker",
+          targetId: newMaker.id,
+          changes: { email: makerData.email, businessName: makerData.businessName },
+          ipAddress: req.ip || null
+        });
+      }
+
+      // Return maker data without password, but include the original password in response for display
+      const { password: _, ...makerWithoutPassword } = newMaker;
+      res.json({ 
+        maker: makerWithoutPassword,
+        credentials: {
+          email: newMaker.email,
+          password: password // Return unhashed password so admin can share it
+        }
+      });
+    } catch (error: any) {
+      // Handle Zod validation errors
+      if (error.name === 'ZodError') {
+        return res.status(400).json({ 
+          error: "Validation failed", 
+          details: error.errors 
+        });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Approve/verify maker
   app.patch("/api/v1/admin/makers/:id/verify", requireAdmin as any, async (req: AuthenticatedRequest, res) => {
     try {
@@ -2948,6 +3003,94 @@ export function registerRoutes(app: Express) {
   // ============================================
   // ADMIN - CREATORS MANAGEMENT
   // ============================================
+  
+  // Create creator account (admin only) - creates both user and stylist profile
+  app.post("/api/v1/admin/creators", requireAdmin as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { 
+        email, 
+        password, 
+        name, 
+        handle, 
+        displayName,
+        bio,
+        styleSpecialties,
+        instagramHandle,
+        tiktokHandle,
+        websiteUrl,
+        isVerified,
+        demographic
+      } = req.body;
+
+      // Validate required fields
+      if (!email || !password || !name || !handle) {
+        return res.status(400).json({ error: "Email, password, name, and handle are required" });
+      }
+
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ error: "Email already in use" });
+      }
+
+      // Check if handle already exists
+      const existingProfile = await storage.getStylistProfileByHandle(handle);
+      if (existingProfile) {
+        return res.status(409).json({ error: "Handle already in use" });
+      }
+
+      // Hash password with bcrypt (12 rounds)
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Create user account
+      const newUser = await storage.createUser({
+        email,
+        password: hashedPassword,
+        name,
+        demographic: demographic || 'women' // Default demographic
+      });
+
+      // Create stylist profile linked to user
+      const stylistProfile = await storage.createStylistProfile({
+        userId: newUser.id,
+        handle,
+        displayName: displayName || name,
+        bio: bio || null,
+        styleSpecialties: styleSpecialties || [],
+        instagramHandle: instagramHandle || null,
+        tiktokHandle: tiktokHandle || null,
+        websiteUrl: websiteUrl || null,
+        isVerified: isVerified || false,
+        isActive: true
+      });
+
+      // Create audit log
+      if (req.user) {
+        await storage.createAuditLog({
+          adminId: req.user.id,
+          action: "create_creator",
+          targetType: "user",
+          targetId: newUser.id,
+          changes: { email, name, handle },
+          ipAddress: req.ip || null
+        });
+      }
+
+      // Return creator data without password, but include the original password in response for display
+      const { password: _, ...userWithoutPassword } = newUser;
+      res.json({ 
+        user: userWithoutPassword,
+        profile: stylistProfile,
+        credentials: {
+          email: newUser.email,
+          password: password // Return unhashed password so admin can share it
+        }
+      });
+    } catch (error: any) {
+      console.error('Creator creation error:', error);
+      res.status(500).json({ error: error.message });
+    }
+  });
   
   // Get all creators with stats (admin only)
   app.get("/api/v1/admin/creators",
