@@ -629,6 +629,57 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Create user (admin only)
+  app.post("/api/v1/admin/users", requireAdmin as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { password, ...userData } = req.body;
+      
+      // Validate required fields
+      if (!userData.email || !password || !userData.name) {
+        return res.status(400).json({ error: "Email, password, and name are required" });
+      }
+
+      // Check if email already exists
+      const existingUser = await storage.getUserByEmail(userData.email);
+      if (existingUser) {
+        return res.status(400).json({ error: "Email already in use" });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 12);
+
+      // Create user with hashed password
+      const newUser = await storage.createUser({
+        ...userData,
+        password: hashedPassword,
+      });
+
+      // Create audit log
+      if (req.user) {
+        await storage.createAuditLog({
+          adminId: req.user.id,
+          action: "create_user",
+          targetType: "user",
+          targetId: newUser.id,
+          changes: { email: userData.email, name: userData.name },
+          ipAddress: req.ip || null
+        });
+      }
+
+      // Return user data without password, but include the original password in response for display
+      const { password: _, ...userWithoutPassword } = newUser;
+      res.json({ 
+        user: userWithoutPassword,
+        credentials: {
+          email: newUser.email,
+          password: password // Return unhashed password so admin can share it
+        }
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Update user (admin only)
   app.patch("/api/v1/admin/users/:id", requireAdmin as any, async (req: AuthenticatedRequest, res) => {
     try {
