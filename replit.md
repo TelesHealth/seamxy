@@ -12,6 +12,19 @@ Ask before making major changes.
 Do not make changes to the folder `Z`.
 Do not make changes to the file `Y`.
 
+## Recent Changes
+
+### November 24, 2025 - Admin Dashboard Enhancements
+- **Admin Authentication System**: Implemented auto-login for development with x-admin-id header authentication
+  - Created `client/src/lib/adminAuth.ts` with adminFetch, adminApiRequest utilities
+  - Fixed 401 errors in Users and Creators tabs with proper authentication flow
+- **Nested Dialog System**: Added comprehensive drill-down views for admin dashboard
+  - **Maker Details**: Clickable sections for Total Orders, Rating, Location, Business Name
+  - **Sub-Dialogs**: Order History (5 orders), Ratings & Reviews (statistics + 4 reviews), Business Information (full contact details)
+  - **Subscription Plans**: Edit Plan form dialog, View Subscribers list dialog
+  - **State Management**: Helper functions (closeMakerDialog, closePlanDialog) properly reset all sub-dialog states when parent closes
+- **UI/UX**: Added hover-elevate styling, visual hints for clickable sections, comprehensive data-testid attributes for testing
+
 ## System Architecture
 
 SeamXY's architecture is built on a modern web stack for scalability and rich user experiences.

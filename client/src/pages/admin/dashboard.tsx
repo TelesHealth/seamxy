@@ -72,6 +72,20 @@ export default function AdminDashboard() {
   // Subscription plan drill-down states
   const [showEditPlan, setShowEditPlan] = useState(false);
   const [showPlanSubscribers, setShowPlanSubscribers] = useState(false);
+  
+  // Helper functions to close dialogs and reset sub-dialog states
+  const closeMakerDialog = () => {
+    setSelectedMaker(null);
+    setShowMakerOrders(false);
+    setShowMakerRatings(false);
+    setShowMakerBusinessInfo(false);
+  };
+  
+  const closePlanDialog = () => {
+    setSelectedPlan(null);
+    setShowEditPlan(false);
+    setShowPlanSubscribers(false);
+  };
 
   // Auto-login for development (in production, would redirect to login page)
   useEffect(() => {
@@ -376,7 +390,7 @@ export default function AdminDashboard() {
 
         {/* Maker Details Dialog */}
         {selectedMaker && (
-          <Dialog open={true} onOpenChange={() => setSelectedMaker(null)}>
+          <Dialog open={true} onOpenChange={() => closeMakerDialog()}>
             <DialogContent data-testid="dialog-maker-details">
               <DialogHeader>
                 <DialogTitle>{selectedMaker.name}</DialogTitle>
@@ -437,7 +451,7 @@ export default function AdminDashboard() {
                 )}
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedMaker(null)}>Close</Button>
+                <Button variant="outline" onClick={() => closeMakerDialog()}>Close</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -482,7 +496,7 @@ export default function AdminDashboard() {
 
         {/* Subscription Plan Details Dialog */}
         {selectedPlan && (
-          <Dialog open={true} onOpenChange={() => setSelectedPlan(null)}>
+          <Dialog open={true} onOpenChange={() => closePlanDialog()}>
             <DialogContent data-testid="dialog-plan-details">
               <DialogHeader>
                 <DialogTitle>{selectedPlan.plan}</DialogTitle>
@@ -530,7 +544,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setSelectedPlan(null)}>Close</Button>
+                <Button variant="outline" onClick={() => closePlanDialog()}>Close</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
