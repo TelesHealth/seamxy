@@ -2213,7 +2213,7 @@ function CreatorsManagement({ isAuthReady }: { isAuthReady: boolean }) {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <p className="font-600" data-testid={`text-creator-name-${i}`}>
-                      {creator.businessName || creator.ownerName || 'Unnamed Creator'}
+                      {creator.stylistProfile?.displayName || creator.name || 'Unnamed Creator'}
                     </p>
                     {creator.isVerified && (
                       <Badge variant="secondary" className="text-xs">Verified</Badge>
@@ -2226,7 +2226,7 @@ function CreatorsManagement({ isAuthReady }: { isAuthReady: boolean }) {
                   
                   {creator.stylistProfile && (
                     <p className="text-xs text-muted-foreground">
-                      @{creator.stylistProfile.handle} • {creator.stylistProfile.tier} tier
+                      @{creator.stylistProfile.handle}
                     </p>
                   )}
                 </div>
