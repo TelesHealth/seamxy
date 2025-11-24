@@ -12,6 +12,28 @@ Ask before making major changes.
 Do not make changes to the folder `Z`.
 Do not make changes to the file `Y`.
 
+## Recent Changes (November 2025)
+
+### Creator Studio Content Population
+- **Luxe Design Studio Profile**: Enhanced with professional content for demonstration
+  - Bio: Luxury fashion atelier specializing in couture eveningwear, bespoke bridal, and executive tailoring
+  - Location: New York, NY
+  - Specialties: Haute Couture, Bridal Couture, Evening Wear, Executive Tailoring, Custom Design
+  - Social: Instagram (@luxedesignstudio), TikTok (@luxe_design), Website
+- **Subscription Tiers**: 2 professional tiers created
+  - Luxe Insider: $14.99/month (5 perks including lookbooks, BTS content, Q&A sessions)
+  - Elite Collection: $79.99/month (6 premium perks including 1-on-1 consultations, 20% discount)
+- **Portfolio Posts**: 5 posts with AI-generated professional fashion images
+  - "Introducing: The Enchanted Bride Collection" (2,847 views, 156 likes)
+  - "Executive Excellence: Bespoke Tailoring" (1,923 views, 98 likes)
+  - "Velvet Dreams: Fall Evening Collection" (3,214 views, 187 likes)
+  - "Inside the Atelier: Where Magic Happens" (subscriber-only, 456 views, 67 likes)
+  - "The Trinity Collection: Evening Couture Unveiled" (4,892 views, 234 likes)
+- **Frontend Fixes**: Resolved data mapping issues in creator profile rendering
+  - Fixed tier.features → tier.perks mapping
+  - Fixed post.caption → post.title + post.content + post.mediaUrls
+  - Added defensive null checks for undefined totalLikes/totalFollowers
+
 ## System Architecture
 
 SeamXY's architecture is built on a modern web stack for scalability and rich user experiences.
