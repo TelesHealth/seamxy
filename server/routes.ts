@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { storage } from "./storage";
+import bcrypt from "bcrypt";
 import { 
   analyzeStyleDescription, 
   calculateProductScores, 
@@ -589,8 +590,13 @@ export function registerRoutes(app: Express) {
       const { email, password } = req.body;
       const admin = await storage.getAdminUserByEmail(email);
       
-      // In production, use proper password hashing (bcrypt)
-      if (!admin || admin.password !== password) {
+      if (!admin) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+
+      // Use bcrypt to compare passwords
+      const isPasswordValid = await bcrypt.compare(password, admin.password);
+      if (!isPasswordValid) {
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
