@@ -6,7 +6,7 @@ import { TrendingUp, Users, ShoppingBag, Scissors, DollarSign, Settings, Sparkle
 import { useQuery, useMutation, QueryFunction } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -201,38 +201,7 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="makers">
-            <Card>
-              <CardHeader>
-                <CardTitle>Maker Management</CardTitle>
-                <CardDescription>Approve and manage custom makers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { id: "1", name: "Savile Modern Tailors", location: "London, UK", status: "Verified", pending: false, email: "savile@tailors.com", rating: "4.9", totalOrders: 156 },
-                    { id: "2", name: "Urban Stitch Co.", location: "Los Angeles, USA", status: "Verified", pending: false, email: "urban@stitch.com", rating: "4.7", totalOrders: 89 },
-                    { id: "3", name: "Minimal Atelier", location: "Lisbon, PT", status: "Pending Review", pending: true, email: "minimal@atelier.pt", rating: "N/A", totalOrders: 0 },
-                  ].map((maker, i) => (
-                    <div key={i} className="flex items-center justify-between p-4 rounded-lg border hover-elevate">
-                      <div className="flex-1">
-                        <p className="font-600">{maker.name}</p>
-                        <p className="text-sm text-muted-foreground">{maker.location}</p>
-                      </div>
-                      <Badge variant={maker.pending ? "outline" : "secondary"}>{maker.status}</Badge>
-                      <Button 
-                        variant={maker.pending ? "default" : "ghost"}
-                        size="sm" 
-                        className="ml-4"
-                        onClick={() => setSelectedMaker(maker)}
-                        data-testid={`button-maker-action-${i}`}
-                      >
-                        {maker.pending ? "Review" : "Manage"}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <MakersManagement isAuthReady={isAuthReady} />
           </TabsContent>
 
           <TabsContent value="transactions">
@@ -1747,6 +1716,426 @@ function CredentialsDisplayDialog({ credentials, onClose }: CredentialsDisplayDi
             Done
           </Button>
         </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Maker creation schema
+const createMakerSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  businessName: z.string().min(1, "Business name is required"),
+  ownerName: z.string().min(1, "Owner name is required"),
+  description: z.string().optional(),
+  specialties: z.string().optional(), // Comma-separated
+  budgetMin: z.coerce.number().int().min(0),
+  budgetMax: z.coerce.number().int().min(0),
+  location: z.string().min(1, "Location is required"),
+  subscriptionTier: z.enum(["basic", "pro", "elite"]).default("basic"),
+  isVerified: z.boolean().default(false),
+});
+
+interface Maker {
+  id: string;
+  email: string;
+  businessName: string;
+  ownerName: string;
+  location: string;
+  budgetMin: number;
+  budgetMax: number;
+  subscriptionTier: string;
+  isVerified: boolean;
+  rating: string;
+  totalReviews: number;
+}
+
+interface MakersResponse {
+  makers: Maker[];
+}
+
+function MakersManagement({ isAuthReady }: { isAuthReady: boolean }) {
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null);
+
+  const { data, isLoading, error } = useQuery<any>({
+    queryKey: ['/api/v1/makers'],
+    enabled: isAuthReady,
+  });
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Maker Management</CardTitle>
+          <CardDescription>Manage custom maker accounts</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8 text-destructive">
+            Error loading makers: {(error as Error).message}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Maker Management</CardTitle>
+              <CardDescription>Create and manage custom maker accounts</CardDescription>
+            </div>
+            <Button onClick={() => setShowCreateDialog(true)} data-testid="button-create-maker">
+              <Plus className="w-4 h-4 mr-2" />
+              Create Maker
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between p-4 rounded-lg border">
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-5 w-48" />
+                    <Skeleton className="h-4 w-64" />
+                  </div>
+                  <Skeleton className="h-10 w-20" />
+                </div>
+              ))}
+            </div>
+          ) : !data || data.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">
+              <Scissors className="w-12 h-12 mx-auto mb-4 opacity-50" />
+              <p className="text-lg font-500">No makers found</p>
+              <p className="text-sm">Create your first maker account to get started</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {data.map((maker: Maker, i: number) => (
+                <div key={maker.id} className="flex items-center justify-between p-4 rounded-lg border" data-testid={`maker-item-${i}`}>
+                  <div className="flex-1">
+                    <p className="font-600" data-testid={`text-maker-name-${i}`}>{maker.businessName}</p>
+                    <p className="text-sm text-muted-foreground">{maker.location} • {maker.ownerName}</p>
+                    <div className="flex gap-2 mt-2">
+                      <Badge variant="outline" className="text-xs">{maker.subscriptionTier}</Badge>
+                      {maker.isVerified && (
+                        <Badge variant="secondary" className="text-xs">Verified</Badge>
+                      )}
+                      <Badge variant="outline" className="text-xs">
+                        ${maker.budgetMin}-${maker.budgetMax}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {showCreateDialog && (
+        <CreateMakerDialog 
+          onClose={() => setShowCreateDialog(false)}
+          onSuccess={(credentials) => {
+            setShowCreateDialog(false);
+            setCreatedCredentials(credentials);
+          }}
+        />
+      )}
+
+      {createdCredentials && (
+        <CredentialsDisplayDialog 
+          credentials={createdCredentials}
+          onClose={() => setCreatedCredentials(null)}
+        />
+      )}
+    </>
+  );
+}
+
+interface CreateMakerDialogProps {
+  onClose: () => void;
+  onSuccess: (credentials: { email: string; password: string }) => void;
+}
+
+function CreateMakerDialog({ onClose, onSuccess }: CreateMakerDialogProps) {
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof createMakerSchema>>({
+    resolver: zodResolver(createMakerSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      businessName: '',
+      ownerName: '',
+      description: '',
+      specialties: '',
+      budgetMin: 100,
+      budgetMax: 5000,
+      location: '',
+      subscriptionTier: 'basic',
+      isVerified: false,
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof createMakerSchema>) => {
+      // Convert specialties string to array
+      const payload = {
+        ...values,
+        specialties: values.specialties ? values.specialties.split(',').map(s => s.trim()) : [],
+      };
+      const response = await adminApiRequest('POST', '/api/v1/admin/makers', payload);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create maker');
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/makers'] });
+      toast({
+        title: "Maker created successfully",
+        description: `Account created for ${data.credentials.email}`,
+      });
+      onSuccess(data.credentials);
+    },
+    onError: (error: Error) => {
+      const isEmailConflict = error.message.includes("Email already in use");
+      toast({
+        title: isEmailConflict ? "Email already exists" : "Failed to create maker",
+        description: isEmailConflict 
+          ? "This email is already registered. Please use a different email address."
+          : error.message,
+        variant: "destructive",
+      });
+      
+      if (isEmailConflict) {
+        form.setError("email", {
+          type: "manual",
+          message: "This email is already registered"
+        });
+      }
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof createMakerSchema>) => {
+    createMutation.mutate(values);
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" data-testid="dialog-create-maker">
+        <DialogHeader>
+          <DialogTitle>Create New Maker</DialogTitle>
+          <DialogDescription>
+            Create a new maker account for custom tailoring services.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="businessName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Name *</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-create-maker-business-name" placeholder="Elite Tailors" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="ownerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Owner Name *</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-create-maker-owner-name" placeholder="John Smith" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email *</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} data-testid="input-create-maker-email" placeholder="contact@elitetailors.com" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password *</FormLabel>
+                    <FormControl>
+                      <Input type="text" {...field} data-testid="input-create-maker-password" placeholder="Minimum 8 characters" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="location"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Location *</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-create-maker-location" placeholder="London, UK" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-create-maker-description" placeholder="Luxury bespoke tailoring..." />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="specialties"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Specialties (comma-separated)</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-create-maker-specialties" placeholder="Suits, Dresses, Alterations" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-3 gap-4">
+              <FormField
+                control={form.control}
+                name="budgetMin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Min ($) *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        data-testid="input-create-maker-budget-min"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="budgetMax"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Max ($) *</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        data-testid="input-create-maker-budget-max"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="subscriptionTier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tier *</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-create-maker-tier">
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="basic">Basic</SelectItem>
+                        <SelectItem value="pro">Pro</SelectItem>
+                        <SelectItem value="elite">Elite</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="isVerified"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Verified Maker</FormLabel>
+                    <FormDescription>
+                      Mark this maker as verified from creation
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <input
+                      type="checkbox"
+                      checked={field.value}
+                      onChange={field.onChange}
+                      data-testid="checkbox-create-maker-verified"
+                      className="h-4 w-4"
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose} disabled={createMutation.isPending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-create-maker">
+                {createMutation.isPending ? "Creating..." : "Create Maker"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );
