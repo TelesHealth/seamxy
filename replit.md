@@ -17,12 +17,16 @@ Do not make changes to the file `Y`.
 ### November 24, 2025 - Admin Dashboard Enhancements
 - **Admin Authentication System**: Implemented auto-login for development with x-admin-id header authentication
   - Created `client/src/lib/adminAuth.ts` with adminFetch, adminApiRequest utilities
-  - Fixed 401 errors in Users and Creators tabs with proper authentication flow
-- **Nested Dialog System**: Added comprehensive drill-down views for admin dashboard
+  - Fixed 401 errors in Users and Creators tabs with proper authentication flow and `enabled: isAuthReady` query flags
+  - **Security Fix**: Corrected admin login endpoint to use `bcrypt.compare()` for password validation (was comparing plain text to hashed passwords)
+- **Nested Dialog System**: Added comprehensive drill-down views for admin dashboard with 3-level hierarchy
   - **Maker Details**: Clickable sections for Total Orders, Rating, Location, Business Name
   - **Sub-Dialogs**: Order History (5 orders), Ratings & Reviews (statistics + 4 reviews), Business Information (full contact details)
+  - **Tertiary Dialogs**: 
+    - **Order Details**: Complete order information (customer, shipping, payment, timeline) accessible from Order History
+    - **Subscriber Management**: Full subscription management interface with action buttons and billing history, accessible from Subscribers list
   - **Subscription Plans**: Edit Plan form dialog, View Subscribers list dialog
-  - **State Management**: Helper functions (closeMakerDialog, closePlanDialog) properly reset all sub-dialog states when parent closes
+  - **State Management**: Helper functions (closeMakerDialog, closePlanDialog) properly reset all sub-dialog AND tertiary dialog states when parent closes to prevent orphan overlays
 - **UI/UX**: Added hover-elevate styling, visual hints for clickable sections, comprehensive data-testid attributes for testing
 
 ## System Architecture
