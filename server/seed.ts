@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { aiPersonas, subscriptionPlans, pricingConfigs, products, makers, users, measurements, supplierAccounts, stylistProfiles, aiTrainingResponses, aiStylistPrompts } from "@shared/schema";
+import { aiPersonas, subscriptionPlans, pricingConfigs, products, makers, users, measurements, supplierAccounts, stylistProfiles, aiTrainingResponses, aiStylistPrompts, adminUsers } from "@shared/schema";
 import bcrypt from "bcrypt";
 
 export async function seedDatabase() {
@@ -697,6 +697,23 @@ When recommending products, prioritize quality over quantity and suggest classic
     }
   } catch (error) {
     console.log("ℹ️ Designer account already exists or error:", error);
+  }
+
+  // Seed Admin Account
+  try {
+    const hashedPassword = await bcrypt.hash("password123", 12);
+    
+    await db.insert(adminUsers).values({
+      email: "admin@example.com",
+      password: hashedPassword,
+      name: "Admin User",
+      role: "super_admin",
+      isActive: true,
+    }).onConflictDoNothing();
+
+    console.log("✅ Admin account created: admin@example.com / password123");
+  } catch (error) {
+    console.log("ℹ️ Admin account already exists");
   }
 
   console.log("🎉 Database seeding complete!");
