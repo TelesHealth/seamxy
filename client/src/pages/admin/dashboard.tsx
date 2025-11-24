@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, Users, ShoppingBag, Scissors, DollarSign, Settings, Sparkles, Eye, FileText, Heart, Edit } from "lucide-react";
+import { TrendingUp, Users, ShoppingBag, Scissors, DollarSign, Settings, Sparkles, Eye, FileText, Heart, Edit, Plus } from "lucide-react";
 import { useQuery, useMutation, QueryFunction } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -1021,6 +1021,19 @@ export default function AdminDashboard() {
   );
 }
 
+// User creation schema - for creating new users
+const createUserSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  demographic: z.enum(["men", "women", "young_adults", "children"]),
+  age: z.coerce.number().int().positive().optional().or(z.literal('')),
+  lifestyle: z.string().optional(),
+  budgetMin: z.coerce.number().int().min(0).optional().or(z.literal('')),
+  budgetMax: z.coerce.number().int().min(0).optional().or(z.literal('')),
+  budgetTier: z.enum(["affordable", "mid_range", "premium", "luxury"]).optional(),
+});
+
 // User editing schema - matches backend adminUpdateUserSchema
 const editUserSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -1055,6 +1068,8 @@ interface UsersResponse {
 
 function UserManagement({ isAuthReady }: { isAuthReady: boolean }) {
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [createdCredentials, setCreatedCredentials] = useState<{ email: string; password: string } | null>(null);
   const { toast } = useToast();
 
   const { data, isLoading, error } = useQuery<UsersResponse>({
@@ -1088,10 +1103,19 @@ function UserManagement({ isAuthReady }: { isAuthReady: boolean }) {
               <CardTitle>User Management</CardTitle>
               <CardDescription>View and manage platform users</CardDescription>
             </div>
-            <Badge variant="secondary">
-              <Users className="w-3 h-3 mr-1" />
-              {isLoading ? '...' : data?.total || 0} Users
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">
+                <Users className="w-3 h-3 mr-1" />
+                {isLoading ? '...' : data?.total || 0} Users
+              </Badge>
+              <Button 
+                onClick={() => setShowCreateDialog(true)}
+                data-testid="button-create-user"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Create User
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -1153,6 +1177,23 @@ function UserManagement({ isAuthReady }: { isAuthReady: boolean }) {
         <EditUserDialog 
           user={editingUser} 
           onClose={() => setEditingUser(null)} 
+        />
+      )}
+
+      {showCreateDialog && (
+        <CreateUserDialog 
+          onClose={() => setShowCreateDialog(false)}
+          onSuccess={(credentials) => {
+            setShowCreateDialog(false);
+            setCreatedCredentials(credentials);
+          }}
+        />
+      )}
+
+      {createdCredentials && (
+        <CredentialsDisplayDialog 
+          credentials={createdCredentials}
+          onClose={() => setCreatedCredentials(null)}
         />
       )}
     </>
@@ -1388,6 +1429,309 @@ function EditUserDialog({ user, onClose }: EditUserDialogProps) {
             </DialogFooter>
           </form>
         </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface CreateUserDialogProps {
+  onClose: () => void;
+  onSuccess: (credentials: { email: string; password: string }) => void;
+}
+
+function CreateUserDialog({ onClose, onSuccess }: CreateUserDialogProps) {
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof createUserSchema>>({
+    resolver: zodResolver(createUserSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      demographic: 'men',
+      age: '' as any,
+      lifestyle: '',
+      budgetMin: '' as any,
+      budgetMax: '' as any,
+      budgetTier: undefined,
+    },
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof createUserSchema>) => {
+      const response = await adminApiRequest('POST', '/api/v1/admin/users', values);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/admin/users'] });
+      toast({
+        title: "User created successfully",
+        description: `Account created for ${data.credentials.email}`,
+      });
+      onSuccess(data.credentials);
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to create user",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (values: z.infer<typeof createUserSchema>) => {
+    createMutation.mutate(values);
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl" data-testid="dialog-create-user">
+        <DialogHeader>
+          <DialogTitle>Create New User</DialogTitle>
+          <DialogDescription>
+            Create a new user account. The credentials will be displayed after creation.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name *</FormLabel>
+                    <FormControl>
+                      <Input {...field} data-testid="input-create-name" placeholder="John Doe" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email *</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} data-testid="input-create-email" placeholder="user@example.com" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password *</FormLabel>
+                  <FormControl>
+                    <Input type="text" {...field} data-testid="input-create-password" placeholder="Minimum 8 characters" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="demographic"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Demographic *</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger data-testid="select-create-demographic">
+                        <SelectValue placeholder="Select demographic" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="men">Men</SelectItem>
+                      <SelectItem value="women">Women</SelectItem>
+                      <SelectItem value="young_adults">Young Adults</SelectItem>
+                      <SelectItem value="children">Children</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="age"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Age</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        value={field.value || ''}
+                        data-testid="input-create-age"
+                        placeholder="Optional"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="budgetTier"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Tier</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-create-budget-tier">
+                          <SelectValue placeholder="Optional" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="affordable">Affordable</SelectItem>
+                        <SelectItem value="mid_range">Mid Range</SelectItem>
+                        <SelectItem value="premium">Premium</SelectItem>
+                        <SelectItem value="luxury">Luxury</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="budgetMin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Min ($)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        value={field.value || ''}
+                        data-testid="input-create-budget-min"
+                        placeholder="Optional"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="budgetMax"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget Max ($)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        value={field.value || ''}
+                        data-testid="input-create-budget-max"
+                        placeholder="Optional"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <FormField
+              control={form.control}
+              name="lifestyle"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Lifestyle</FormLabel>
+                  <FormControl>
+                    <Input {...field} data-testid="input-create-lifestyle" placeholder="e.g., Business professional, casual, athletic" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose} disabled={createMutation.isPending}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending} data-testid="button-submit-create-user">
+                {createMutation.isPending ? "Creating..." : "Create User"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+interface CredentialsDisplayDialogProps {
+  credentials: { email: string; password: string };
+  onClose: () => void;
+}
+
+function CredentialsDisplayDialog({ credentials, onClose }: CredentialsDisplayDialogProps) {
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = () => {
+    const text = `Email: ${credentials.email}\nPassword: ${credentials.password}`;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Dialog open={true} onOpenChange={onClose}>
+      <DialogContent data-testid="dialog-credentials-display">
+        <DialogHeader>
+          <DialogTitle>User Account Created</DialogTitle>
+          <DialogDescription>
+            Save these credentials. They will not be shown again.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="p-4 bg-muted rounded-lg space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Email</p>
+              <p className="font-600 text-lg" data-testid="text-created-email">{credentials.email}</p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Password</p>
+              <p className="font-600 text-lg font-mono" data-testid="text-created-password">{credentials.password}</p>
+            </div>
+          </div>
+
+          <Button 
+            onClick={copyToClipboard} 
+            variant="outline" 
+            className="w-full"
+            data-testid="button-copy-credentials"
+          >
+            {copied ? "Copied!" : "Copy Credentials"}
+          </Button>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={onClose} data-testid="button-close-credentials">
+            Done
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
