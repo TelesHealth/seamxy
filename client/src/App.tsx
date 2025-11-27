@@ -51,6 +51,9 @@ import CreatorProfile from "@/pages/creator-profile";
 import CreatorsDirectory from "@/pages/creators-directory";
 import ForCreators from "@/pages/for-creators";
 
+// Virtual Try-On
+import SharedTryOn from "@/pages/shared-tryon";
+
 function Router() {
   return (
     <Switch>
@@ -122,6 +125,9 @@ function Router() {
       <Route path="/for-creators" component={ForCreators} />
       <Route path="/creators" component={CreatorsDirectory} />
       <Route path="/creator/:handle" component={CreatorProfile} />
+      
+      {/* Virtual Try-On */}
+      <Route path="/try-on/shared/:shareCode" component={SharedTryOn} />
       
       <Route component={NotFound} />
     </Switch>

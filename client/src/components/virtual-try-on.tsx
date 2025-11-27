@@ -18,6 +18,8 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { TryOnModel, UserTryOnPhoto } from "@shared/schema";
+import { usePoseDetection } from "@/hooks/usePoseDetection";
+import { TryOnCanvas, type GarmentOverlay, type BodyMeasurements } from "@/components/TryOnCanvas";
 import { 
   Camera, 
   Upload, 
@@ -35,7 +37,11 @@ import {
   Sparkles,
   Ruler,
   ArrowLeft,
-  ChevronRight
+  ChevronRight,
+  Crown,
+  ThumbsUp,
+  Zap,
+  AlertCircle
 } from "lucide-react";
 
 interface PoseLandmark {
@@ -76,9 +82,18 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
   const [clothingPosition, setClothingPosition] = useState({ x: 0, y: 0 });
   const [clothingScale, setClothingScale] = useState(1);
   const [clothingRotation, setClothingRotation] = useState(0);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [lastResultId, setLastResultId] = useState<string | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const { detectFromImage, isInitializing: isPoseInitializing, error: poseError, isDetecting } = usePoseDetection();
+  
+  const { data: rateLimit } = useQuery<{ allowed: boolean; remaining: number; limit: number }>({
+    queryKey: ["/api/v1/try-on/rate-limit"],
+    enabled: open && !!userId
+  });
   
   const { data: models = [] } = useQuery<TryOnModel[]>({
     queryKey: ["/api/v1/try-on/models"],
@@ -132,32 +147,126 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
       queryClient.invalidateQueries({ queryKey: ["/api/v1/try-on/closet"] });
     }
   });
+  
+  const shareTryOnMutation = useMutation({
+    mutationFn: async ({ resultId, title }: { resultId: string; title: string }) => {
+      const response = await apiRequest("POST", "/api/v1/try-on/shares", { resultId, title });
+      return response.json();
+    },
+    onSuccess: (data) => {
+      const shareUrl = `${window.location.origin}/try-on/shared/${data.shareCode}`;
+      navigator.clipboard.writeText(shareUrl);
+      toast({ 
+        title: "Link copied!", 
+        description: "Share this look with your friends and get their votes."
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Sharing failed",
+        description: "Could not create a shareable link. Please try again.",
+        variant: "destructive"
+      });
+    }
+  });
 
   const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (userId && rateLimit && !rateLimit.allowed) {
+        toast({
+          title: "Daily limit reached",
+          description: "Upgrade to Premium for unlimited try-ons!",
+          variant: "destructive"
+        });
+        return;
+      }
+      
       const reader = new FileReader();
-      reader.onload = (e) => {
-        setUploadedImage(e.target?.result as string);
+      reader.onload = async (e) => {
+        const imageData = e.target?.result as string;
+        setUploadedImage(imageData);
         setStep("detection");
-        simulatePoseDetection();
+        
+        await performPoseDetection(imageData);
       };
       reader.readAsDataURL(file);
     }
-  }, []);
+  }, [userId, rateLimit, performPoseDetection, toast]);
 
-  const handleModelSelect = useCallback((modelId: string) => {
+  const handleModelSelect = useCallback(async (modelId: string) => {
+    if (userId && rateLimit && !rateLimit.allowed) {
+      toast({
+        title: "Daily limit reached",
+        description: "Upgrade to Premium for unlimited try-ons!",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedModelId(modelId);
     const model = models.find(m => m.id === modelId);
     if (model?.poseLandmarks) {
       setPoseLandmarks(model.poseLandmarks as PoseLandmark[]);
       setStep("tryOn");
+    } else if (model?.photoUrl) {
+      setStep("detection");
+      await performPoseDetection(model.photoUrl);
     } else {
       setStep("detection");
       simulatePoseDetection();
     }
-  }, [models]);
+  }, [models, userId, rateLimit, performPoseDetection, toast, simulatePoseDetection]);
 
+  const performPoseDetection = useCallback(async (imageSource: string) => {
+    setDetectionProgress(0);
+    
+    try {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = () => reject(new Error("Failed to load image"));
+        img.src = imageSource;
+      });
+      
+      setDetectionProgress(25);
+      
+      const result = await detectFromImage(img);
+      
+      setDetectionProgress(75);
+      
+      if (result && result.landmarks && result.landmarks.length > 0) {
+        const formattedLandmarks: PoseLandmark[] = result.landmarks.map(lm => ({
+          x: lm.x,
+          y: lm.y,
+          z: lm.z,
+          visibility: lm.visibility
+        }));
+        
+        setDetectionProgress(100);
+        setPoseLandmarks(formattedLandmarks);
+        setStep("tryOn");
+        
+        toast({
+          title: "Body detected!",
+          description: "You can now try on the garment."
+        });
+      } else {
+        throw new Error("Could not detect body pose. Please use a clearer full-body photo.");
+      }
+    } catch (error: any) {
+      console.error("Pose detection error:", error);
+      toast({
+        title: "Detection failed",
+        description: error.message || "Please try a different photo with a clear full-body view.",
+        variant: "destructive"
+      });
+      setStep("photo");
+    }
+  }, [detectFromImage, toast]);
+  
   const simulatePoseDetection = useCallback(() => {
     setDetectionProgress(0);
     const interval = setInterval(() => {
@@ -249,7 +358,7 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
 
   const handleSaveResult = async () => {
     try {
-      await createSessionMutation.mutateAsync({
+      const session = await createSessionMutation.mutateAsync({
         userId,
         photoType: selectedModelId ? "model" : "user_upload",
         modelId: selectedModelId,
@@ -261,11 +370,33 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
         }],
         isPublic: false
       });
+      
+      if (session?.id) {
+        setLastResultId(session.id);
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["/api/v1/try-on/rate-limit"] });
       setStep("result");
       toast({ title: "Try-on saved!", description: "Your look has been saved to your history." });
     } catch (error) {
       toast({ title: "Error", description: "Failed to save try-on result", variant: "destructive" });
     }
+  };
+  
+  const handleShare = async () => {
+    if (!lastResultId) {
+      toast({ 
+        title: "Save first", 
+        description: "Please save your try-on before sharing.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    shareTryOnMutation.mutate({
+      resultId: lastResultId,
+      title: `${product.name} Try-On Look`
+    });
   };
 
   const resetTryOn = () => {
@@ -277,6 +408,7 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
     setClothingPosition({ x: 0, y: 0 });
     setClothingScale(1);
     setClothingRotation(0);
+    setLastResultId(null);
   };
 
   return (
@@ -286,10 +418,33 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
     }}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
         <DialogHeader className="px-6 pt-6 pb-4">
-          <DialogTitle className="flex items-center gap-2" data-testid="try-on-dialog-title">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Virtual Try-On
-          </DialogTitle>
+          <div className="flex items-center justify-between">
+            <DialogTitle className="flex items-center gap-2" data-testid="try-on-dialog-title">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Virtual Try-On
+            </DialogTitle>
+            
+            {userId && rateLimit && (
+              <div className="flex items-center gap-2" data-testid="rate-limit-badge">
+                {rateLimit.limit < 0 ? (
+                  <Badge variant="secondary" className="gap-1">
+                    <Crown className="h-3 w-3" />
+                    Unlimited
+                  </Badge>
+                ) : rateLimit.remaining > 0 ? (
+                  <Badge variant="outline" className="gap-1">
+                    <Zap className="h-3 w-3" />
+                    {rateLimit.remaining}/{rateLimit.limit} today
+                  </Badge>
+                ) : (
+                  <Badge variant="destructive" className="gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    Limit reached
+                  </Badge>
+                )}
+              </div>
+            )}
+          </div>
           <DialogDescription>
             See how {product.name} looks on you before buying
           </DialogDescription>
@@ -666,9 +821,19 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
                   <ChevronRight className="h-4 w-4 ml-2" />
                 </Button>
                 
-                <Button variant="outline" className="flex-1" data-testid="button-share">
-                  <Share2 className="h-4 w-4 mr-2" />
-                  Share
+                <Button 
+                  variant="outline" 
+                  className="flex-1" 
+                  onClick={handleShare}
+                  disabled={shareTryOnMutation.isPending}
+                  data-testid="button-share"
+                >
+                  {shareTryOnMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Share2 className="h-4 w-4 mr-2" />
+                  )}
+                  Share & Get Votes
                 </Button>
               </div>
               
