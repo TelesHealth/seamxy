@@ -1673,6 +1673,121 @@ export type InsertCreatorPayout = z.infer<typeof insertCreatorPayoutSchema>;
 
 export const tryOnPhotoTypeEnum = pgEnum("try_on_photo_type", ["user_upload", "model"]);
 export const tryOnSessionStatusEnum = pgEnum("try_on_session_status", ["pending", "processing", "completed", "failed"]);
+export const tryOnGarmentCategoryEnum = pgEnum("try_on_garment_category", ["tops", "bottoms", "dresses", "outerwear", "accessories"]);
+export const fitRatingEnum = pgEnum("fit_rating", ["too_small", "slightly_small", "perfect", "slightly_large", "too_large"]);
+
+// Garments available for try-on (linked to stylist portfolios)
+export const tryonGarments = pgTable('tryon_garments', {
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
+  stylistId: varchar('stylist_id').references(() => stylistProfiles.id, { onDelete: "set null" }),
+  portfolioImageId: varchar('portfolio_image_id').references(() => stylistPortfolioItems.id, { onDelete: "set null" }),
+  name: text('name').notNull(),
+  category: tryOnGarmentCategoryEnum('category').notNull(),
+  description: text('description'),
+  imageUrl: text('image_url').notNull(),
+  thumbnailUrl: text('thumbnail_url'),
+  overlayConfig: jsonb('overlay_config').$type<{
+    category: 'top' | 'bottom' | 'dress' | 'outerwear';
+    anchorPoints: {
+      type: 'shoulders' | 'hips' | 'full';
+      offsetY: number;
+    };
+    scale: {
+      baseWidth: number;
+      aspectRatio: number;
+    };
+    controlPoints?: Array<{ x: number; y: number }>;
+    zIndex: number;
+  }>(),
+  sizesAvailable: text('sizes_available').array(),
+  price: decimal('price', { precision: 10, scale: 2 }),
+  externalPurchaseUrl: text('external_purchase_url'),
+  isActive: boolean('is_active').default(true),
+  isPublic: boolean('is_public').default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Track try-on usage for rate limiting (Free: 3/day, Premium: unlimited)
+export const tryonUsage = pgTable('tryon_usage', {
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar('user_id').notNull().references(() => users.id, { onDelete: "cascade" }),
+  date: text('date').notNull(), // YYYY-MM-DD format
+  count: integer('count').default(0),
+});
+
+// Individual try-on results within a session
+export const tryonResults = pgTable('tryon_results', {
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar('session_id').notNull().references(() => tryOnSessions.id, { onDelete: "cascade" }),
+  garmentIds: text('garment_ids').array().notNull(),
+  resultImageUrl: text('result_image_url'),
+  resultThumbnailUrl: text('result_thumbnail_url'),
+  sizeRecommendation: jsonb('size_recommendation').$type<{
+    recommendedSize: string;
+    confidence: number;
+    fitDescription: string;
+    alternativeSize?: string;
+    measurements?: {
+      chest?: number;
+      waist?: number;
+      hips?: number;
+    };
+  }>(),
+  savedToCloset: boolean('saved_to_closet').default(false),
+  sharedPublicly: boolean('shared_publicly').default(false),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Social sharing and voting (public try-on results)
+export const tryonShares = pgTable('tryon_shares', {
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
+  resultId: varchar('result_id').notNull().references(() => tryonResults.id, { onDelete: "cascade" }),
+  shareCode: text('share_code').notNull().unique(),
+  title: text('title'),
+  voteCount: jsonb('vote_count').$type<{
+    love: number;
+    like: number;
+    meh: number;
+  }>().default({ love: 0, like: 0, meh: 0 }),
+  isActive: boolean('is_active').default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const tryonVotes = pgTable('tryon_votes', {
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
+  shareId: varchar('share_id').notNull().references(() => tryonShares.id, { onDelete: "cascade" }),
+  voterId: varchar('voter_id').references(() => users.id, { onDelete: "set null" }),
+  voterIp: text('voter_ip'),
+  vote: text('vote', { enum: ['love', 'like', 'meh'] }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Fit feedback for brand learning
+export const fitFeedback = pgTable('fit_feedback', {
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar('user_id').notNull().references(() => users.id, { onDelete: "cascade" }),
+  garmentId: varchar('garment_id').references(() => tryonGarments.id, { onDelete: "set null" }),
+  brand: text('brand').notNull(),
+  category: text('category').notNull(),
+  sizePurchased: text('size_purchased').notNull(),
+  sizeRecommended: text('size_recommended'),
+  fitRating: fitRatingEnum('fit_rating').notNull(),
+  wouldBuyAgain: boolean('would_buy_again'),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// User brand preferences (learned from feedback)
+export const userBrandPreferences = pgTable('user_brand_preferences', {
+  id: varchar('id').primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar('user_id').notNull().references(() => users.id, { onDelete: "cascade" }),
+  brand: text('brand').notNull(),
+  sizeAdjustment: decimal('size_adjustment', { precision: 3, scale: 1 }), // -2 to +2
+  avgFitRating: decimal('avg_fit_rating', { precision: 3, scale: 2 }),
+  totalPurchases: integer('total_purchases').default(0),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
 // Pre-photographed models for users who prefer not to upload their own photos
 export const tryOnModels = pgTable("try_on_models", {
@@ -1771,6 +1886,42 @@ export const insertTryOnClosetSchema = createInsertSchema(tryOnCloset).omit({
   addedAt: true,
 });
 
+// Additional insert schemas for enhanced try-on tables
+export const insertTryonGarmentSchema = createInsertSchema(tryonGarments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTryonUsageSchema = createInsertSchema(tryonUsage).omit({
+  id: true,
+});
+
+export const insertTryonResultSchema = createInsertSchema(tryonResults).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTryonShareSchema = createInsertSchema(tryonShares).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTryonVoteSchema = createInsertSchema(tryonVotes).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertFitFeedbackSchema = createInsertSchema(fitFeedback).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserBrandPreferenceSchema = createInsertSchema(userBrandPreferences).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Virtual Try-On types
 export type TryOnModel = typeof tryOnModels.$inferSelect;
 export type InsertTryOnModel = z.infer<typeof insertTryOnModelSchema>;
@@ -1786,3 +1937,25 @@ export type InsertTryOnFeedback = z.infer<typeof insertTryOnFeedbackSchema>;
 
 export type TryOnClosetItem = typeof tryOnCloset.$inferSelect;
 export type InsertTryOnClosetItem = z.infer<typeof insertTryOnClosetSchema>;
+
+// Enhanced try-on types
+export type TryonGarment = typeof tryonGarments.$inferSelect;
+export type InsertTryonGarment = z.infer<typeof insertTryonGarmentSchema>;
+
+export type TryonUsage = typeof tryonUsage.$inferSelect;
+export type InsertTryonUsage = z.infer<typeof insertTryonUsageSchema>;
+
+export type TryonResult = typeof tryonResults.$inferSelect;
+export type InsertTryonResult = z.infer<typeof insertTryonResultSchema>;
+
+export type TryonShare = typeof tryonShares.$inferSelect;
+export type InsertTryonShare = z.infer<typeof insertTryonShareSchema>;
+
+export type TryonVote = typeof tryonVotes.$inferSelect;
+export type InsertTryonVote = z.infer<typeof insertTryonVoteSchema>;
+
+export type FitFeedback = typeof fitFeedback.$inferSelect;
+export type InsertFitFeedback = z.infer<typeof insertFitFeedbackSchema>;
+
+export type UserBrandPreference = typeof userBrandPreferences.$inferSelect;
+export type InsertUserBrandPreference = z.infer<typeof insertUserBrandPreferenceSchema>;
