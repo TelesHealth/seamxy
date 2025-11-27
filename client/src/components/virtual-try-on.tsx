@@ -20,6 +20,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { TryOnModel, UserTryOnPhoto } from "@shared/schema";
 import { usePoseDetection } from "@/hooks/usePoseDetection";
 import { TryOnCanvas, type GarmentOverlay, type BodyMeasurements } from "@/components/TryOnCanvas";
+import { FitFeedback } from "@/components/fit-feedback";
 import { 
   Camera, 
   Upload, 
@@ -84,6 +85,8 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
   const [clothingRotation, setClothingRotation] = useState(0);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [lastResultId, setLastResultId] = useState<string | null>(null);
+  const [fitFeedbackOpen, setFitFeedbackOpen] = useState(false);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -124,6 +127,12 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
     fit: string;
     availableSizes: string[];
   } | undefined;
+  
+  useEffect(() => {
+    if (sizeRecommendation?.recommendedSize && !selectedSize) {
+      setSelectedSize(sizeRecommendation.recommendedSize);
+    }
+  }, [sizeRecommendation, selectedSize]);
   
   const isLoadingSize = sizeRecommendationMutation.isPending;
   
@@ -170,53 +179,26 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
     }
   });
 
-  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (userId && rateLimit && !rateLimit.allowed) {
-        toast({
-          title: "Daily limit reached",
-          description: "Upgrade to Premium for unlimited try-ons!",
-          variant: "destructive"
-        });
-        return;
-      }
-      
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const imageData = e.target?.result as string;
-        setUploadedImage(imageData);
-        setStep("detection");
-        
-        await performPoseDetection(imageData);
-      };
-      reader.readAsDataURL(file);
-    }
-  }, [userId, rateLimit, performPoseDetection, toast]);
-
-  const handleModelSelect = useCallback(async (modelId: string) => {
-    if (userId && rateLimit && !rateLimit.allowed) {
-      toast({
-        title: "Daily limit reached",
-        description: "Upgrade to Premium for unlimited try-ons!",
-        variant: "destructive"
+  const simulatePoseDetection = useCallback(() => {
+    setDetectionProgress(0);
+    const interval = setInterval(() => {
+      setDetectionProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          const mockLandmarks: PoseLandmark[] = Array.from({ length: 33 }, (_, i) => ({
+            x: 0.3 + Math.random() * 0.4,
+            y: 0.1 + (i / 33) * 0.8,
+            z: -0.1 + Math.random() * 0.2,
+            visibility: 0.8 + Math.random() * 0.2
+          }));
+          setPoseLandmarks(mockLandmarks);
+          setStep("tryOn");
+          return 100;
+        }
+        return prev + 5;
       });
-      return;
-    }
-    
-    setSelectedModelId(modelId);
-    const model = models.find(m => m.id === modelId);
-    if (model?.poseLandmarks) {
-      setPoseLandmarks(model.poseLandmarks as PoseLandmark[]);
-      setStep("tryOn");
-    } else if (model?.photoUrl) {
-      setStep("detection");
-      await performPoseDetection(model.photoUrl);
-    } else {
-      setStep("detection");
-      simulatePoseDetection();
-    }
-  }, [models, userId, rateLimit, performPoseDetection, toast, simulatePoseDetection]);
+    }, 100);
+  }, []);
 
   const performPoseDetection = useCallback(async (imageSource: string) => {
     setDetectionProgress(0);
@@ -266,27 +248,54 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
       setStep("photo");
     }
   }, [detectFromImage, toast]);
-  
-  const simulatePoseDetection = useCallback(() => {
-    setDetectionProgress(0);
-    const interval = setInterval(() => {
-      setDetectionProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          const mockLandmarks: PoseLandmark[] = Array.from({ length: 33 }, (_, i) => ({
-            x: 0.3 + Math.random() * 0.4,
-            y: 0.1 + (i / 33) * 0.8,
-            z: -0.1 + Math.random() * 0.2,
-            visibility: 0.8 + Math.random() * 0.2
-          }));
-          setPoseLandmarks(mockLandmarks);
-          setStep("tryOn");
-          return 100;
-        }
-        return prev + 5;
+
+  const handleFileUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (userId && rateLimit && !rateLimit.allowed) {
+        toast({
+          title: "Daily limit reached",
+          description: "Upgrade to Premium for unlimited try-ons!",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const imageData = e.target?.result as string;
+        setUploadedImage(imageData);
+        setStep("detection");
+        
+        await performPoseDetection(imageData);
+      };
+      reader.readAsDataURL(file);
+    }
+  }, [userId, rateLimit, performPoseDetection, toast]);
+
+  const handleModelSelect = useCallback(async (modelId: string) => {
+    if (userId && rateLimit && !rateLimit.allowed) {
+      toast({
+        title: "Daily limit reached",
+        description: "Upgrade to Premium for unlimited try-ons!",
+        variant: "destructive"
       });
-    }, 100);
-  }, []);
+      return;
+    }
+    
+    setSelectedModelId(modelId);
+    const model = models.find(m => m.id === modelId);
+    if (model?.poseLandmarks) {
+      setPoseLandmarks(model.poseLandmarks as PoseLandmark[]);
+      setStep("tryOn");
+    } else if (model?.photoUrl) {
+      setStep("detection");
+      await performPoseDetection(model.photoUrl);
+    } else {
+      setStep("detection");
+      simulatePoseDetection();
+    }
+  }, [models, userId, rateLimit, performPoseDetection, toast, simulatePoseDetection]);
 
   const drawTryOnCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -409,6 +418,8 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
     setClothingScale(1);
     setClothingRotation(0);
     setLastResultId(null);
+    setSelectedSize(null);
+    setFitFeedbackOpen(false);
   };
 
   return (
@@ -844,10 +855,35 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
               >
                 Try another item
               </Button>
+              
+              {lastResultId && (
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2" 
+                  onClick={() => setFitFeedbackOpen(true)}
+                  data-testid="button-rate-fit"
+                >
+                  <Ruler className="h-4 w-4" />
+                  Rate the Fit
+                </Button>
+              )}
             </div>
           )}
         </div>
       </DialogContent>
+      
+      {lastResultId && (
+        <FitFeedback
+          open={fitFeedbackOpen}
+          onOpenChange={setFitFeedbackOpen}
+          resultId={lastResultId}
+          productId={product.id}
+          productName={product.name}
+          brand={product.brand}
+          size={selectedSize || sizeRecommendation?.recommendedSize || "M"}
+          userId={userId}
+        />
+      )}
     </Dialog>
   );
 }
