@@ -14,6 +14,18 @@ Do not make changes to the file `Y`.
 
 ## Recent Changes (November 2025)
 
+### Virtual Try-On Integration (TryFit)
+- **Database Schema**: Added try-on tables (try_on_models, user_try_on_photos, try_on_sessions, try_on_closet, try_on_feedback)
+- **Virtual Try-On Modal**: New component at `client/src/components/virtual-try-on.tsx`
+  - Photo upload with drag-and-drop
+  - Model selection gallery (4 pre-seeded models: Emma, James, Sofia, Michael)
+  - Canvas-based try-on studio with position, scale, rotation controls
+  - Size recommendation integration using user measurements
+  - Save & share functionality
+- **ProductCard Integration**: "Try On" button added to all product cards on shop page
+- **API Endpoints**: /api/v1/try-on/* for models, sessions, photos, closet, feedback
+- **Tech Stack**: MediaPipe Pose detection (simulated for MVP), canvas overlay rendering
+
 ### Creator Studio Content Population
 - **Luxe Design Studio Profile**: Enhanced with professional content for demonstration
   - Bio: Luxury fashion atelier specializing in couture eveningwear, bespoke bridal, and executive tailoring

@@ -90,15 +90,27 @@ export function VirtualTryOn({ product, open, onOpenChange, userId }: VirtualTry
     enabled: open && !!userId
   });
   
-  const { data: sizeRecommendation, isLoading: isLoadingSize } = useQuery<{
+  const sizeRecommendationMutation = useMutation({
+    mutationFn: async (productId: string) => {
+      const response = await apiRequest("POST", "/api/v1/try-on/size-recommendation", { productId });
+      return response.json();
+    }
+  });
+  
+  useEffect(() => {
+    if (open && userId && step === "tryOn" && !sizeRecommendationMutation.data && !sizeRecommendationMutation.isPending) {
+      sizeRecommendationMutation.mutate(product.id);
+    }
+  }, [open, userId, step, product.id, sizeRecommendationMutation.data, sizeRecommendationMutation.isPending]);
+  
+  const sizeRecommendation = sizeRecommendationMutation.data as {
     recommendedSize: string;
     confidence: number;
     fit: string;
     availableSizes: string[];
-  }>({
-    queryKey: ["/api/v1/try-on/size-recommendation", product.id],
-    enabled: open && !!userId && step === "tryOn"
-  });
+  } | undefined;
+  
+  const isLoadingSize = sizeRecommendationMutation.isPending;
   
   const createSessionMutation = useMutation({
     mutationFn: async (data: any) => {
