@@ -65,6 +65,15 @@ import {
   type TryOnSession, type InsertTryOnSession,
   type TryOnFeedback, type InsertTryOnFeedback,
   type TryOnClosetItem, type InsertTryOnClosetItem,
+  // Enhanced Try-On Tables
+  tryonGarments, tryonUsage, tryonResults, tryonShares, tryonVotes, fitFeedback, userBrandPreferences,
+  type TryonGarment, type InsertTryonGarment,
+  type TryonUsage, type InsertTryonUsage,
+  type TryonResult, type InsertTryonResult,
+  type TryonShare, type InsertTryonShare,
+  type TryonVote, type InsertTryonVote,
+  type FitFeedback, type InsertFitFeedback,
+  type UserBrandPreference, type InsertUserBrandPreference,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
@@ -359,6 +368,43 @@ export interface IStorage {
   addToTryOnCloset(item: InsertTryOnClosetItem): Promise<TryOnClosetItem>;
   removeFromTryOnCloset(userId: string, productId: string): Promise<void>;
   isInTryOnCloset(userId: string, productId: string): Promise<boolean>;
+  
+  // Enhanced Try-On - Garments
+  getTryonGarments(filters?: { category?: string; stylistId?: string; isPublic?: boolean }): Promise<TryonGarment[]>;
+  getTryonGarment(id: string): Promise<TryonGarment | undefined>;
+  createTryonGarment(garment: InsertTryonGarment): Promise<TryonGarment>;
+  updateTryonGarment(id: string, updates: Partial<InsertTryonGarment>): Promise<TryonGarment | undefined>;
+  deleteTryonGarment(id: string): Promise<void>;
+  
+  // Enhanced Try-On - Usage (Rate Limiting)
+  getTryonUsage(userId: string, date: string): Promise<TryonUsage | undefined>;
+  incrementTryonUsage(userId: string, date: string): Promise<TryonUsage>;
+  
+  // Enhanced Try-On - Results
+  getTryonResult(id: string): Promise<TryonResult | undefined>;
+  getTryonResultsBySession(sessionId: string): Promise<TryonResult[]>;
+  createTryonResult(result: InsertTryonResult): Promise<TryonResult>;
+  updateTryonResult(id: string, updates: Partial<InsertTryonResult>): Promise<TryonResult | undefined>;
+  
+  // Enhanced Try-On - Shares
+  getTryonShare(id: string): Promise<TryonShare | undefined>;
+  getTryonShareByCode(shareCode: string): Promise<TryonShare | undefined>;
+  createTryonShare(share: InsertTryonShare): Promise<TryonShare>;
+  updateTryonShare(id: string, updates: Partial<TryonShare>): Promise<TryonShare | undefined>;
+  
+  // Enhanced Try-On - Votes
+  getTryonVotesByShare(shareId: string): Promise<TryonVote[]>;
+  getUserVoteOnShare(shareId: string, voterId?: string, voterIp?: string): Promise<TryonVote | undefined>;
+  createTryonVote(vote: InsertTryonVote): Promise<TryonVote>;
+  
+  // Enhanced Try-On - Fit Feedback
+  getUserFitFeedback(userId: string): Promise<FitFeedback[]>;
+  createFitFeedback(feedback: InsertFitFeedback): Promise<FitFeedback>;
+  
+  // Enhanced Try-On - Brand Preferences
+  getUserBrandPreference(userId: string, brand: string): Promise<UserBrandPreference | undefined>;
+  getUserBrandPreferences(userId: string): Promise<UserBrandPreference[]>;
+  upsertUserBrandPreference(preference: InsertUserBrandPreference): Promise<UserBrandPreference>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1708,6 +1754,181 @@ export class DatabaseStorage implements IStorage {
         eq(tryOnCloset.productId, productId)
       ));
     return !!item;
+  }
+  
+  // Enhanced Try-On - Garments
+  async getTryonGarments(filters?: { category?: string; stylistId?: string; isPublic?: boolean }): Promise<TryonGarment[]> {
+    const conditions = [];
+    if (filters?.category) conditions.push(eq(tryonGarments.category, filters.category as any));
+    if (filters?.stylistId) conditions.push(eq(tryonGarments.stylistId, filters.stylistId));
+    if (filters?.isPublic !== undefined) conditions.push(eq(tryonGarments.isPublic, filters.isPublic));
+    conditions.push(eq(tryonGarments.isActive, true));
+    
+    return await db.select().from(tryonGarments)
+      .where(and(...conditions))
+      .orderBy(desc(tryonGarments.createdAt));
+  }
+  
+  async getTryonGarment(id: string): Promise<TryonGarment | undefined> {
+    const [garment] = await db.select().from(tryonGarments).where(eq(tryonGarments.id, id));
+    return garment || undefined;
+  }
+  
+  async createTryonGarment(garment: InsertTryonGarment): Promise<TryonGarment> {
+    const [created] = await db.insert(tryonGarments).values(garment).returning();
+    return created;
+  }
+  
+  async updateTryonGarment(id: string, updates: Partial<InsertTryonGarment>): Promise<TryonGarment | undefined> {
+    const [updated] = await db.update(tryonGarments)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(tryonGarments.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  async deleteTryonGarment(id: string): Promise<void> {
+    await db.update(tryonGarments)
+      .set({ isActive: false })
+      .where(eq(tryonGarments.id, id));
+  }
+  
+  // Enhanced Try-On - Usage (Rate Limiting)
+  async getTryonUsage(userId: string, date: string): Promise<TryonUsage | undefined> {
+    const [usage] = await db.select().from(tryonUsage)
+      .where(and(
+        eq(tryonUsage.userId, userId),
+        eq(tryonUsage.date, date)
+      ));
+    return usage || undefined;
+  }
+  
+  async incrementTryonUsage(userId: string, date: string): Promise<TryonUsage> {
+    const existing = await this.getTryonUsage(userId, date);
+    if (existing) {
+      const [updated] = await db.update(tryonUsage)
+        .set({ count: (existing.count || 0) + 1 })
+        .where(eq(tryonUsage.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(tryonUsage).values({ userId, date, count: 1 }).returning();
+    return created;
+  }
+  
+  // Enhanced Try-On - Results
+  async getTryonResult(id: string): Promise<TryonResult | undefined> {
+    const [result] = await db.select().from(tryonResults).where(eq(tryonResults.id, id));
+    return result || undefined;
+  }
+  
+  async getTryonResultsBySession(sessionId: string): Promise<TryonResult[]> {
+    return await db.select().from(tryonResults)
+      .where(eq(tryonResults.sessionId, sessionId))
+      .orderBy(desc(tryonResults.createdAt));
+  }
+  
+  async createTryonResult(result: InsertTryonResult): Promise<TryonResult> {
+    const [created] = await db.insert(tryonResults).values(result).returning();
+    return created;
+  }
+  
+  async updateTryonResult(id: string, updates: Partial<InsertTryonResult>): Promise<TryonResult | undefined> {
+    const [updated] = await db.update(tryonResults)
+      .set(updates)
+      .where(eq(tryonResults.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // Enhanced Try-On - Shares
+  async getTryonShare(id: string): Promise<TryonShare | undefined> {
+    const [share] = await db.select().from(tryonShares).where(eq(tryonShares.id, id));
+    return share || undefined;
+  }
+  
+  async getTryonShareByCode(shareCode: string): Promise<TryonShare | undefined> {
+    const [share] = await db.select().from(tryonShares).where(eq(tryonShares.shareCode, shareCode));
+    return share || undefined;
+  }
+  
+  async createTryonShare(share: InsertTryonShare): Promise<TryonShare> {
+    const [created] = await db.insert(tryonShares).values(share).returning();
+    return created;
+  }
+  
+  async updateTryonShare(id: string, updates: Partial<TryonShare>): Promise<TryonShare | undefined> {
+    const [updated] = await db.update(tryonShares)
+      .set(updates)
+      .where(eq(tryonShares.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // Enhanced Try-On - Votes
+  async getTryonVotesByShare(shareId: string): Promise<TryonVote[]> {
+    return await db.select().from(tryonVotes)
+      .where(eq(tryonVotes.shareId, shareId))
+      .orderBy(desc(tryonVotes.createdAt));
+  }
+  
+  async getUserVoteOnShare(shareId: string, voterId?: string, voterIp?: string): Promise<TryonVote | undefined> {
+    const conditions = [eq(tryonVotes.shareId, shareId)];
+    if (voterId) {
+      conditions.push(eq(tryonVotes.voterId, voterId));
+    } else if (voterIp) {
+      conditions.push(eq(tryonVotes.voterIp, voterIp));
+    } else {
+      return undefined;
+    }
+    const [vote] = await db.select().from(tryonVotes).where(and(...conditions));
+    return vote || undefined;
+  }
+  
+  async createTryonVote(vote: InsertTryonVote): Promise<TryonVote> {
+    const [created] = await db.insert(tryonVotes).values(vote).returning();
+    return created;
+  }
+  
+  // Enhanced Try-On - Fit Feedback
+  async getUserFitFeedback(userId: string): Promise<FitFeedback[]> {
+    return await db.select().from(fitFeedback)
+      .where(eq(fitFeedback.userId, userId))
+      .orderBy(desc(fitFeedback.createdAt));
+  }
+  
+  async createFitFeedback(feedback: InsertFitFeedback): Promise<FitFeedback> {
+    const [created] = await db.insert(fitFeedback).values(feedback).returning();
+    return created;
+  }
+  
+  // Enhanced Try-On - Brand Preferences
+  async getUserBrandPreference(userId: string, brand: string): Promise<UserBrandPreference | undefined> {
+    const [pref] = await db.select().from(userBrandPreferences)
+      .where(and(
+        eq(userBrandPreferences.userId, userId),
+        eq(userBrandPreferences.brand, brand)
+      ));
+    return pref || undefined;
+  }
+  
+  async getUserBrandPreferences(userId: string): Promise<UserBrandPreference[]> {
+    return await db.select().from(userBrandPreferences)
+      .where(eq(userBrandPreferences.userId, userId))
+      .orderBy(desc(userBrandPreferences.totalPurchases));
+  }
+  
+  async upsertUserBrandPreference(preference: InsertUserBrandPreference): Promise<UserBrandPreference> {
+    const existing = await this.getUserBrandPreference(preference.userId, preference.brand);
+    if (existing) {
+      const [updated] = await db.update(userBrandPreferences)
+        .set({ ...preference, updatedAt: new Date() })
+        .where(eq(userBrandPreferences.id, existing.id))
+        .returning();
+      return updated;
+    }
+    const [created] = await db.insert(userBrandPreferences).values(preference).returning();
+    return created;
   }
 }
 

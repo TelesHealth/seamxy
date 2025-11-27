@@ -3576,4 +3576,405 @@ export function registerRoutes(app: Express) {
       }
     }
   );
+
+  // ============================================
+  // ENHANCED TRY-ON - Rate Limiting
+  // ============================================
+  
+  const FREE_DAILY_LIMIT = 3;
+  const PREMIUM_DAILY_LIMIT = -1; // Unlimited
+  const PRO_DAILY_LIMIT = -1; // Unlimited + AR features
+  
+  const checkTryonRateLimit = async (userId: string): Promise<{ allowed: boolean; remaining: number; limit: number }> => {
+    const today = new Date().toISOString().split('T')[0];
+    const usage = await storage.getTryonUsage(userId, today);
+    const currentCount = usage?.count || 0;
+    
+    // TODO: Check user subscription tier for actual limits
+    // For now, using free tier limits
+    const limit: number = FREE_DAILY_LIMIT;
+    
+    if (limit < 0) {
+      return { allowed: true, remaining: -1, limit: -1 };
+    }
+    
+    return {
+      allowed: currentCount < limit,
+      remaining: Math.max(0, limit - currentCount),
+      limit
+    };
+  };
+  
+  // Check try-on rate limit
+  app.get("/api/v1/try-on/rate-limit",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const result = await checkTryonRateLimit(req.userId!);
+        res.json(result);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Increment try-on usage (called when a try-on is performed)
+  app.post("/api/v1/try-on/usage",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const rateLimit = await checkTryonRateLimit(req.userId!);
+        if (!rateLimit.allowed) {
+          return res.status(429).json({ 
+            error: "Daily try-on limit reached. Upgrade to Premium for unlimited try-ons.",
+            remaining: 0,
+            limit: rateLimit.limit
+          });
+        }
+        
+        const today = new Date().toISOString().split('T')[0];
+        const usage = await storage.incrementTryonUsage(req.userId!, today);
+        
+        const newLimit = await checkTryonRateLimit(req.userId!);
+        res.json({ 
+          success: true, 
+          count: usage.count,
+          remaining: newLimit.remaining,
+          limit: newLimit.limit
+        });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // ============================================
+  // ENHANCED TRY-ON - Garments
+  // ============================================
+  
+  // Get available garments for try-on
+  app.get("/api/v1/try-on/garments", async (req, res) => {
+    try {
+      const { category, stylistId } = req.query;
+      const garments = await storage.getTryonGarments({
+        category: category as string,
+        stylistId: stylistId as string,
+        isPublic: true
+      });
+      res.json(garments);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Get single garment
+  app.get("/api/v1/try-on/garments/:id", async (req, res) => {
+    try {
+      const garment = await storage.getTryonGarment(req.params.id);
+      if (!garment) {
+        return res.status(404).json({ error: "Garment not found" });
+      }
+      res.json(garment);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Create garment (stylist only)
+  app.post("/api/v1/try-on/garments",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        // Verify user is a stylist
+        const stylist = await storage.getStylistProfileByUserId(req.userId!);
+        if (!stylist) {
+          return res.status(403).json({ error: "Only stylists can create garments" });
+        }
+        
+        const garment = await storage.createTryonGarment({
+          ...req.body,
+          stylistId: stylist.id
+        });
+        res.status(201).json(garment);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Update garment (stylist only)
+  app.patch("/api/v1/try-on/garments/:id",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const garment = await storage.getTryonGarment(req.params.id);
+        if (!garment) {
+          return res.status(404).json({ error: "Garment not found" });
+        }
+        
+        const stylist = await storage.getStylistProfileByUserId(req.userId!);
+        if (!stylist || garment.stylistId !== stylist.id) {
+          return res.status(403).json({ error: "Not authorized to update this garment" });
+        }
+        
+        const updated = await storage.updateTryonGarment(req.params.id, req.body);
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Delete garment (soft delete)
+  app.delete("/api/v1/try-on/garments/:id",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const garment = await storage.getTryonGarment(req.params.id);
+        if (!garment) {
+          return res.status(404).json({ error: "Garment not found" });
+        }
+        
+        const stylist = await storage.getStylistProfileByUserId(req.userId!);
+        if (!stylist || garment.stylistId !== stylist.id) {
+          return res.status(403).json({ error: "Not authorized to delete this garment" });
+        }
+        
+        await storage.deleteTryonGarment(req.params.id);
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // ============================================
+  // ENHANCED TRY-ON - Results
+  // ============================================
+  
+  // Get results for a session
+  app.get("/api/v1/try-on/sessions/:sessionId/results",
+    async (req, res) => {
+      try {
+        const results = await storage.getTryonResultsBySession(req.params.sessionId);
+        res.json(results);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Create a try-on result
+  app.post("/api/v1/try-on/results",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        // Check rate limit
+        const rateLimit = await checkTryonRateLimit(req.userId!);
+        if (!rateLimit.allowed) {
+          return res.status(429).json({ 
+            error: "Daily try-on limit reached",
+            remaining: 0
+          });
+        }
+        
+        // Increment usage
+        const today = new Date().toISOString().split('T')[0];
+        await storage.incrementTryonUsage(req.userId!, today);
+        
+        const result = await storage.createTryonResult(req.body);
+        res.status(201).json(result);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // ============================================
+  // ENHANCED TRY-ON - Social Sharing
+  // ============================================
+  
+  // Create a public share
+  app.post("/api/v1/try-on/shares",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { resultId, title } = req.body;
+        
+        // Verify the result belongs to the user
+        const result = await storage.getTryonResult(resultId);
+        if (!result) {
+          return res.status(404).json({ error: "Result not found" });
+        }
+        
+        // Generate unique share code
+        const shareCode = Math.random().toString(36).substring(2, 10).toUpperCase();
+        
+        const share = await storage.createTryonShare({
+          resultId,
+          shareCode,
+          title,
+          voteCount: { love: 0, like: 0, meh: 0 }
+        });
+        
+        // Update result to mark as shared
+        await storage.updateTryonResult(resultId, { sharedPublicly: true });
+        
+        res.status(201).json(share);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get shared try-on by code
+  app.get("/api/v1/try-on/shares/:shareCode", async (req, res) => {
+    try {
+      const share = await storage.getTryonShareByCode(req.params.shareCode);
+      if (!share || !share.isActive) {
+        return res.status(404).json({ error: "Share not found" });
+      }
+      
+      // Get the result details
+      const result = await storage.getTryonResult(share.resultId);
+      
+      res.json({ share, result });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Vote on a shared try-on
+  app.post("/api/v1/try-on/shares/:shareId/vote", async (req, res) => {
+    try {
+      const { vote } = req.body;
+      const shareId = req.params.shareId;
+      
+      if (!['love', 'like', 'meh'].includes(vote)) {
+        return res.status(400).json({ error: "Invalid vote type" });
+      }
+      
+      const share = await storage.getTryonShare(shareId);
+      if (!share) {
+        return res.status(404).json({ error: "Share not found" });
+      }
+      
+      // Check if user/IP has already voted
+      const userId = (req as any).userId;
+      const voterIp = req.ip || req.socket.remoteAddress;
+      
+      const existingVote = await storage.getUserVoteOnShare(shareId, userId, voterIp);
+      if (existingVote) {
+        return res.status(400).json({ error: "Already voted on this try-on" });
+      }
+      
+      // Create vote
+      await storage.createTryonVote({
+        shareId,
+        voterId: userId,
+        voterIp,
+        vote
+      });
+      
+      // Update vote count
+      const currentVotes = share.voteCount || { love: 0, like: 0, meh: 0 };
+      const newVotes = {
+        ...currentVotes,
+        [vote]: (currentVotes[vote as keyof typeof currentVotes] || 0) + 1
+      };
+      
+      await storage.updateTryonShare(shareId, { voteCount: newVotes });
+      
+      res.json({ success: true, voteCount: newVotes });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // ============================================
+  // ENHANCED TRY-ON - Fit Feedback
+  // ============================================
+  
+  // Submit fit feedback
+  app.post("/api/v1/try-on/fit-feedback",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const feedback = await storage.createFitFeedback({
+          ...req.body,
+          userId: req.userId!
+        });
+        
+        // Update user brand preference based on feedback
+        const { brand, fitRating, wouldBuyAgain } = req.body;
+        const existingPref = await storage.getUserBrandPreference(req.userId!, brand);
+        
+        // Calculate size adjustment based on fit rating
+        let sizeAdjustment = 0;
+        if (fitRating === 'too_small') sizeAdjustment = 1;
+        else if (fitRating === 'slightly_small') sizeAdjustment = 0.5;
+        else if (fitRating === 'slightly_large') sizeAdjustment = -0.5;
+        else if (fitRating === 'too_large') sizeAdjustment = -1;
+        
+        // Calculate new average
+        const totalPurchases = (existingPref?.totalPurchases || 0) + 1;
+        const prevSizeAdj = existingPref ? Number(existingPref.sizeAdjustment) || 0 : 0;
+        const newSizeAdj = ((prevSizeAdj * (totalPurchases - 1)) + sizeAdjustment) / totalPurchases;
+        
+        await storage.upsertUserBrandPreference({
+          userId: req.userId!,
+          brand,
+          sizeAdjustment: newSizeAdj.toFixed(1),
+          avgFitRating: newSizeAdj.toFixed(2),
+          totalPurchases
+        });
+        
+        res.status(201).json(feedback);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get user's fit feedback history
+  app.get("/api/v1/try-on/fit-feedback",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const feedback = await storage.getUserFitFeedback(req.userId!);
+        res.json(feedback);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get user's brand preferences
+  app.get("/api/v1/try-on/brand-preferences",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const preferences = await storage.getUserBrandPreferences(req.userId!);
+        res.json(preferences);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get specific brand preference
+  app.get("/api/v1/try-on/brand-preferences/:brand",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const preference = await storage.getUserBrandPreference(req.userId!, req.params.brand);
+        if (!preference) {
+          return res.json({ brand: req.params.brand, sizeAdjustment: 0, totalPurchases: 0 });
+        }
+        res.json(preference);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
 }
