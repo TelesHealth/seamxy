@@ -58,6 +58,13 @@ import {
   type CreatorCustomRequest, type InsertCreatorCustomRequest,
   type ModerationFlag, type InsertModerationFlag,
   type CreatorPayout, type InsertCreatorPayout,
+  // Virtual Try-On (TryFit Integration)
+  tryOnModels, userTryOnPhotos, tryOnSessions, tryOnFeedback, tryOnCloset,
+  type TryOnModel, type InsertTryOnModel,
+  type UserTryOnPhoto, type InsertUserTryOnPhoto,
+  type TryOnSession, type InsertTryOnSession,
+  type TryOnFeedback, type InsertTryOnFeedback,
+  type TryOnClosetItem, type InsertTryOnClosetItem,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
@@ -320,6 +327,38 @@ export interface IStorage {
   getCreatorPayout(id: string): Promise<CreatorPayout | undefined>;
   createCreatorPayout(payout: InsertCreatorPayout): Promise<CreatorPayout>;
   updateCreatorPayout(id: string, updates: Partial<CreatorPayout>): Promise<CreatorPayout | undefined>;
+  
+  // Virtual Try-On (TryFit Integration)
+  // Models
+  getTryOnModels(filters?: { gender?: string; bodyType?: string }): Promise<TryOnModel[]>;
+  getTryOnModel(id: string): Promise<TryOnModel | undefined>;
+  createTryOnModel(model: InsertTryOnModel): Promise<TryOnModel>;
+  updateTryOnModel(id: string, updates: Partial<InsertTryOnModel>): Promise<TryOnModel | undefined>;
+  
+  // User Photos
+  getUserTryOnPhotos(userId: string): Promise<UserTryOnPhoto[]>;
+  getUserTryOnPhoto(id: string): Promise<UserTryOnPhoto | undefined>;
+  createUserTryOnPhoto(photo: InsertUserTryOnPhoto): Promise<UserTryOnPhoto>;
+  updateUserTryOnPhoto(id: string, updates: Partial<InsertUserTryOnPhoto>): Promise<UserTryOnPhoto | undefined>;
+  deleteUserTryOnPhoto(id: string): Promise<void>;
+  
+  // Try-On Sessions
+  getTryOnSession(id: string): Promise<TryOnSession | undefined>;
+  getTryOnSessionByShareToken(shareToken: string): Promise<TryOnSession | undefined>;
+  getUserTryOnSessions(userId: string): Promise<TryOnSession[]>;
+  createTryOnSession(session: InsertTryOnSession): Promise<TryOnSession>;
+  updateTryOnSession(id: string, updates: Partial<TryOnSession>): Promise<TryOnSession | undefined>;
+  incrementTryOnSessionViews(id: string): Promise<void>;
+  
+  // Try-On Feedback
+  getTryOnFeedback(sessionId: string): Promise<TryOnFeedback[]>;
+  createTryOnFeedback(feedback: InsertTryOnFeedback): Promise<TryOnFeedback>;
+  
+  // Try-On Closet
+  getUserTryOnCloset(userId: string): Promise<TryOnClosetItem[]>;
+  addToTryOnCloset(item: InsertTryOnClosetItem): Promise<TryOnClosetItem>;
+  removeFromTryOnCloset(userId: string, productId: string): Promise<void>;
+  isInTryOnCloset(userId: string, productId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1519,6 +1558,156 @@ export class DatabaseStorage implements IStorage {
       .where(eq(creatorPayouts.id, id))
       .returning();
     return updated || undefined;
+  }
+  
+  // ============================================
+  // VIRTUAL TRY-ON (TryFit Integration)
+  // ============================================
+  
+  // Try-On Models
+  async getTryOnModels(filters?: { gender?: string; bodyType?: string }): Promise<TryOnModel[]> {
+    let query = db.select().from(tryOnModels).where(eq(tryOnModels.isActive, true));
+    
+    if (filters?.gender) {
+      query = db.select().from(tryOnModels)
+        .where(and(
+          eq(tryOnModels.isActive, true),
+          eq(tryOnModels.gender, filters.gender)
+        ));
+    }
+    if (filters?.bodyType) {
+      query = db.select().from(tryOnModels)
+        .where(and(
+          eq(tryOnModels.isActive, true),
+          eq(tryOnModels.bodyType, filters.bodyType)
+        ));
+    }
+    
+    return await query;
+  }
+  
+  async getTryOnModel(id: string): Promise<TryOnModel | undefined> {
+    const [model] = await db.select().from(tryOnModels).where(eq(tryOnModels.id, id));
+    return model || undefined;
+  }
+  
+  async createTryOnModel(model: InsertTryOnModel): Promise<TryOnModel> {
+    const [created] = await db.insert(tryOnModels).values(model).returning();
+    return created;
+  }
+  
+  async updateTryOnModel(id: string, updates: Partial<InsertTryOnModel>): Promise<TryOnModel | undefined> {
+    const [updated] = await db.update(tryOnModels)
+      .set(updates)
+      .where(eq(tryOnModels.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // User Try-On Photos
+  async getUserTryOnPhotos(userId: string): Promise<UserTryOnPhoto[]> {
+    return await db.select().from(userTryOnPhotos)
+      .where(eq(userTryOnPhotos.userId, userId))
+      .orderBy(desc(userTryOnPhotos.createdAt));
+  }
+  
+  async getUserTryOnPhoto(id: string): Promise<UserTryOnPhoto | undefined> {
+    const [photo] = await db.select().from(userTryOnPhotos).where(eq(userTryOnPhotos.id, id));
+    return photo || undefined;
+  }
+  
+  async createUserTryOnPhoto(photo: InsertUserTryOnPhoto): Promise<UserTryOnPhoto> {
+    const [created] = await db.insert(userTryOnPhotos).values(photo).returning();
+    return created;
+  }
+  
+  async updateUserTryOnPhoto(id: string, updates: Partial<InsertUserTryOnPhoto>): Promise<UserTryOnPhoto | undefined> {
+    const [updated] = await db.update(userTryOnPhotos)
+      .set(updates)
+      .where(eq(userTryOnPhotos.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  async deleteUserTryOnPhoto(id: string): Promise<void> {
+    await db.delete(userTryOnPhotos).where(eq(userTryOnPhotos.id, id));
+  }
+  
+  // Try-On Sessions
+  async getTryOnSession(id: string): Promise<TryOnSession | undefined> {
+    const [session] = await db.select().from(tryOnSessions).where(eq(tryOnSessions.id, id));
+    return session || undefined;
+  }
+  
+  async getTryOnSessionByShareToken(shareToken: string): Promise<TryOnSession | undefined> {
+    const [session] = await db.select().from(tryOnSessions).where(eq(tryOnSessions.shareToken, shareToken));
+    return session || undefined;
+  }
+  
+  async getUserTryOnSessions(userId: string): Promise<TryOnSession[]> {
+    return await db.select().from(tryOnSessions)
+      .where(eq(tryOnSessions.userId, userId))
+      .orderBy(desc(tryOnSessions.createdAt));
+  }
+  
+  async createTryOnSession(session: InsertTryOnSession): Promise<TryOnSession> {
+    const [created] = await db.insert(tryOnSessions).values(session).returning();
+    return created;
+  }
+  
+  async updateTryOnSession(id: string, updates: Partial<TryOnSession>): Promise<TryOnSession | undefined> {
+    const [updated] = await db.update(tryOnSessions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(tryOnSessions.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  async incrementTryOnSessionViews(id: string): Promise<void> {
+    await db.update(tryOnSessions)
+      .set({ viewCount: sql`${tryOnSessions.viewCount} + 1` })
+      .where(eq(tryOnSessions.id, id));
+  }
+  
+  // Try-On Feedback
+  async getTryOnFeedback(sessionId: string): Promise<TryOnFeedback[]> {
+    return await db.select().from(tryOnFeedback)
+      .where(eq(tryOnFeedback.sessionId, sessionId))
+      .orderBy(desc(tryOnFeedback.createdAt));
+  }
+  
+  async createTryOnFeedback(feedback: InsertTryOnFeedback): Promise<TryOnFeedback> {
+    const [created] = await db.insert(tryOnFeedback).values(feedback).returning();
+    return created;
+  }
+  
+  // Try-On Closet
+  async getUserTryOnCloset(userId: string): Promise<TryOnClosetItem[]> {
+    return await db.select().from(tryOnCloset)
+      .where(eq(tryOnCloset.userId, userId))
+      .orderBy(desc(tryOnCloset.addedAt));
+  }
+  
+  async addToTryOnCloset(item: InsertTryOnClosetItem): Promise<TryOnClosetItem> {
+    const [created] = await db.insert(tryOnCloset).values(item).returning();
+    return created;
+  }
+  
+  async removeFromTryOnCloset(userId: string, productId: string): Promise<void> {
+    await db.delete(tryOnCloset)
+      .where(and(
+        eq(tryOnCloset.userId, userId),
+        eq(tryOnCloset.productId, productId)
+      ));
+  }
+  
+  async isInTryOnCloset(userId: string, productId: string): Promise<boolean> {
+    const [item] = await db.select().from(tryOnCloset)
+      .where(and(
+        eq(tryOnCloset.userId, userId),
+        eq(tryOnCloset.productId, productId)
+      ));
+    return !!item;
   }
 }
 

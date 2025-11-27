@@ -1666,3 +1666,123 @@ export type InsertModerationFlag = z.infer<typeof insertModerationFlagSchema>;
 
 export type CreatorPayout = typeof creatorPayouts.$inferSelect;
 export type InsertCreatorPayout = z.infer<typeof insertCreatorPayoutSchema>;
+
+// ============================================
+// VIRTUAL TRY-ON (TryFit Integration)
+// ============================================
+
+export const tryOnPhotoTypeEnum = pgEnum("try_on_photo_type", ["user_upload", "model"]);
+export const tryOnSessionStatusEnum = pgEnum("try_on_session_status", ["pending", "processing", "completed", "failed"]);
+
+// Pre-photographed models for users who prefer not to upload their own photos
+export const tryOnModels = pgTable("try_on_models", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  photoUrl: text("photo_url").notNull(),
+  bodyType: text("body_type"), // "petite", "average", "athletic", "curvy", "plus_size"
+  height: text("height"), // e.g., "5'4", "170cm"
+  skinTone: text("skin_tone"), // "fair", "light", "medium", "tan", "dark"
+  gender: text("gender").notNull(), // "male", "female", "unisex"
+  // Pre-computed pose landmarks for faster try-on
+  poseLandmarks: jsonb("pose_landmarks"), // MediaPipe 33 landmark coordinates
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User photos uploaded for virtual try-on
+export const userTryOnPhotos = pgTable("user_try_on_photos", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  photoUrl: text("photo_url").notNull(),
+  poseLandmarks: jsonb("pose_landmarks"), // MediaPipe detected landmarks
+  bodyMeasurements: jsonb("body_measurements"), // Calculated from landmarks
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Virtual try-on sessions
+export const tryOnSessions = pgTable("try_on_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  // Photo source (either user upload or pre-photographed model)
+  photoType: tryOnPhotoTypeEnum("photo_type").notNull(),
+  userPhotoId: varchar("user_photo_id").references(() => userTryOnPhotos.id),
+  modelId: varchar("model_id").references(() => tryOnModels.id),
+  // Try-on items (array of product IDs with positions)
+  tryOnItems: jsonb("try_on_items").notNull(), // [{productId, position, scale, rotation, layer}]
+  status: tryOnSessionStatusEnum("status").default("pending").notNull(),
+  // Result
+  resultImageUrl: text("result_image_url"),
+  sizeRecommendations: jsonb("size_recommendations"), // {productId: {size: "M", confidence: 0.85, fit: "standard"}}
+  // Sharing
+  shareToken: text("share_token").unique(),
+  isPublic: boolean("is_public").default(false),
+  // Analytics
+  viewCount: integer("view_count").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Social feedback on shared try-on results
+export const tryOnVoteEnum = pgEnum("try_on_vote", ["love", "like", "meh", "not_for_me"]);
+
+export const tryOnFeedback = pgTable("try_on_feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull().references(() => tryOnSessions.id, { onDelete: "cascade" }),
+  vote: tryOnVoteEnum("vote"),
+  comment: text("comment"),
+  voterName: text("voter_name"), // Optional name for anonymous feedback
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User closet (saved favorite items for try-on)
+export const tryOnCloset = pgTable("try_on_closet", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  productId: varchar("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+});
+
+// Virtual Try-On insert schemas
+export const insertTryOnModelSchema = createInsertSchema(tryOnModels).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserTryOnPhotoSchema = createInsertSchema(userTryOnPhotos).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTryOnSessionSchema = createInsertSchema(tryOnSessions).omit({
+  id: true,
+  viewCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertTryOnFeedbackSchema = createInsertSchema(tryOnFeedback).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertTryOnClosetSchema = createInsertSchema(tryOnCloset).omit({
+  id: true,
+  addedAt: true,
+});
+
+// Virtual Try-On types
+export type TryOnModel = typeof tryOnModels.$inferSelect;
+export type InsertTryOnModel = z.infer<typeof insertTryOnModelSchema>;
+
+export type UserTryOnPhoto = typeof userTryOnPhotos.$inferSelect;
+export type InsertUserTryOnPhoto = z.infer<typeof insertUserTryOnPhotoSchema>;
+
+export type TryOnSession = typeof tryOnSessions.$inferSelect;
+export type InsertTryOnSession = z.infer<typeof insertTryOnSessionSchema>;
+
+export type TryOnFeedback = typeof tryOnFeedback.$inferSelect;
+export type InsertTryOnFeedback = z.infer<typeof insertTryOnFeedbackSchema>;
+
+export type TryOnClosetItem = typeof tryOnCloset.$inferSelect;
+export type InsertTryOnClosetItem = z.infer<typeof insertTryOnClosetSchema>;
