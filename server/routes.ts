@@ -1,6 +1,7 @@
 import type { Express } from "express";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 import { 
   analyzeStyleDescription, 
   calculateProductScores, 
@@ -3228,4 +3229,351 @@ export function registerRoutes(app: Express) {
   
   // Register event routes
   registerEventRoutes(app);
+
+  // ============================================
+  // VIRTUAL TRY-ON (TryFit Integration)
+  // ============================================
+  
+  // Get available try-on models
+  app.get("/api/v1/try-on/models", async (req, res) => {
+    try {
+      const { gender, bodyType } = req.query;
+      const models = await storage.getTryOnModels({
+        gender: gender as string,
+        bodyType: bodyType as string
+      });
+      res.json(models);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Get single try-on model
+  app.get("/api/v1/try-on/models/:id", async (req, res) => {
+    try {
+      const model = await storage.getTryOnModel(req.params.id);
+      if (!model) {
+        return res.status(404).json({ error: "Model not found" });
+      }
+      res.json(model);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // User photo management
+  app.get("/api/v1/try-on/my-photos",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const photos = await storage.getUserTryOnPhotos(req.userId!);
+        res.json(photos);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  app.post("/api/v1/try-on/photos",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const photo = await storage.createUserTryOnPhoto({
+          userId: req.userId!,
+          photoUrl: req.body.photoUrl,
+          poseLandmarks: req.body.poseLandmarks,
+          bodyMeasurements: req.body.bodyMeasurements,
+          isDefault: req.body.isDefault || false
+        });
+        res.json(photo);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  app.patch("/api/v1/try-on/photos/:id",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const photo = await storage.getUserTryOnPhoto(req.params.id);
+        if (!photo || photo.userId !== req.userId) {
+          return res.status(404).json({ error: "Photo not found" });
+        }
+        
+        const updated = await storage.updateUserTryOnPhoto(req.params.id, req.body);
+        res.json(updated);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  app.delete("/api/v1/try-on/photos/:id",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const photo = await storage.getUserTryOnPhoto(req.params.id);
+        if (!photo || photo.userId !== req.userId) {
+          return res.status(404).json({ error: "Photo not found" });
+        }
+        
+        await storage.deleteUserTryOnPhoto(req.params.id);
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Try-on sessions
+  app.post("/api/v1/try-on/sessions", async (req, res) => {
+    try {
+      // Generate a share token for sharing the result
+      const shareToken = crypto.randomBytes(16).toString('hex');
+      
+      const session = await storage.createTryOnSession({
+        userId: req.body.userId || null,
+        photoType: req.body.photoType,
+        userPhotoId: req.body.userPhotoId,
+        modelId: req.body.modelId,
+        tryOnItems: req.body.tryOnItems,
+        status: 'pending',
+        shareToken,
+        isPublic: req.body.isPublic || false
+      });
+      
+      res.json(session);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  
+  app.get("/api/v1/try-on/sessions/:id", async (req, res) => {
+    try {
+      const session = await storage.getTryOnSession(req.params.id);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      res.json(session);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Get session by share token (for shared results)
+  app.get("/api/v1/try-on/shared/:shareToken", async (req, res) => {
+    try {
+      const session = await storage.getTryOnSessionByShareToken(req.params.shareToken);
+      if (!session || !session.isPublic) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      // Increment view count
+      await storage.incrementTryOnSessionViews(session.id);
+      
+      res.json(session);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  app.get("/api/v1/try-on/my-sessions",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const sessions = await storage.getUserTryOnSessions(req.userId!);
+        res.json(sessions);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  app.patch("/api/v1/try-on/sessions/:id", async (req, res) => {
+    try {
+      const updated = await storage.updateTryOnSession(req.params.id, req.body);
+      if (!updated) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      res.json(updated);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  // Try-on feedback (for shared results)
+  app.get("/api/v1/try-on/sessions/:sessionId/feedback", async (req, res) => {
+    try {
+      const feedback = await storage.getTryOnFeedback(req.params.sessionId);
+      res.json(feedback);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+  
+  app.post("/api/v1/try-on/sessions/:sessionId/feedback", async (req, res) => {
+    try {
+      const feedback = await storage.createTryOnFeedback({
+        sessionId: req.params.sessionId,
+        vote: req.body.vote,
+        comment: req.body.comment,
+        voterName: req.body.voterName
+      });
+      res.json(feedback);
+    } catch (error: any) {
+      res.status(400).json({ error: error.message });
+    }
+  });
+  
+  // Try-on closet (saved items)
+  app.get("/api/v1/try-on/closet",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const items = await storage.getUserTryOnCloset(req.userId!);
+        res.json(items);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  app.post("/api/v1/try-on/closet",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        // Check if already in closet
+        const exists = await storage.isInTryOnCloset(req.userId!, req.body.productId);
+        if (exists) {
+          return res.status(409).json({ error: "Item already in closet" });
+        }
+        
+        const item = await storage.addToTryOnCloset({
+          userId: req.userId!,
+          productId: req.body.productId
+        });
+        res.json(item);
+      } catch (error: any) {
+        res.status(400).json({ error: error.message });
+      }
+    }
+  );
+  
+  app.delete("/api/v1/try-on/closet/:productId",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        await storage.removeFromTryOnCloset(req.userId!, req.params.productId);
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Check if product is in closet
+  app.get("/api/v1/try-on/closet/check/:productId",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const isInCloset = await storage.isInTryOnCloset(req.userId!, req.params.productId);
+        res.json({ isInCloset });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Calculate size recommendations based on user measurements
+  app.post("/api/v1/try-on/size-recommendation",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const { productId } = req.body;
+        
+        // Get user measurements
+        const measurements = await storage.getUserMeasurements(req.userId!);
+        if (!measurements) {
+          return res.status(400).json({ error: "No measurements found. Please complete your profile." });
+        }
+        
+        // Get product info
+        const product = await storage.getProduct(productId);
+        if (!product) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+        
+        // Calculate size recommendation based on measurements and product size chart
+        const sizeChart = product.sizeChart as Record<string, any> | null;
+        const sizes = product.sizes || [];
+        
+        // Simple size matching algorithm
+        let recommendedSize = "M";
+        let confidence = 0.75;
+        let fit = "Standard fit";
+        
+        if (measurements.chest && sizeChart) {
+          const chest = Number(measurements.chest);
+          
+          // Basic size mapping
+          if (chest < 36) {
+            recommendedSize = "XS";
+            confidence = 0.85;
+          } else if (chest < 38) {
+            recommendedSize = "S";
+            confidence = 0.90;
+          } else if (chest < 40) {
+            recommendedSize = "M";
+            confidence = 0.90;
+          } else if (chest < 42) {
+            recommendedSize = "L";
+            confidence = 0.85;
+          } else if (chest < 44) {
+            recommendedSize = "XL";
+            confidence = 0.80;
+          } else {
+            recommendedSize = "XXL";
+            confidence = 0.75;
+          }
+          
+          // Check if recommended size is available
+          if (!sizes.includes(recommendedSize)) {
+            // Find closest available size
+            const sizeOrder = ["XS", "S", "M", "L", "XL", "XXL"];
+            const currentIndex = sizeOrder.indexOf(recommendedSize);
+            
+            for (let i = 1; i <= sizeOrder.length; i++) {
+              if (currentIndex + i < sizeOrder.length && sizes.includes(sizeOrder[currentIndex + i])) {
+                recommendedSize = sizeOrder[currentIndex + i];
+                fit = "May run slightly large";
+                confidence -= 0.15;
+                break;
+              }
+              if (currentIndex - i >= 0 && sizes.includes(sizeOrder[currentIndex - i])) {
+                recommendedSize = sizeOrder[currentIndex - i];
+                fit = "May run slightly small";
+                confidence -= 0.15;
+                break;
+              }
+            }
+          }
+        }
+        
+        res.json({
+          recommendedSize,
+          confidence: Math.max(0.5, confidence),
+          fit,
+          availableSizes: sizes,
+          userMeasurements: {
+            chest: measurements.chest,
+            waist: measurements.waist,
+            hips: measurements.hips
+          }
+        });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
 }
