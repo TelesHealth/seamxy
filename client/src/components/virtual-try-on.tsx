@@ -17,7 +17,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, TryOnModel, UserTryOnPhoto } from "@shared/schema";
+import type { TryOnModel, UserTryOnPhoto } from "@shared/schema";
 import { 
   Camera, 
   Upload, 
@@ -45,8 +45,19 @@ interface PoseLandmark {
   visibility: number;
 }
 
+interface TryOnProduct {
+  id: string;
+  name: string;
+  brand: string;
+  price: string;
+  imageUrl?: string | null;
+  affiliateUrl?: string | null;
+  sizes?: string[] | null;
+  sizeChart?: Record<string, any> | null;
+}
+
 interface VirtualTryOnProps {
-  product: Product;
+  product: TryOnProduct;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   userId?: string;

@@ -1,8 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ExternalLink } from "lucide-react";
+import { Heart, ExternalLink, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { VirtualTryOn } from "./virtual-try-on";
 
 interface ProductCardProps {
   id: string;
@@ -15,7 +16,11 @@ interface ProductCardProps {
   budgetMatch?: number;
   totalScore?: number;
   affiliateUrl?: string;
+  sizes?: string[];
+  sizeChart?: Record<string, any> | null;
   onQuickBuy?: () => void;
+  userId?: string;
+  showTryOn?: boolean;
 }
 
 export function ProductCard({
@@ -29,9 +34,25 @@ export function ProductCard({
   budgetMatch = 0,
   totalScore = 0,
   affiliateUrl,
+  sizes = [],
+  sizeChart = null,
   onQuickBuy,
+  userId,
+  showTryOn = true,
 }: ProductCardProps) {
   const [isSaved, setIsSaved] = useState(false);
+  const [tryOnOpen, setTryOnOpen] = useState(false);
+  
+  const productForTryOn = {
+    id,
+    name,
+    brand,
+    price: String(price),
+    imageUrl: imageUrl || null,
+    affiliateUrl: affiliateUrl || null,
+    sizes: sizes || null,
+    sizeChart: sizeChart || null,
+  };
 
   const handleQuickBuy = () => {
     if (affiliateUrl) {
@@ -100,16 +121,38 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Quick Buy Button */}
-        <Button 
-          className="w-full" 
-          onClick={handleQuickBuy}
-          data-testid={`button-quickbuy-${id}`}
-        >
-          <ExternalLink className="w-4 h-4 mr-2" />
-          Quick Buy
-        </Button>
+        {/* Buttons */}
+        <div className="flex flex-col gap-2">
+          {showTryOn && (
+            <Button 
+              variant="outline"
+              className="w-full" 
+              onClick={() => setTryOnOpen(true)}
+              data-testid={`button-tryon-${id}`}
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Try On
+            </Button>
+          )}
+          <Button 
+            className="w-full" 
+            onClick={handleQuickBuy}
+            data-testid={`button-quickbuy-${id}`}
+          >
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Quick Buy
+          </Button>
+        </div>
       </CardContent>
+      
+      {showTryOn && (
+        <VirtualTryOn 
+          product={productForTryOn}
+          open={tryOnOpen}
+          onOpenChange={setTryOnOpen}
+          userId={userId}
+        />
+      )}
     </Card>
   );
 }
