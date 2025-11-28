@@ -1789,6 +1789,184 @@ export const userBrandPreferences = pgTable('user_brand_preferences', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
+// ============================================
+// STYLE QUIZ & USER PROFILES (Enhanced UX)
+// ============================================
+
+export const riskToleranceEnum = pgEnum("risk_tolerance", ["classic", "balanced", "experimental", "trendy"]);
+export const subscriptionTierTypeEnum = pgEnum("subscription_tier_type", ["free", "premium", "pro"]);
+
+// Complete user style profile from onboarding quiz
+export const userStyleProfiles = pgTable("user_style_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  
+  // Style Identity
+  aestheticPreferences: text("aesthetic_preferences").array(), // ["minimalist", "bohemian", "edgy"]
+  silhouettePreferences: text("silhouette_preferences").array(), // ["oversized", "tailored", "flowy"]
+  vibeWords: text("vibe_words").array(), // ["sophisticated", "relaxed", "bold"]
+  colorPreferences: text("color_preferences").array(), // ["neutrals", "earth tones", "bold colors"]
+  riskTolerance: riskToleranceEnum("risk_tolerance").default("balanced"),
+  confidenceGoals: text("confidence_goals").array(), // ["professional", "approachable", "powerful"]
+  
+  // Lifestyle Blueprint
+  lifestyleNeeds: text("lifestyle_needs").array(), // ["workwear", "weekend", "athleisure", "nightlife", "events"]
+  primaryLifestyle: text("primary_lifestyle"), // Main focus area
+  budgetOverallMin: integer("budget_overall_min").default(50),
+  budgetOverallMax: integer("budget_overall_max").default(500),
+  budgetPerItemMax: integer("budget_per_item_max").default(150),
+  
+  // Fit & Form Profile
+  bodyType: text("body_type"), // "hourglass", "apple", "pear", "rectangle", "athletic"
+  fitChallenges: text("fit_challenges").array(), // ["tight arms", "short torso", "long legs"]
+  heightCategory: text("height_category"), // "petite", "average", "tall"
+  proportions: text("proportions"), // "balanced", "long_torso", "long_legs"
+  
+  // Style Boundaries & Dealbreakers
+  clothingDislikes: text("clothing_dislikes").array(), // ["crop tops", "high waisted", "skinny jeans"]
+  fabricsToAvoid: text("fabrics_to_avoid").array(), // ["polyester", "wool", "leather"]
+  silhouettesToAvoid: text("silhouettes_to_avoid").array(), // ["bodycon", "oversized"]
+  
+  // Photo References (optional)
+  mirrorSelfieUrl: text("mirror_selfie_url"),
+  pinterestBoardUrl: text("pinterest_board_url"),
+  closetPhotosUrls: text("closet_photos_urls").array(),
+  
+  // Onboarding Status
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  onboardingStep: integer("onboarding_step").default(1), // 1-4
+  
+  // AI Generated Profile
+  styleIdentitySummary: text("style_identity_summary"), // AI-generated summary
+  recommendedStylistId: varchar("recommended_stylist_id"), // AI persona recommendation
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User closet items (uploaded wardrobe)
+export const userClosetItems = pgTable("user_closet_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  imageUrl: text("image_url").notNull(),
+  category: text("category").notNull(), // "tops", "bottoms", "dresses", "outerwear", "shoes", "accessories"
+  subcategory: text("subcategory"), // "t-shirt", "blouse", "jeans", "sneakers"
+  color: text("color"),
+  brand: text("brand"),
+  styleTags: text("style_tags").array(),
+  season: text("season"), // "spring", "summer", "fall", "winter", "all"
+  aiDetectedAttributes: jsonb("ai_detected_attributes"), // AI-analyzed attributes
+  timesWorn: integer("times_worn").default(0),
+  lastWorn: timestamp("last_worn"),
+  isFavorite: boolean("is_favorite").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// AI-generated outfit recommendations
+export const outfitRecommendations = pgTable("outfit_recommendations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  recommendationType: text("recommendation_type").notNull(), // "daily", "weekly", "event", "weather", "capsule"
+  title: text("title").notNull(),
+  description: text("description"),
+  occasion: text("occasion"), // "work", "date_night", "brunch", "casual"
+  weather: text("weather"), // "sunny", "rainy", "cold", "hot"
+  
+  // Items in the outfit
+  items: jsonb("items").notNull().$type<{
+    productId?: string; // Marketplace item
+    closetItemId?: string; // User's own item
+    name: string;
+    imageUrl: string;
+    price?: number;
+    affiliateUrl?: string;
+    isFromCloset: boolean;
+  }[]>(),
+  
+  // Styling notes
+  stylistNotes: text("stylist_notes"), // AI or human notes
+  voiceNoteUrl: text("voice_note_url"), // Human stylist voice note
+  
+  // Metadata
+  totalPrice: decimal("total_price", { precision: 10, scale: 2 }),
+  isLocked: boolean("is_locked").default(false), // Premium content
+  isSaved: boolean("is_saved").default(false),
+  isViewed: boolean("is_viewed").default(false),
+  
+  // Date context
+  recommendedFor: timestamp("recommended_for"), // Target date for the outfit
+  expiresAt: timestamp("expires_at"),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Outfit interaction tracking (for personalization)
+export const outfitInteractions = pgTable("outfit_interactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  outfitId: varchar("outfit_id").notNull().references(() => outfitRecommendations.id, { onDelete: "cascade" }),
+  interactionType: text("interaction_type").notNull(), // "view", "save", "share", "shop", "swap_request", "dislike"
+  swappedItemIndex: integer("swapped_item_index"), // For swap requests
+  swapReason: text("swap_reason"), // "different_color", "different_style", "too_expensive"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// User subscription tier (for closet limits, outfit caps)
+export const userSubscriptions = pgTable("user_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }).unique(),
+  tier: subscriptionTierTypeEnum("tier").default("free").notNull(),
+  
+  // Usage limits
+  closetUploadLimit: integer("closet_upload_limit").default(20), // Free: 20, Premium: unlimited
+  weeklyOutfitLimit: integer("weekly_outfit_limit").default(5), // Free: 5, Premium: 20, Pro: unlimited
+  outfitsUsedThisWeek: integer("outfits_used_this_week").default(0),
+  weekStartDate: timestamp("week_start_date").defaultNow(),
+  
+  // Stripe info
+  stripeSubscriptionId: text("stripe_subscription_id"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  
+  // Features
+  hasHumanStylist: boolean("has_human_stylist").default(false),
+  hasCapsulePlanning: boolean("has_capsule_planning").default(false),
+  hasUnlimitedTryOn: boolean("has_unlimited_try_on").default(false),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User saved items (lookbook)
+export const userSavedItems = pgTable("user_saved_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  itemType: text("item_type").notNull(), // "product", "outfit", "outfit_item"
+  productId: varchar("product_id").references(() => products.id, { onDelete: "cascade" }),
+  outfitId: varchar("outfit_id").references(() => outfitRecommendations.id, { onDelete: "cascade" }),
+  note: text("note"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Wardrobe gap analysis
+export const wardrobeGapAnalysis = pgTable("wardrobe_gap_analysis", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  analysisDate: timestamp("analysis_date").defaultNow().notNull(),
+  gaps: jsonb("gaps").$type<{
+    category: string;
+    description: string;
+    priority: "high" | "medium" | "low";
+    recommendedProducts: string[]; // Product IDs
+  }[]>(),
+  capsuleSuggestions: jsonb("capsule_suggestions").$type<{
+    name: string;
+    pieces: string[];
+    versatilityScore: number;
+  }[]>(),
+  overallScore: integer("overall_score"), // Wardrobe completeness 0-100
+  aiNotes: text("ai_notes"),
+});
+
 // Pre-photographed models for users who prefer not to upload their own photos
 export const tryOnModels = pgTable("try_on_models", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1959,3 +2137,65 @@ export type InsertFitFeedback = z.infer<typeof insertFitFeedbackSchema>;
 
 export type UserBrandPreference = typeof userBrandPreferences.$inferSelect;
 export type InsertUserBrandPreference = z.infer<typeof insertUserBrandPreferenceSchema>;
+
+// ============================================
+// STYLE QUIZ & DASHBOARD - Insert Schemas and Types
+// ============================================
+
+export const insertUserStyleProfileSchema = createInsertSchema(userStyleProfiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserClosetItemSchema = createInsertSchema(userClosetItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOutfitRecommendationSchema = createInsertSchema(outfitRecommendations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertOutfitInteractionSchema = createInsertSchema(outfitInteractions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertUserSubscriptionSchema = createInsertSchema(userSubscriptions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertUserSavedItemSchema = createInsertSchema(userSavedItems).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertWardrobeGapAnalysisSchema = createInsertSchema(wardrobeGapAnalysis).omit({
+  id: true,
+});
+
+// Style Quiz & Dashboard Types
+export type UserStyleProfile = typeof userStyleProfiles.$inferSelect;
+export type InsertUserStyleProfile = z.infer<typeof insertUserStyleProfileSchema>;
+
+export type UserClosetItem = typeof userClosetItems.$inferSelect;
+export type InsertUserClosetItem = z.infer<typeof insertUserClosetItemSchema>;
+
+export type OutfitRecommendation = typeof outfitRecommendations.$inferSelect;
+export type InsertOutfitRecommendation = z.infer<typeof insertOutfitRecommendationSchema>;
+
+export type OutfitInteraction = typeof outfitInteractions.$inferSelect;
+export type InsertOutfitInteraction = z.infer<typeof insertOutfitInteractionSchema>;
+
+export type UserSubscription = typeof userSubscriptions.$inferSelect;
+export type InsertUserSubscription = z.infer<typeof insertUserSubscriptionSchema>;
+
+export type UserSavedItem = typeof userSavedItems.$inferSelect;
+export type InsertUserSavedItem = z.infer<typeof insertUserSavedItemSchema>;
+
+export type WardrobeGapAnalysis = typeof wardrobeGapAnalysis.$inferSelect;
+export type InsertWardrobeGapAnalysis = z.infer<typeof insertWardrobeGapAnalysisSchema>;

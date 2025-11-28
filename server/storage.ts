@@ -74,6 +74,12 @@ import {
   type TryonVote, type InsertTryonVote,
   type FitFeedback, type InsertFitFeedback,
   type UserBrandPreference, type InsertUserBrandPreference,
+  // Style Quiz & Dashboard Tables
+  userStyleProfiles, userClosetItems, outfitRecommendations, userSubscriptions,
+  type UserStyleProfile, type InsertUserStyleProfile,
+  type UserClosetItem, type InsertUserClosetItem,
+  type OutfitRecommendation, type InsertOutfitRecommendation,
+  type UserSubscription, type InsertUserSubscription,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
@@ -1929,6 +1935,168 @@ export class DatabaseStorage implements IStorage {
     }
     const [created] = await db.insert(userBrandPreferences).values(preference).returning();
     return created;
+  }
+  
+  // ============================================
+  // STYLE QUIZ & PROFILE
+  // ============================================
+  
+  async getUserStyleProfile(userId: string): Promise<UserStyleProfile | undefined> {
+    const [profile] = await db.select().from(userStyleProfiles)
+      .where(eq(userStyleProfiles.userId, userId));
+    return profile || undefined;
+  }
+  
+  async createUserStyleProfile(profile: InsertUserStyleProfile): Promise<UserStyleProfile> {
+    const [created] = await db.insert(userStyleProfiles).values(profile).returning();
+    return created;
+  }
+  
+  async updateUserStyleProfile(userId: string, updates: Partial<InsertUserStyleProfile>): Promise<UserStyleProfile | undefined> {
+    const [updated] = await db.update(userStyleProfiles)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(userStyleProfiles.userId, userId))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // ============================================
+  // USER SUBSCRIPTIONS
+  // ============================================
+  
+  async getUserSubscription(userId: string): Promise<UserSubscription | undefined> {
+    const [sub] = await db.select().from(userSubscriptions)
+      .where(eq(userSubscriptions.userId, userId));
+    return sub || undefined;
+  }
+  
+  async createUserSubscription(subscription: InsertUserSubscription): Promise<UserSubscription> {
+    const [created] = await db.insert(userSubscriptions).values(subscription).returning();
+    return created;
+  }
+  
+  async updateUserSubscription(userId: string, updates: Partial<InsertUserSubscription>): Promise<UserSubscription | undefined> {
+    const [updated] = await db.update(userSubscriptions)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(userSubscriptions.userId, userId))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // ============================================
+  // CLOSET MANAGEMENT
+  // ============================================
+  
+  async getUserClosetItems(userId: string): Promise<UserClosetItem[]> {
+    return await db.select().from(userClosetItems)
+      .where(eq(userClosetItems.userId, userId))
+      .orderBy(desc(userClosetItems.createdAt));
+  }
+  
+  async createClosetItem(item: InsertUserClosetItem): Promise<UserClosetItem> {
+    const [created] = await db.insert(userClosetItems).values(item).returning();
+    return created;
+  }
+  
+  async deleteClosetItem(id: string, userId: string): Promise<boolean> {
+    const [deleted] = await db.delete(userClosetItems)
+      .where(and(
+        eq(userClosetItems.id, id),
+        eq(userClosetItems.userId, userId)
+      ))
+      .returning();
+    return !!deleted;
+  }
+  
+  async toggleClosetItemFavorite(id: string, userId: string): Promise<UserClosetItem | undefined> {
+    const [item] = await db.select().from(userClosetItems)
+      .where(and(
+        eq(userClosetItems.id, id),
+        eq(userClosetItems.userId, userId)
+      ));
+    
+    if (!item) return undefined;
+    
+    const [updated] = await db.update(userClosetItems)
+      .set({ isFavorite: !item.isFavorite })
+      .where(eq(userClosetItems.id, id))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // ============================================
+  // OUTFIT RECOMMENDATIONS
+  // ============================================
+  
+  async getOutfitRecommendations(userId: string, type: string): Promise<OutfitRecommendation[]> {
+    return await db.select().from(outfitRecommendations)
+      .where(and(
+        eq(outfitRecommendations.userId, userId),
+        eq(outfitRecommendations.recommendationType, type)
+      ))
+      .orderBy(desc(outfitRecommendations.createdAt));
+  }
+  
+  async createOutfitRecommendation(outfit: InsertOutfitRecommendation): Promise<OutfitRecommendation> {
+    const [created] = await db.insert(outfitRecommendations).values(outfit).returning();
+    return created;
+  }
+  
+  async saveOutfit(outfitId: string, userId: string): Promise<OutfitRecommendation | undefined> {
+    const [updated] = await db.update(outfitRecommendations)
+      .set({ isSaved: true })
+      .where(and(
+        eq(outfitRecommendations.id, outfitId),
+        eq(outfitRecommendations.userId, userId)
+      ))
+      .returning();
+    return updated || undefined;
+  }
+  
+  // ============================================
+  // SAVED ITEMS
+  // ============================================
+  
+  async getUserSavedItems(userId: string): Promise<any[]> {
+    // Return saved outfit recommendations as saved items for now
+    return await db.select().from(outfitRecommendations)
+      .where(and(
+        eq(outfitRecommendations.userId, userId),
+        eq(outfitRecommendations.isSaved, true)
+      ))
+      .orderBy(desc(outfitRecommendations.createdAt));
+  }
+  
+  // ============================================
+  // WARDROBE GAP ANALYSIS
+  // ============================================
+  
+  async getWardrobeGapAnalysis(userId: string): Promise<any> {
+    const items = await this.getUserClosetItems(userId);
+    
+    // Calculate category breakdown
+    const categoryCount: Record<string, number> = {};
+    items.forEach(item => {
+      categoryCount[item.category] = (categoryCount[item.category] || 0) + 1;
+    });
+    
+    // Identify gaps based on common wardrobe needs
+    const essentialCategories = ['tops', 'bottoms', 'outerwear', 'shoes', 'accessories'];
+    const gaps: string[] = [];
+    essentialCategories.forEach(cat => {
+      if (!categoryCount[cat] || categoryCount[cat] < 3) {
+        gaps.push(cat);
+      }
+    });
+    
+    return {
+      categoryBreakdown: categoryCount,
+      gaps,
+      suggestions: gaps.map(gap => ({
+        category: gap,
+        suggestion: `Add more ${gap} to complete your wardrobe`
+      }))
+    };
   }
 }
 

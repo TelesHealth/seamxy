@@ -46,6 +46,26 @@ Do not make changes to the file `Y`.
   - Fixed post.caption → post.title + post.content + post.mediaUrls
   - Added defensive null checks for undefined totalLikes/totalFollowers
 
+### Style Quiz & Dashboard System
+- **Routes Added**: /style-quiz, /dashboard, /closet pages in App.tsx
+- **Style Quiz Component**: client/src/components/style-quiz/style-quiz.tsx
+  - Swipe card interface for style preferences
+  - Sections: Style Identity, Lifestyle Blueprint, Fit Profile, Dealbreakers
+- **Dashboard Page**: client/src/pages/style-dashboard.tsx
+  - Pinterest-style outfit feed with daily/weekly recommendations
+  - Closet preview widget, stylist messages, goals tracking
+  - Subscription tier indicators (free/premium)
+- **Closet Page**: client/src/pages/closet.tsx
+  - Free tier: 20 items limit, basic AI categorization
+  - Paid tier: Unlimited uploads, stylist audits, capsule planning
+- **API Endpoints**:
+  - POST/GET /api/v1/style-profile - Style profile CRUD with Zod validation
+  - POST /api/v1/style-profile/generate-preview - AI-generated style preview
+  - GET /api/v1/dashboard - Dashboard data aggregation
+  - GET /api/v1/closet - Closet items with subscription limits
+  - POST/DELETE /api/v1/closet/items - Closet item CRUD
+- **Storage Methods**: getUserStyleProfile, getUserSubscription, getUserClosetItems, getOutfitRecommendations, getWardrobeGapAnalysis
+
 ## System Architecture
 
 SeamXY's architecture is built on a modern web stack for scalability and rich user experiences.

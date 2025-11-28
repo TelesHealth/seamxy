@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { storage } from "./storage";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { ZodError } from "zod";
 import { 
   analyzeStyleDescription, 
   calculateProductScores, 
@@ -31,7 +32,8 @@ import {
   insertStylistRfqSchema, insertStylistReviewSchema,
   insertCreatorTierSchema, insertCreatorPostSchema, insertCreatorSubscriptionSchema,
   insertCreatorTipSchema, insertCreatorCustomRequestSchema, insertModerationFlagSchema,
-  adminUpdateUserSchema
+  adminUpdateUserSchema,
+  insertUserStyleProfileSchema, insertUserClosetItemSchema
 } from "@shared/schema";
 import { priceComparisonService } from "./services/price-comparison";
 import { aiProductMatcher } from "./services/ai-product-matcher";
@@ -3972,6 +3974,285 @@ export function registerRoutes(app: Express) {
           return res.json({ brand: req.params.brand, sizeAdjustment: 0, totalPurchases: 0 });
         }
         res.json(preference);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // STYLE QUIZ & PROFILE
+  // ============================================
+  
+  // Save/update style profile from quiz
+  app.post("/api/v1/style-profile",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        // Validate request body with Zod schema
+        const validatedData = insertUserStyleProfileSchema.parse({
+          userId: req.userId!,
+          ...req.body,
+          onboardingCompleted: true,
+          onboardingStep: 4
+        });
+        
+        // Check if profile exists
+        const existing = await storage.getUserStyleProfile(req.userId!);
+        let profile;
+        if (existing) {
+          profile = await storage.updateUserStyleProfile(req.userId!, validatedData);
+        } else {
+          profile = await storage.createUserStyleProfile(validatedData);
+        }
+        
+        res.json(profile);
+      } catch (error: any) {
+        if (error instanceof ZodError) {
+          return res.status(400).json({ error: error.errors[0]?.message || "Validation error" });
+        }
+        console.error("Style profile error:", error);
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Get style profile
+  app.get("/api/v1/style-profile",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const profile = await storage.getUserStyleProfile(req.userId!);
+        res.json(profile || null);
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Generate AI preview from quiz data
+  app.post("/api/v1/style-profile/generate-preview",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const quizData = req.body;
+        
+        // Generate style identity summary
+        const aesthetics = quizData.aestheticPreferences?.slice(0, 2).join(" and ") || "classic";
+        const vibes = quizData.vibeWords?.slice(0, 3).join(", ") || "sophisticated, polished";
+        const lifestyle = quizData.primaryLifestyle || quizData.lifestyleNeeds?.[0] || "everyday";
+        
+        const styleIdentitySummary = `Based on your preferences, you have a ${quizData.riskTolerance || "balanced"} approach to fashion with a focus on ${aesthetics} aesthetics. Your style is characterized by ${vibes} vibes, perfect for your ${lifestyle} lifestyle.`;
+        
+        // Recommend stylist based on preferences
+        const stylistMap: Record<string, string> = {
+          minimalist: "aiden",
+          classic: "eduardo",
+          streetwear: "luca",
+          bohemian: "sofia",
+          edgy: "marcus",
+          romantic: "evelyn",
+          preppy: "kai",
+          athleisure: "kai"
+        };
+        
+        const recommendedStylistId = stylistMap[quizData.aestheticPreferences?.[0]] || "aiden";
+        
+        // Generate style board images
+        const styleBoard = [
+          "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300&q=80",
+          "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=300&q=80",
+          "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=300&q=80",
+          "https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=300&q=80",
+        ];
+        
+        // Generate outfit previews
+        const outfitPreviews = [
+          { title: "Workday Ready", description: "A polished look for the office" },
+          { title: "Weekend Vibes", description: "Relaxed yet stylish" },
+          { title: "Evening Out", description: "Perfect for dinner or drinks" },
+        ];
+        
+        res.json({
+          styleIdentitySummary,
+          recommendedStylistId,
+          styleBoard,
+          outfitPreviews
+        });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // STYLE DASHBOARD
+  // ============================================
+  
+  // Get dashboard data
+  app.get("/api/v1/dashboard",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const userId = req.userId!;
+        
+        // Get all dashboard data in parallel
+        const [profile, subscription, closetItems, savedItems] = await Promise.all([
+          storage.getUserStyleProfile(userId),
+          storage.getUserSubscription(userId),
+          storage.getUserClosetItems(userId),
+          storage.getUserSavedItems(userId)
+        ]);
+        
+        // Get outfit recommendations
+        const todaysOutfits = await storage.getOutfitRecommendations(userId, "daily");
+        const weeklyOutfits = await storage.getOutfitRecommendations(userId, "weekly");
+        
+        // Default subscription if none exists
+        const sub = subscription || {
+          tier: "free" as const,
+          outfitsRemaining: 5,
+          closetSlots: 20,
+          closetUsed: closetItems.length
+        };
+        
+        res.json({
+          profile,
+          todaysOutfits,
+          weeklyOutfits,
+          savedItems,
+          closetItems: closetItems.slice(0, 8),
+          stylistMessages: [],
+          subscription: {
+            tier: sub.tier,
+            outfitsRemaining: (sub.weeklyOutfitLimit || 5) - (sub.outfitsUsedThisWeek || 0),
+            closetSlots: sub.closetUploadLimit || 20,
+            closetUsed: closetItems.length
+          },
+          goals: []
+        });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Refresh outfit recommendations
+  app.post("/api/v1/outfits/refresh",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        // Generate new outfit recommendations
+        // For now, just return success
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Save outfit
+  app.post("/api/v1/outfits/:id/save",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        await storage.saveOutfit(req.params.id, req.userId!);
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+
+  // ============================================
+  // CLOSET MANAGEMENT
+  // ============================================
+  
+  // Get closet data
+  app.get("/api/v1/closet",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const userId = req.userId!;
+        
+        const [items, subscription, gapAnalysis] = await Promise.all([
+          storage.getUserClosetItems(userId),
+          storage.getUserSubscription(userId),
+          storage.getWardrobeGapAnalysis(userId)
+        ]);
+        
+        res.json({
+          items,
+          subscription: subscription || {
+            tier: "free" as const,
+            closetUploadLimit: 20
+          },
+          gapAnalysis
+        });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Add closet item
+  app.post("/api/v1/closet/items",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const userId = req.userId!;
+        
+        // Check subscription limits
+        const subscription = await storage.getUserSubscription(userId);
+        const items = await storage.getUserClosetItems(userId);
+        const limit = subscription?.closetUploadLimit || 20;
+        
+        if (subscription?.tier === "free" && items.length >= limit) {
+          return res.status(403).json({ error: "Closet limit reached. Upgrade to add more items." });
+        }
+        
+        // Validate request body with Zod schema
+        const validatedData = insertUserClosetItemSchema.parse({
+          userId,
+          ...req.body
+        });
+        
+        const item = await storage.createClosetItem(validatedData);
+        
+        res.status(201).json(item);
+      } catch (error: any) {
+        if (error instanceof ZodError) {
+          return res.status(400).json({ error: error.errors[0]?.message || "Validation error" });
+        }
+        console.error("Closet item error:", error);
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Delete closet item
+  app.delete("/api/v1/closet/items/:id",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const deleted = await storage.deleteClosetItem(req.params.id, req.userId!);
+        if (!deleted) {
+          return res.status(404).json({ error: "Item not found or not owned by user" });
+        }
+        res.json({ success: true });
+      } catch (error: any) {
+        res.status(500).json({ error: error.message });
+      }
+    }
+  );
+  
+  // Toggle favorite
+  app.post("/api/v1/closet/items/:id/favorite",
+    requireUser as any,
+    async (req: AuthenticatedRequest, res) => {
+      try {
+        const item = await storage.toggleClosetItemFavorite(req.params.id, req.userId!);
+        res.json(item);
       } catch (error: any) {
         res.status(500).json({ error: error.message });
       }

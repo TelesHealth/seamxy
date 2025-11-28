@@ -54,6 +54,11 @@ import ForCreators from "@/pages/for-creators";
 // Virtual Try-On
 import SharedTryOn from "@/pages/shared-tryon";
 
+// Style Quiz & Dashboard
+import StyleQuiz from "@/components/style-quiz/style-quiz";
+import StyleDashboard from "@/pages/style-dashboard";
+import Closet from "@/pages/closet";
+
 function Router() {
   return (
     <Switch>
@@ -128,6 +133,11 @@ function Router() {
       
       {/* Virtual Try-On */}
       <Route path="/try-on/shared/:shareCode" component={SharedTryOn} />
+      
+      {/* Style Quiz & Dashboard */}
+      <Route path="/style-quiz" component={StyleQuiz} />
+      <Route path="/dashboard" component={StyleDashboard} />
+      <Route path="/closet" component={Closet} />
       
       <Route component={NotFound} />
     </Switch>
