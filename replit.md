@@ -51,6 +51,22 @@ Do not make changes to the file `Y`.
 - **Style Quiz Component**: client/src/components/style-quiz/style-quiz.tsx
   - Swipe card interface for style preferences
   - Sections: Style Identity, Lifestyle Blueprint, Fit Profile, Dealbreakers
+  - **14 question categories with 94+ answer options** (see `docs/style-quiz-questions.md` for full list)
+- **Quiz Data**: client/src/components/style-quiz/quiz-data.ts
+  - Aesthetic options (8): Minimalist, Bohemian, Classic, Edgy, Romantic, Streetwear, Preppy, Athleisure
+  - Color palettes (6): Neutrals, Earth Tones, Pastels, Bold Colors, Monochrome, Jewel Tones
+  - Silhouettes (6): Tailored, Oversized, Flowy, Body-Conscious, Boxy, A-Line
+  - Vibe words (12): Sophisticated, Relaxed, Bold, Approachable, Powerful, Creative, etc.
+  - Risk tolerance (4): Classic, Balanced, Experimental, Trendy
+  - Confidence goals (6): Professional, Approachable, Powerful, Creative, Elegant, Youthful
+  - Lifestyle options (6): Workwear, Weekend, Athleisure, Nightlife, Events, Travel
+  - Budget ranges (5): Budget-Friendly to Luxury ($0-$5000/month)
+  - Body types (6): Hourglass, Pear, Apple, Rectangle, Inverted Triangle, Athletic
+  - Height categories (3): Petite, Average, Tall
+  - Fit challenges (12): Arms, torso, legs, shoulders, bust, hips, thighs
+  - Clothing dislikes (12): Crop tops, high-waisted, skinny jeans, turtlenecks, etc.
+  - Fabric dislikes (8): Polyester, Wool, Leather, Silk, Denim, Linen, Velvet, Synthetics
+  - Photo uploads (3): Mirror selfie, Pinterest board URL, Closet photos
 - **Dashboard Page**: client/src/pages/style-dashboard.tsx
   - Pinterest-style outfit feed with daily/weekly recommendations
   - Closet preview widget, stylist messages, goals tracking
@@ -65,6 +81,7 @@ Do not make changes to the file `Y`.
   - GET /api/v1/closet - Closet items with subscription limits
   - POST/DELETE /api/v1/closet/items - Closet item CRUD
 - **Storage Methods**: getUserStyleProfile, getUserSubscription, getUserClosetItems, getOutfitRecommendations, getWardrobeGapAnalysis
+- **Documentation**: `docs/style-quiz-questions.md` - Complete list of all quiz questions and answer options
 
 ## System Architecture
 
