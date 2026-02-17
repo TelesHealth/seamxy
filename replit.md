@@ -14,19 +14,45 @@ Do not make changes to the file `Y`.
 
 ## Recent Changes (February 2026)
 
-### CRO Audit Documentation & Alignment Review Preparation
-- **CRO + UX/UI Audit**: Received professional Conversion Rate Optimization audit (attached at `attached_assets/SeamXY_CRO_UX_UI_Audit_1770912442922.pdf`) identifying 4 Tier-1 pre-launch friction points:
-  1. Homepage audience ambiguity — users can't immediately identify "Is this for me?"
-  2. AI introduced too early — cognitive load before trust is earned
-  3. "Fit" framed as probability — triggers sizing anxiety
-  4. Insufficient reassurance before data input — measurements feel high-stakes
-- **Current UX/UI State Document**: Created comprehensive document at `docs/seamxy-current-ux-state.md` mapping all user-facing flows, copy, CTAs, navigation, AI introduction points, and data submission moments against the audit findings
-- **Follow-On Alignment Review**: Prepared for CRO alignment review with auditor to validate UX/UI execution against original strategy before implementing Tier-1 fixes
-- **Tier-1 Fix Status**: None of the Tier-1 recommendations have been implemented yet — awaiting alignment review confirmation before development
+### Situational Styling Engine (Stage 0) — Anonymous-First Front Door
+- **Strategic Pivot**: Implemented anonymous-first "Situational Styling Engine" as new front door based on CRO audit findings. Users can get outfit recommendations without account, measurements, or AI jargon.
+- **Homepage Rebuild**: `client/src/pages/home.tsx` — Outcome-first copy ("Know exactly what to wear for any moment"), single CTA ("Get Outfit Ideas"), no AI language, no tech jargon
+- **Navigation Reorganization**: `client/src/components/header.tsx` — Logged-out users see: Logo, Get Outfit Ideas, How It Works, Sign In. Logged-in users see full nav including Dashboard, Shop, Closet, My Requests.
+- **New Pages**:
+  - `/get-outfit-ideas` — Multi-step situational styling flow: Category → Situation → Vibe → Loading → Results
+  - `/how-it-works` — Simplified explainer page (5 steps, no tech language)
+- **Situational Styling Flow** (`client/src/pages/get-outfit-ideas.tsx`):
+  - 6 categories (Work, Social, Casual, Events, Active, Travel) with 6 situations each (36 total)
+  - 6 vibe options (Polished, Bold, Relaxed, Classic, Creative, Minimalist) + skip option
+  - Custom situation text input support
+  - Results show full outfit cards with per-item details, "Why it works" explanation, styling tips
+  - Heart/favorite outfits with floating picks counter
+  - "Show me something different" refresh
+  - "Shop similar" links on each outfit item connecting to existing shop/search
+  - "Send me these looks" email capture dialog (no account needed)
+- **Conversion Triggers**:
+  - Hearts threshold (3+ hearts triggers account creation prompt)
+  - Multi-situation engagement (2+ situations triggers prompt)
+  - Return visitor recognition (localStorage-based, shows welcome back card)
+  - "Send me these looks" email capture (captures lead without requiring account)
+  - All prompts dismissible with "Not now"
+- **Database Tables** (5 new):
+  - `anonymous_sessions` — Tracks anonymous user sessions with category/situation/vibe
+  - `session_outfits` — Stores generated outfits per session
+  - `leads` — Email captures from "send me these looks" flow
+  - `engagement_events` — All event tracking (outfits_generated, hearts, email_captured)
+  - `contextual_prompts` — Configurable prompts for progressive feature discovery
+- **API Endpoints**:
+  - `POST /api/v1/outfits/situational` — Generate outfit ideas via OpenAI
+  - `POST /api/v1/outfits/heart` — Track heart/unheart events
+  - `POST /api/v1/outfits/send-looks` — Capture email + log lead
+- **OpenAI Integration**: New `generateSituationalOutfits()` function in `server/services/openai.ts` using GPT-5 with fashion-specific prompt (warm tone, no AI jargon, specific items with prices)
+- **Feature Reorganization**: Existing features (Style Quiz, Dashboard, Closet, AI Stylist, Makers, Creators) hidden from logged-out nav. Appear after login.
 
-### Navigation Status Notes
-- **Not yet linked from main navigation**: `/style-quiz`, `/dashboard`, `/closet` pages are fully implemented but disconnected from the header navigation and main user journey
-- **Planned**: These pages will be integrated into the primary user flow as part of the Tier-1 CRO fix implementation
+### CRO Audit Documentation (Earlier February 2026)
+- **CRO + UX/UI Audit**: Received professional audit (attached at `attached_assets/SeamXY_CRO_UX_UI_Audit_1770912442922.pdf`) identifying 4 Tier-1 pre-launch friction points
+- **Current UX/UI State Document**: `docs/seamxy-current-ux-state.md`
+- **Status**: Tier-1 fixes now implemented via the Situational Styling Engine approach (addresses audience ambiguity, early AI introduction, data anxiety)
 
 ## Previous Changes (November 2025)
 

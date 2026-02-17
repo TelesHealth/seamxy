@@ -80,6 +80,12 @@ import {
   type UserClosetItem, type InsertUserClosetItem,
   type OutfitRecommendation, type InsertOutfitRecommendation,
   type UserSubscription, type InsertUserSubscription,
+  // Situational Styling Engine
+  anonymousSessions, sessionOutfits, leads, engagementEvents,
+  type AnonymousSession, type InsertAnonymousSession,
+  type SessionOutfit, type InsertSessionOutfit,
+  type Lead, type InsertLead,
+  type EngagementEvent, type InsertEngagementEvent,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
@@ -411,6 +417,12 @@ export interface IStorage {
   getUserBrandPreference(userId: string, brand: string): Promise<UserBrandPreference | undefined>;
   getUserBrandPreferences(userId: string): Promise<UserBrandPreference[]>;
   upsertUserBrandPreference(preference: InsertUserBrandPreference): Promise<UserBrandPreference>;
+
+  // Situational Styling Engine
+  createAnonymousSession(data: InsertAnonymousSession): Promise<AnonymousSession>;
+  createSessionOutfit(data: InsertSessionOutfit): Promise<SessionOutfit>;
+  createLead(data: InsertLead): Promise<Lead>;
+  createEngagementEvent(data: InsertEngagementEvent): Promise<EngagementEvent>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2097,6 +2109,27 @@ export class DatabaseStorage implements IStorage {
         suggestion: `Add more ${gap} to complete your wardrobe`
       }))
     };
+  }
+
+  // Situational Styling Engine
+  async createAnonymousSession(data: InsertAnonymousSession): Promise<AnonymousSession> {
+    const [session] = await db.insert(anonymousSessions).values(data).returning();
+    return session;
+  }
+
+  async createSessionOutfit(data: InsertSessionOutfit): Promise<SessionOutfit> {
+    const [outfit] = await db.insert(sessionOutfits).values(data).returning();
+    return outfit;
+  }
+
+  async createLead(data: InsertLead): Promise<Lead> {
+    const [lead] = await db.insert(leads).values(data).returning();
+    return lead;
+  }
+
+  async createEngagementEvent(data: InsertEngagementEvent): Promise<EngagementEvent> {
+    const [event] = await db.insert(engagementEvents).values(data).returning();
+    return event;
   }
 }
 

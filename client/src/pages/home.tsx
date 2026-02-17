@@ -1,170 +1,113 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ShoppingBag, Scissors, Sparkles, TrendingUp } from "lucide-react";
+import { Shirt, ChevronRight, Calendar, Sparkles } from "lucide-react";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-background">
-      {/* Hero Section */}
       <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden">
-        {/* Hero Image with Gradient Overlay */}
         <div className="absolute inset-0 z-0">
           <img
             src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1920&q=80"
-            alt="Fashion Hero"
+            alt="Fashion"
             className="w-full h-full object-cover"
           />
-          {/* Dark wash gradient for text legibility */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
         </div>
 
-        {/* Hero Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 text-center">
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-800 text-white mb-6">
-            Find Clothes That
+        <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-6 lg:px-8 text-center">
+          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-800 text-white mb-6 leading-tight">
+            Know exactly what to wear
             <br />
-            <span className="text-primary-foreground">Actually Fit</span>
+            <span className="text-white/90">for any moment</span>
           </h1>
-          <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-12">
-            AI-powered personal styling meets precision fit matching. Shop ready-to-wear or connect with custom makers for perfectly tailored clothing.
+          <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-4">
+            Get outfit ideas for real situations. No account needed. No guesswork.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/shop">
-              <Button 
-                size="lg" 
-                className="px-8 py-6 text-lg backdrop-blur-md bg-white/90 text-foreground hover:bg-white border border-white/20"
-                data-testid="button-shop-now"
+          <p className="text-sm text-white/60 mb-10">
+            Try it — takes 30 seconds
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link href="/get-outfit-ideas">
+              <Button
+                size="lg"
+                className="px-8 py-6 text-lg backdrop-blur-md bg-white/90 text-foreground border border-white/20"
+                data-testid="button-get-outfit-ideas"
               >
-                <ShoppingBag className="w-5 h-5 mr-2" />
-                Shop Now
+                <Shirt className="w-5 h-5 mr-2" />
+                Get Outfit Ideas
               </Button>
             </Link>
-            <Link href="/makers">
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="px-8 py-6 text-lg backdrop-blur-md bg-black/20 text-white hover:bg-black/30 border border-white/30"
-                data-testid="button-find-maker"
-              >
-                <Scissors className="w-5 h-5 mr-2" />
-                Find a Maker
-              </Button>
+          </div>
+          <div className="mt-6">
+            <Link href="/for-creators">
+              <span className="text-white/60 text-sm underline underline-offset-4 cursor-pointer hover:text-white/80 transition-colors" data-testid="link-makers-creators">
+                For Makers & Creators
+                <ChevronRight className="w-3 h-3 inline ml-1" />
+              </span>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+      <section className="py-20 bg-background">
+        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-700 text-foreground mb-4">
-              How SeamXY Works
+            <h2 className="font-display text-3xl md:text-4xl font-700 text-foreground mb-4">
+              How it works
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Three simple steps to perfectly fitting clothes
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              No sign-ups, no measurements, no quizzes upfront. Just pick a situation and see what works.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                icon: <Sparkles className="w-12 h-12" />,
-                title: "Measure & Describe",
-                description: "Enter your measurements and tell us your style in your own words. Our AI understands exactly what you're looking for.",
-                href: "/how-it-works/measure-describe",
+                icon: <Calendar className="w-10 h-10" />,
+                step: "1",
+                title: "Pick a situation",
+                description: "Date night, work meeting, weekend brunch — tell us what you're dressing for.",
               },
               {
-                icon: <TrendingUp className="w-12 h-12" />,
-                title: "Smart Matching",
-                description: "Get scored recommendations based on fit (50%), style (30%), and budget (20%). Every item shows exactly how well it matches you.",
-                href: "/how-it-works/smart-matching",
+                icon: <Sparkles className="w-10 h-10" />,
+                step: "2",
+                title: "Choose your vibe",
+                description: "Polished, bold, relaxed — or skip this and we'll show you a mix.",
               },
               {
-                icon: <ShoppingBag className="w-12 h-12" />,
-                title: "Buy or Custom Order",
-                description: "Quick Buy from top retailers with one tap, or request custom-made pieces from verified tailors worldwide.",
-                href: "/how-it-works/buy-custom-order",
+                icon: <Shirt className="w-10 h-10" />,
+                step: "3",
+                title: "See outfits that work",
+                description: "Get complete outfit ideas with styling tips and the reasoning behind each look.",
               },
-            ].map((step, i) => (
-              <Link key={i} href={step.href}>
-                <Card className="p-8 text-center hover-elevate cursor-pointer" data-testid={`card-how-${i}`}>
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-6">
-                    {step.icon}
-                  </div>
-                  <h3 className="font-display text-2xl font-600 text-foreground mb-4">
-                    {step.title}
-                  </h3>
-                  <p className="text-muted-foreground">
-                    {step.description}
-                  </p>
-                </Card>
-              </Link>
+            ].map((item, i) => (
+              <Card key={i} className="p-8 text-center" data-testid={`card-step-${i}`}>
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-6">
+                  {item.icon}
+                </div>
+                <h3 className="font-display text-xl font-600 text-foreground mb-3">
+                  {item.title}
+                </h3>
+                <p className="text-muted-foreground text-sm">
+                  {item.description}
+                </p>
+              </Card>
             ))}
           </div>
-        </div>
-      </section>
 
-      {/* Demographics Section */}
-      <section className="py-24 bg-muted/30">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-700 text-foreground mb-4">
-              For Everyone
-            </h2>
-            <p className="text-lg text-muted-foreground">
-              Personalized fit matching for every demographic
+          <div className="text-center mt-12">
+            <Link href="/get-outfit-ideas">
+              <Button size="lg" data-testid="button-get-started-bottom">
+                Get Outfit Ideas
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
+            <p className="text-xs text-muted-foreground mt-3">
+              No account needed to get started
             </p>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { demo: "men", title: "Men", image: "https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=800&q=80" },
-              { demo: "women", title: "Women", image: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=800&q=80" },
-              { demo: "young_adults", title: "Young Adults", image: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=800&q=80" },
-              { demo: "children", title: "Children", image: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?w=800&q=80" },
-            ].map((cat) => (
-              <Link key={cat.demo} href={`/shop?demographic=${cat.demo}`}>
-                <Card className="overflow-hidden hover-elevate cursor-pointer group">
-                  <div className="aspect-[3/4] relative">
-                    <img
-                      src={cat.image}
-                      alt={cat.title}
-                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                      <h3 className="font-display text-3xl font-700 text-white p-6">
-                        {cat.title}
-                      </h3>
-                    </div>
-                  </div>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-24 bg-primary text-primary-foreground">
-        <div className="max-w-4xl mx-auto px-4 md:px-6 lg:px-8 text-center">
-          <h2 className="font-display text-4xl md:text-5xl font-700 mb-6">
-            Ready to Find Your Perfect Fit?
-          </h2>
-          <p className="text-xl mb-8 text-primary-foreground/90">
-            Join thousands who've stopped guessing sizes and started wearing clothes that actually fit.
-          </p>
-          <Link href="/onboarding">
-            <Button 
-              size="lg" 
-              variant="secondary"
-              className="px-8 py-6 text-lg"
-              data-testid="button-get-started"
-            >
-              Get Started Free
-            </Button>
-          </Link>
         </div>
       </section>
     </div>

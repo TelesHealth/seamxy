@@ -136,3 +136,117 @@ ${personaSystemPrompt}`;
     throw new Error(`AI stylist error: ${error.message}`);
   }
 }
+
+export interface SituationalOutfitItem {
+  name: string;
+  type: string;
+  description: string;
+  colorOrPattern: string;
+  priceRange: string;
+}
+
+export interface SituationalOutfit {
+  id: string;
+  title: string;
+  whyItWorks: string;
+  items: SituationalOutfitItem[];
+  stylingTip: string;
+  overallVibe: string;
+}
+
+export async function generateSituationalOutfits(
+  situation: string,
+  vibe: string | null,
+  category: string
+): Promise<SituationalOutfit[]> {
+  try {
+  const vibeInstruction = vibe
+    ? `The user wants a "${vibe}" vibe — lean into that energy.`
+    : "The user didn't specify a vibe, so provide a diverse range of styles.";
+
+  const response = await openai.chat.completions.create({
+    model: "gpt-5",
+    messages: [
+      {
+        role: "system",
+        content: `You are a personal stylist. Generate 3 complete outfit ideas for a specific real-life situation.
+
+Rules:
+- Each outfit should be a complete head-to-toe look with 4-6 items
+- Include specific item names, colors/patterns, and approximate price ranges
+- Write a short "why it works" explanation for each outfit (2-3 sentences, conversational tone)
+- Include a practical styling tip for each outfit
+- Use warm, approachable language — no jargon, no "AI-powered" language
+- Focus on items people can actually find in stores or online
+- Each outfit should feel distinct from the others
+
+${vibeInstruction}
+
+Return JSON with this exact structure:
+{
+  "outfits": [
+    {
+      "title": "Name of the look",
+      "whyItWorks": "Why this outfit is great for this situation",
+      "items": [
+        {
+          "name": "Specific item name",
+          "type": "Category (e.g., Top, Bottom, Shoes, Accessory)",
+          "description": "Brief description of the item",
+          "colorOrPattern": "Color or pattern",
+          "priceRange": "Approximate price range like $40-60"
+        }
+      ],
+      "stylingTip": "One practical tip for pulling this look together",
+      "overallVibe": "2-3 word vibe description"
+    }
+  ]
+}`
+      },
+      {
+        role: "user",
+        content: `Category: ${category}\nSituation: ${situation}`
+      }
+    ],
+    response_format: { type: "json_object" },
+    max_completion_tokens: 4000
+  });
+
+  const content = response.choices[0]?.message?.content;
+  if (!content) {
+    console.error("OpenAI returned empty content for situational outfits");
+    console.error("Response:", JSON.stringify(response.choices[0]));
+    throw new Error("Failed to generate outfit ideas");
+  }
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(content);
+  } catch (e) {
+    console.error("Failed to parse OpenAI response:", content);
+    throw new Error("Failed to parse outfit ideas response");
+  }
+  const outfits: SituationalOutfit[] = (parsed.outfits || []).map((o: any, idx: number) => ({
+    id: `outfit-${Date.now()}-${idx}`,
+    title: o.title || "Outfit",
+    whyItWorks: o.whyItWorks || "",
+    items: (o.items || []).map((item: any) => ({
+      name: item.name || "",
+      type: item.type || "",
+      description: item.description || "",
+      colorOrPattern: item.colorOrPattern || "",
+      priceRange: item.priceRange || "",
+    })),
+    stylingTip: o.stylingTip || "",
+    overallVibe: o.overallVibe || "",
+  }));
+
+  return outfits;
+  } catch (error: any) {
+    console.error("generateSituationalOutfits error:", error.message);
+    if (error.response) {
+      console.error("OpenAI API response status:", error.response.status);
+    }
+    throw error;
+  }
+}

@@ -59,10 +59,16 @@ import StyleQuiz from "@/components/style-quiz/style-quiz";
 import StyleDashboard from "@/pages/style-dashboard";
 import Closet from "@/pages/closet";
 
+// Situational Styling (Stage 0)
+import GetOutfitIdeas from "@/pages/get-outfit-ideas";
+import HowItWorksPage from "@/pages/how-it-works";
+
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/get-outfit-ideas" component={GetOutfitIdeas} />
+      <Route path="/how-it-works" component={HowItWorksPage} />
       <Route path="/login" component={Login} />
       <Route path="/signup" component={Signup} />
       <Route path="/onboarding" component={Onboarding} />

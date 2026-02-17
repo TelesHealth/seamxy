@@ -2178,6 +2178,92 @@ export const insertWardrobeGapAnalysisSchema = createInsertSchema(wardrobeGapAna
   id: true,
 });
 
+// ==========================================
+// SITUATIONAL STYLING ENGINE (Stage 0)
+// ==========================================
+
+export const anonymousSessions = pgTable("anonymous_sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fingerprint: varchar("fingerprint"),
+  category: varchar("category"),
+  situation: varchar("situation"),
+  vibe: varchar("vibe"),
+  userId: varchar("user_id"),
+  convertedAt: timestamp("converted_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  lastActiveAt: timestamp("last_active_at").defaultNow(),
+});
+
+export const sessionOutfits = pgTable("session_outfits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull(),
+  outfitData: jsonb("outfit_data").notNull(),
+  hearted: boolean("hearted").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const leads = pgTable("leads", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  sessionId: varchar("session_id"),
+  source: varchar("source").default("send_looks"),
+  convertedToUserId: varchar("converted_to_user_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const engagementEvents = pgTable("engagement_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id"),
+  userId: varchar("user_id"),
+  eventType: varchar("event_type").notNull(),
+  eventData: jsonb("event_data"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const contextualPrompts = pgTable("contextual_prompts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  triggerCondition: varchar("trigger_condition").notNull(),
+  title: varchar("title").notNull(),
+  description: text("description").notNull(),
+  ctaLabel: varchar("cta_label").notNull(),
+  ctaHref: varchar("cta_href").notNull(),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAnonymousSessionSchema = createInsertSchema(anonymousSessions).omit({
+  id: true,
+  createdAt: true,
+  lastActiveAt: true,
+});
+export const insertSessionOutfitSchema = createInsertSchema(sessionOutfits).omit({
+  id: true,
+  createdAt: true,
+});
+export const insertLeadSchema = createInsertSchema(leads).omit({
+  id: true,
+  createdAt: true,
+});
+export const insertEngagementEventSchema = createInsertSchema(engagementEvents).omit({
+  id: true,
+  createdAt: true,
+});
+export const insertContextualPromptSchema = createInsertSchema(contextualPrompts).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type AnonymousSession = typeof anonymousSessions.$inferSelect;
+export type InsertAnonymousSession = z.infer<typeof insertAnonymousSessionSchema>;
+export type SessionOutfit = typeof sessionOutfits.$inferSelect;
+export type InsertSessionOutfit = z.infer<typeof insertSessionOutfitSchema>;
+export type Lead = typeof leads.$inferSelect;
+export type InsertLead = z.infer<typeof insertLeadSchema>;
+export type EngagementEvent = typeof engagementEvents.$inferSelect;
+export type InsertEngagementEvent = z.infer<typeof insertEngagementEventSchema>;
+export type ContextualPrompt = typeof contextualPrompts.$inferSelect;
+export type InsertContextualPrompt = z.infer<typeof insertContextualPromptSchema>;
+
 // Style Quiz & Dashboard Types
 export type UserStyleProfile = typeof userStyleProfiles.$inferSelect;
 export type InsertUserStyleProfile = z.infer<typeof insertUserStyleProfileSchema>;

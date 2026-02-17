@@ -6,7 +6,8 @@ import { ZodError } from "zod";
 import { 
   analyzeStyleDescription, 
   calculateProductScores, 
-  generateAiStylistResponse 
+  generateAiStylistResponse,
+  generateSituationalOutfits
 } from "./services/openai";
 import { requireUser, requireAdmin, requireRole, type AuthenticatedRequest } from "./middleware/auth";
 import {
@@ -4258,4 +4259,116 @@ export function registerRoutes(app: Express) {
       }
     }
   );
+
+  // ============================================
+  // SITUATIONAL STYLING ENGINE (Stage 0)
+  // ============================================
+
+  app.post("/api/v1/outfits/situational", async (req, res) => {
+    try {
+      const { situation, vibe, category, sessionId } = req.body;
+
+      if (!situation || !category) {
+        return res.status(400).json({ error: "Situation and category are required" });
+      }
+
+      const outfits = await generateSituationalOutfits(situation, vibe || null, category);
+
+      let currentSessionId = sessionId;
+      if (!currentSessionId) {
+        const session = await storage.createAnonymousSession({
+          category,
+          situation,
+          vibe: vibe || null,
+        });
+        currentSessionId = session.id;
+      }
+
+      for (const outfit of outfits) {
+        await storage.createSessionOutfit({
+          sessionId: currentSessionId,
+          outfitData: outfit,
+        });
+      }
+
+      await storage.createEngagementEvent({
+        sessionId: currentSessionId,
+        eventType: "outfits_generated",
+        eventData: { situation, vibe, category, outfitCount: outfits.length },
+      });
+
+      res.json({
+        sessionId: currentSessionId,
+        outfits,
+        situation,
+        vibe: vibe || null,
+      });
+    } catch (error: any) {
+      console.error("Situational styling error:", error.message);
+      res.status(500).json({ error: "Failed to generate outfit ideas" });
+    }
+  });
+
+  app.post("/api/v1/outfits/heart", async (req, res) => {
+    try {
+      const { outfitId, sessionId, hearted } = req.body;
+      if (!outfitId || !sessionId) {
+        return res.status(400).json({ error: "outfitId and sessionId are required" });
+      }
+
+      await storage.createEngagementEvent({
+        sessionId,
+        eventType: hearted ? "outfit_hearted" : "outfit_unhearted",
+        eventData: { outfitId },
+      });
+
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/v1/outfits/track-event", async (req, res) => {
+    try {
+      const { sessionId, eventType, eventData } = req.body;
+      if (!sessionId || !eventType) {
+        return res.status(400).json({ error: "sessionId and eventType are required" });
+      }
+
+      await storage.createEngagementEvent({
+        sessionId,
+        eventType,
+        eventData: eventData || {},
+      });
+
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/v1/outfits/send-looks", async (req, res) => {
+    try {
+      const { email, sessionId } = req.body;
+      if (!email || !sessionId) {
+        return res.status(400).json({ error: "Email and sessionId are required" });
+      }
+
+      await storage.createLead({
+        email,
+        sessionId,
+        source: "send_looks",
+      });
+
+      await storage.createEngagementEvent({
+        sessionId,
+        eventType: "email_captured",
+        eventData: { email, source: "send_looks" },
+      });
+
+      res.json({ success: true, message: "We'll send your looks shortly!" });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
 }
