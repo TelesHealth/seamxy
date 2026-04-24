@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ClipboardList } from 'lucide-react';
 
 export default function SupplierRequests() {
-  const { data: requests, isLoading } = useQuery({
+  const { data: requests, isLoading } = useQuery<any[]>({
     queryKey: ['/api/v1/supplier/tailor/custom-requests']
   });
 

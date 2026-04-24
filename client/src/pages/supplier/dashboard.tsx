@@ -8,12 +8,12 @@ import { useQuery } from '@tanstack/react-query';
 export default function SupplierDashboard() {
   const { supplier, profile } = useSupplierAuth();
 
-  const { data: analytics } = useQuery({
+  const { data: analytics } = useQuery<any>({
     queryKey: ['/api/v1/supplier/analytics'],
     enabled: !!supplier
   });
 
-  const { data: affiliateAnalytics } = useQuery({
+  const { data: affiliateAnalytics } = useQuery<any>({
     queryKey: ['/api/v1/supplier/affiliate-analytics'],
     enabled: !!supplier
   });

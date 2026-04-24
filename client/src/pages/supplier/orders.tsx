@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingCart } from 'lucide-react';
 
 export default function SupplierOrders() {
-  const { data: orders, isLoading } = useQuery({
+  const { data: orders, isLoading } = useQuery<any[]>({
     queryKey: ['/api/v1/supplier/orders']
   });
 

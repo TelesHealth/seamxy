@@ -26,7 +26,7 @@ export default function SupplierProducts() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
 
-  const { data: products, isLoading } = useQuery({
+  const { data: products, isLoading } = useQuery<any[]>({
     queryKey: ['/api/v1/supplier/retailer/products']
   });
 

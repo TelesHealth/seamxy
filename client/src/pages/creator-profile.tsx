@@ -10,9 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Heart, DollarSign, Star, MapPin, Calendar, Lock, Eye, MessageSquare, Crown, Sparkles } from "lucide-react";
+import { Heart, DollarSign, Star, MapPin, Calendar, Lock, Eye, MessageSquare, Crown, Sparkles, AlertCircle } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCustomerAuth } from "@/lib/customer-auth";
 import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
@@ -42,6 +42,7 @@ interface CreatorTier {
   priceCents: number;
   features: string[];
   subscriberCount: number;
+  perks?: string[] | null;
 }
 
 interface CreatorPost {
@@ -54,6 +55,8 @@ interface CreatorPost {
   viewCount: number;
   likeCount: number;
   createdAt: string;
+  title?: string | null;
+  mediaUrls?: string[] | null;
 }
 
 interface CreatorSubscription {
@@ -281,7 +284,7 @@ export default function CreatorProfile() {
       queryKey: [`/api/v1/creators/${creator.id}/subscribe-intent`, tier.id],
       queryFn: async () => {
         const response = await apiRequest('POST', `/api/v1/creators/${creator.id}/subscribe`, { tierId: tier.id });
-        setClientSecret(response.clientSecret);
+        setClientSecret((response as any).clientSecret);
         return response;
       },
       enabled: !!tier.id && !!creator.id,

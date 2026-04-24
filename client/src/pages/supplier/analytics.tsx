@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BarChart3, TrendingUp, DollarSign, Package } from 'lucide-react';
 
 export default function SupplierAnalytics() {
-  const { data: analytics } = useQuery({
+  const { data: analytics } = useQuery<any>({
     queryKey: ['/api/v1/supplier/analytics']
   });
 

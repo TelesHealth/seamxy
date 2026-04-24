@@ -12,7 +12,7 @@ export default function SupplierIntegrations() {
   const { supplier } = useSupplierAuth();
   const { toast } = useToast();
 
-  const { data: integrations, isLoading } = useQuery({
+  const { data: integrations, isLoading } = useQuery<any[]>({
     queryKey: ['/api/v1/supplier/integrations'],
     enabled: supplier?.tier === 'pro' || supplier?.tier === 'enterprise'
   });

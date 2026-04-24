@@ -6,6 +6,7 @@ import { storage } from '../storage';
 declare global {
   namespace Express {
     interface Request {
+      user?: any;
       supplierId?: string;
       supplierRole?: 'retailer' | 'tailor' | 'designer';
       supplierTier?: 'basic' | 'pro' | 'enterprise';

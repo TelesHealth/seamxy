@@ -25,7 +25,7 @@ export default function SupplierPortfolio() {
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const { data: items, isLoading } = useQuery({
+  const { data: items, isLoading } = useQuery<any[]>({
     queryKey: ['/api/v1/supplier/tailor/portfolio']
   });
 

@@ -36,7 +36,7 @@ export default function Shop() {
     queryKey: [buildProductsUrl()],
   });
 
-  const filteredProducts = products
+  const filteredProducts = (products as any[])
     .filter((p: any) => {
       if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
       return true;

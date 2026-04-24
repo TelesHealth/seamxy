@@ -4126,8 +4126,8 @@ export function registerRoutes(app: Express) {
           stylistMessages: [],
           subscription: {
             tier: sub.tier,
-            outfitsRemaining: (sub.weeklyOutfitLimit || 5) - (sub.outfitsUsedThisWeek || 0),
-            closetSlots: sub.closetUploadLimit || 20,
+            outfitsRemaining: ((sub as any).weeklyOutfitLimit || 5) - ((sub as any).outfitsUsedThisWeek || 0),
+            closetSlots: (sub as any).closetUploadLimit || 20,
             closetUsed: closetItems.length
           },
           goals: []

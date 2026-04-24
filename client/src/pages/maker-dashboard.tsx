@@ -147,6 +147,7 @@ export default function MakerDashboard() {
               makerId={makerId}
               isSelected={selectedRequestId === request.id}
               onSelect={() => setSelectedRequestId(request.id)}
+              onDeselect={() => setSelectedRequestId(null)}
               onSubmitQuote={(data) => submitQuoteMutation.mutate(data)}
               isSubmitting={submitQuoteMutation.isPending}
             />
@@ -162,6 +163,7 @@ function RequestCard({
   makerId,
   isSelected,
   onSelect,
+  onDeselect,
   onSubmitQuote,
   isSubmitting,
 }: {
@@ -169,15 +171,16 @@ function RequestCard({
   makerId: string;
   isSelected: boolean;
   onSelect: () => void;
+  onDeselect: () => void;
   onSubmitQuote: (data: QuoteFormData) => void;
   isSubmitting: boolean;
 }) {
   const form = useForm<QuoteFormData>({
-    resolver: zodResolver(quoteFormSchema),
+    resolver: zodResolver(quoteFormSchema) as any,
     defaultValues: {
       requestId: request.id,
       makerId: makerId,
-      price: "",
+      price: 0,
       leadTimeDays: 14,
       materials: "",
       message: "",
@@ -304,7 +307,7 @@ function RequestCard({
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => setSelectedRequestId(null)}
+                      onClick={() => onDeselect()}
                       className="flex-1"
                     >
                       Cancel

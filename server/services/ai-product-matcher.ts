@@ -184,8 +184,8 @@ Format: "Score: XX - Explanation"
     const words1 = new Set(text1.split(/\s+/));
     const words2 = new Set(text2.split(/\s+/));
 
-    const intersection = new Set([...words1].filter(word => words2.has(word)));
-    const union = new Set([...words1, ...words2]);
+    const intersection = new Set(Array.from(words1).filter(word => words2.has(word)));
+    const union = new Set([...Array.from(words1), ...Array.from(words2)]);
 
     return intersection.size / union.size;
   }

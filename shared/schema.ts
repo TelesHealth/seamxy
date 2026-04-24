@@ -1384,7 +1384,7 @@ export const creatorTiers = pgTable("creator_tiers", {
   name: text("name").notNull(), // "Free", "Basic", "Premium"
   description: text("description"),
   priceCents: integer("price_cents").notNull().default(0), // $4.99 = 499, $9.99 = 999
-  perks: jsonb("perks"), // ["Exclusive posts", "AI chat access", "Custom requests"]
+  perks: jsonb("perks").$type<string[] | null>(), // ["Exclusive posts", "AI chat access", "Custom requests"]
   isPublic: boolean("is_public").default(true).notNull(),
   isDefault: boolean("is_default").default(false).notNull(),
   stripePriceId: text("stripe_price_id"), // Stripe Price ID for recurring billing
@@ -1646,10 +1646,10 @@ export const insertCreatorPayoutSchema = createInsertSchema(creatorPayouts).omit
 });
 
 // Creator Studio types
-export type CreatorTier = typeof creatorTiers.$inferSelect;
+export type CreatorTier = typeof creatorTiers.$inferSelect & { perks?: string[] | null };
 export type InsertCreatorTier = z.infer<typeof insertCreatorTierSchema>;
 
-export type CreatorPost = typeof creatorPosts.$inferSelect;
+export type CreatorPost = typeof creatorPosts.$inferSelect & { title?: string | null; mediaUrls?: string[] | null };
 export type InsertCreatorPost = z.infer<typeof insertCreatorPostSchema>;
 
 export type CreatorSubscription = typeof creatorSubscriptions.$inferSelect;

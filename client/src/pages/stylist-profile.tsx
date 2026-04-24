@@ -361,7 +361,7 @@ export default function StylistProfile() {
                           <div className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                             {msg.role === 'assistant' && (
                               <Avatar className="w-8 h-8">
-                                <AvatarImage src={stylist.avatar} />
+                                <AvatarImage src={stylist.avatarUrl} />
                                 <AvatarFallback className="bg-primary/10 text-primary text-xs">
                                   AI
                                 </AvatarFallback>
@@ -408,7 +408,7 @@ export default function StylistProfile() {
                       {chatMutation.isPending && (
                         <div className="flex gap-3 justify-start">
                           <Avatar className="w-8 h-8">
-                            <AvatarImage src={stylist.avatar} />
+                            <AvatarImage src={stylist.avatarUrl} />
                             <AvatarFallback className="bg-primary/10 text-primary animate-pulse text-xs">
                               AI
                             </AvatarFallback>

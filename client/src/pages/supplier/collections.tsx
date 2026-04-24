@@ -25,7 +25,7 @@ export default function SupplierCollections() {
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
-  const { data: collections, isLoading } = useQuery({
+  const { data: collections, isLoading } = useQuery<any[]>({
     queryKey: ['/api/v1/supplier/designer/collections']
   });
 

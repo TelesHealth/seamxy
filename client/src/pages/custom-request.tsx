@@ -44,7 +44,7 @@ export default function CustomRequest() {
   const userId = localStorage.getItem("seamxy_user_id");
 
   // Fetch user measurements
-  const { data: measurements } = useQuery({
+  const { data: measurements } = useQuery<any>({
     queryKey: ['/api/v1/measurements', userId],
     enabled: !!userId,
   });

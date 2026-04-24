@@ -358,10 +358,10 @@ export class ECommerceIntegrationManager {
       await storage.createRetailerProduct({
         supplierId,
         productId: null, // Will be linked after AI fit matching
-        externalProductId: product.externalId,
-        externalPlatform: platform,
-        syncedAt: new Date()
-      });
+        externalId: product.externalId,
+        channelSource: platform,
+        lastSyncAt: new Date()
+      } as any);
     }
 
     return products;

@@ -15,7 +15,7 @@ export default defineConfig(async () => {
     const { cartographer } = await import("@replit/vite-plugin-cartographer");
     const { devBanner } = await import("@replit/vite-plugin-dev-banner");
     const runtimeErrorModal = (await import("@replit/vite-plugin-runtime-error-modal")).default;
-    plugins.push(cartographer(), devBanner(), runtimeErrorModal());
+    plugins.push(cartographer() as any, devBanner() as any, runtimeErrorModal() as any);
   }
 
   return {

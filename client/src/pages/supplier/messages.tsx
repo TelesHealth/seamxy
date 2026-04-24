@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { MessageSquare } from 'lucide-react';
 
 export default function SupplierMessages() {
-  const { data: threads, isLoading } = useQuery({
+  const { data: threads, isLoading } = useQuery<any[]>({
     queryKey: ['/api/v1/supplier/messages']
   });
 
