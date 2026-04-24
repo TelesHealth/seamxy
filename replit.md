@@ -25,7 +25,7 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 ### Technical Implementations
 - **Frontend**: React 18, Wouter, TanStack Query, Tailwind CSS, `shadcn/ui`.
 - **Backend**: Express.js with TypeScript.
-- **AI Integration**: OpenAI GPT-5/GPT-4o for style analysis, virtual stylists, and product matching, integrated via Replit AI Integrations.
+- **AI Integration**: Anthropic Claude (`claude-opus-4-5`) for style analysis, virtual stylists, product matching, and situational outfit generation via `@anthropic-ai/sdk`. Replaced OpenAI entirely.
 - **Database Schema**: Core entities include `users`, `measurements`, `products`, `makers`, `custom_requests`, `quotes`, `orders`, along with tables for admin, supplier, and creator functionalities (`admin_users`, `subscription_plans`, `audit_logs`, `supplier_accounts`, `creator_tiers`, `creator_posts`, `ai_stylist_prompts`, `affiliate_conversions`). Recent additions include tables for an anonymous-first situational styling engine (`anonymous_sessions`, `session_outfits`, `leads`, `engagement_events`, `contextual_prompts`) and a gig economy layer (`gigProviders`, `gigServices`, `gigAvailability`, `gigJobs`, `gigQuotes`, `gigMessages`, `gigReviews`).
 - **API Routes**: Comprehensive APIs cover Marketplace (user profiles, product search), Admin (user/maker management), AI Stylist (chat sessions, onboarding), Supplier Portal (product catalogs, e-commerce integrations), Price Comparison, Creator Studio (tiers, posts, subscriptions, tips, custom requests, moderation, directory), and a Gig Economy layer for local services.
 - **Scoring Algorithm**: Products are scored based on Fit (50%), Style (30%), and Budget (20%).
@@ -54,7 +54,7 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 ## External Dependencies
 
 - **Database**: Neon Serverless PostgreSQL.
-- **AI**: OpenAI GPT-5/GPT-4o.
+- **AI**: Anthropic Claude (`claude-opus-4-5`) via `@anthropic-ai/sdk`. Requires `ANTHROPIC_API_KEY` secret.
 - **File Storage**: AWS S3.
 - **Payment Processing**: Stripe.
 - **Retailer APIs**: Etsy Open API v3, Amazon Product Advertising API, eBay Browse API, Rakuten API.

@@ -8,7 +8,7 @@ import {
   calculateProductScores, 
   generateAiStylistResponse,
   generateSituationalOutfits
-} from "./services/openai";
+} from "./services/anthropic";
 import { requireUser, requireAdmin, requireRole, type AuthenticatedRequest } from "./middleware/auth";
 import {
   authenticateSupplier,
