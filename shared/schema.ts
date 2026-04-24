@@ -41,6 +41,8 @@ export const users = pgTable("users", {
   budgetTier: budgetTierEnum("budget_tier"),
   preferredBrands: text("preferred_brands").array(),
   stripeCustomerId: text("stripe_customer_id"),
+  heightCm: integer("height_cm"),
+  bodyMeasurements: jsonb("body_measurements"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
