@@ -2439,3 +2439,11 @@ export type InsertUserSavedItem = z.infer<typeof insertUserSavedItemSchema>;
 
 export type WardrobeGapAnalysis = typeof wardrobeGapAnalysis.$inferSelect;
 export type InsertWardrobeGapAnalysis = z.infer<typeof insertWardrobeGapAnalysisSchema>;
+
+// ── Virtual Try-On Types ──────────────────────────────────────────
+export interface BodyLandmark {
+  x: number;
+  y: number;
+  z: number;
+  visibility: number;
+}

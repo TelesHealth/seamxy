@@ -1,0 +1,66 @@
+Fix 2 — Fix req.user type in server/routes.ts
+At the top of server/routes.ts, find where Express types are imported and add:
+typescriptdeclare global {
+  namespace Express {
+    interface Request {
+      user?: any;
+    }
+  }
+}
+If this declaration already exists somewhere in the codebase, skip this step.
+
+Fix 3 — Fix implicit any types in server/storage.ts
+At line 2220, change:
+typescriptreturn results.filter(r =>
+to:
+typescriptreturn results.filter((r: any) =>
+At line 2322, change:
+typescriptreturn jobs.filter(j =>
+to:
+typescriptreturn jobs.filter((j: any) =>
+At line 2452, change:
+typescriptconst avg = allReviews.reduce((sum, r) => sum + r.rating, 0)
+to:
+typescriptconst avg = allReviews.reduce((sum: number, r: any) => sum + r.rating, 0)
+
+Fix 4 — Fix vite.config.ts plugin push
+At line 18, change:
+typescriptplugins.push(cartographer(), devBanner(), runtimeErrorModal());
+to:
+typescriptplugins.push(cartographer() as any, devBanner() as any, runtimeErrorModal() as any);
+
+Fix 5 — Fix server/services/ai-product-matcher.ts Set iteration
+Find the tsconfig.json and confirm "target" is "ES2017" or higher. If it is "ES5" or "ES6", change it to "ES2017". If tsconfig already has ES2015+, add "downlevelIteration": true to compilerOptions instead.
+
+Fix 6 — Fix supplier pages unknown types
+These are all the same pattern — useQuery returning unknown instead of a typed array. For each of these files, find the useQuery call and add a type parameter:
+supplier/analytics.tsx, supplier/collections.tsx, supplier/dashboard.tsx, supplier/integrations.tsx, supplier/messages.tsx, supplier/orders.tsx, supplier/portfolio.tsx, supplier/products.tsx, supplier/requests.tsx
+For each file, change:
+typescriptconst { data: X } = useQuery({...})
+to:
+typescriptconst { data: X = [] } = useQuery<any[]>({...})
+Or for non-array data (analytics, dashboard stats):
+typescriptconst { data: X = {} } = useQuery<any>({...})
+
+Fix 7 — Fix creator-profile.tsx
+The CreatorTier type is missing perks and CreatorPost is missing title and mediaUrls. Find the type definitions for CreatorTier and CreatorPost in shared/schema.ts or wherever they're defined, and add the missing fields:
+For CreatorTier, add: perks?: string[]
+For CreatorPost, add: title?: string, mediaUrls?: string[]
+
+Fix 8 — Fix server/routes.ts subscription fields
+At lines 4129-4130, the subscription object union type doesn't have weeklyOutfitLimit etc. Change to use optional chaining with fallbacks:
+typescriptoutfitsRemaining: ((sub as any).weeklyOutfitLimit || 5) - ((sub as any).outfitsUsedThisWeek || 0),
+closetSlots: (sub as any).closetUploadLimit || 20,
+
+Fix 9 — Fix server/services/ecommerce-integrations.ts
+At line 361, remove or rename externalProductId — it doesn't exist in the insert type. Change to whatever the correct field name is (likely externalId or remove the line if the field doesn't exist in the schema).
+
+Fix 10 — Fix shop.tsx
+At line 39, change:
+typescriptconst filteredProducts = products
+to:
+typescriptconst filteredProducts = (products as any[])
+
+After all fixes, verify:
+bashnpm run check
+Target: zero errors. If any remain, paste them here.

@@ -2217,7 +2217,7 @@ export class DatabaseStorage implements IStorage {
       .groupBy(gigProviders.id);
 
     if (filters.city) {
-      return results.filter(r =>
+      return results.filter((r: any) =>
         r.provider.city.toLowerCase().includes(filters.city!.toLowerCase())
       );
     }
@@ -2319,7 +2319,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(gigJobs.createdAt));
 
     if (city) {
-      return jobs.filter(j =>
+      return jobs.filter((j: any) =>
         j.customerCity?.toLowerCase().includes(city.toLowerCase())
       );
     }
@@ -2449,7 +2449,7 @@ export class DatabaseStorage implements IStorage {
       .from(gigReviews)
       .where(eq(gigReviews.providerId, data.providerId));
 
-    const avg = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+    const avg = allReviews.reduce((sum: number, r: any) => sum + Number(r.rating), 0) / allReviews.length;
 
     await db
       .update(gigProviders)

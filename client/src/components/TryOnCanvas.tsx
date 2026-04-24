@@ -1,6 +1,15 @@
 import { useRef, useEffect, useCallback, useState, forwardRef, useImperativeHandle } from "react";
 import { PoseLandmark, GarmentPlacement, drawPoseOnCanvas, POSE_LANDMARKS } from "@/lib/poseDetection";
 
+export interface BodyMeasurements {
+  chest?: number;
+  waist?: number;
+  hips?: number;
+  inseam?: number;
+  shoulderWidth?: number;
+  height?: number;
+}
+
 export interface GarmentOverlay {
   id: string;
   imageUrl: string;
