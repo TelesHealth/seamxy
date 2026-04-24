@@ -86,9 +86,17 @@ import {
   type SessionOutfit, type InsertSessionOutfit,
   type Lead, type InsertLead,
   type EngagementEvent, type InsertEngagementEvent,
+  // Gig Economy
+  gigProviders, gigServices, gigAvailability, gigJobs, gigQuotes, gigMessages, gigReviews,
+  type GigProvider, type InsertGigProvider,
+  type GigService, type InsertGigService,
+  type GigJob, type InsertGigJob,
+  type GigQuote, type InsertGigQuote,
+  type GigMessage, type InsertGigMessage,
+  type GigReview, type InsertGigReview,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, desc, sql, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, ne, isNull, sql, inArray } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -2130,6 +2138,337 @@ export class DatabaseStorage implements IStorage {
   async createEngagementEvent(data: InsertEngagementEvent): Promise<EngagementEvent> {
     const [event] = await db.insert(engagementEvents).values(data).returning();
     return event;
+  }
+
+  // ── Gig Providers ─────────────────────────────────────────────────
+
+  async createGigProvider(data: {
+    userId: string;
+    displayName: string;
+    bio?: string;
+    city: string;
+    state?: string;
+    country?: string;
+    locationLat?: string;
+    locationLng?: string;
+    serviceRadiusMiles?: number;
+    offersHomeVisits?: boolean;
+    offersDropOff?: boolean;
+    offersShipping?: boolean;
+  }) {
+    const [provider] = await db.insert(gigProviders).values(data).returning();
+    return provider;
+  }
+
+  async getGigProviderByUserId(userId: string) {
+    const [provider] = await db
+      .select()
+      .from(gigProviders)
+      .where(eq(gigProviders.userId, userId));
+    return provider || null;
+  }
+
+  async getGigProviderById(id: string) {
+    const [provider] = await db
+      .select()
+      .from(gigProviders)
+      .where(eq(gigProviders.id, id));
+    return provider || null;
+  }
+
+  async updateGigProvider(id: string, userId: string, data: Partial<typeof gigProviders.$inferInsert>) {
+    const [updated] = await db
+      .update(gigProviders)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(gigProviders.id, id), eq(gigProviders.userId, userId)))
+      .returning();
+    return updated;
+  }
+
+  async searchGigProviders(filters: {
+    city?: string;
+    serviceType?: string;
+    offersHomeVisits?: boolean;
+    offersShipping?: boolean;
+  }) {
+    const results = await db
+      .select({
+        provider: gigProviders,
+        services: sql<any[]>`
+          array_agg(
+            json_build_object(
+              'id', ${gigServices.id},
+              'serviceType', ${gigServices.serviceType},
+              'customName', ${gigServices.customName},
+              'priceMin', ${gigServices.priceMin},
+              'priceMax', ${gigServices.priceMax},
+              'turnaroundDaysMin', ${gigServices.turnaroundDaysMin},
+              'turnaroundDaysMax', ${gigServices.turnaroundDaysMax}
+            )
+          ) filter (where ${gigServices.id} is not null)
+        `,
+      })
+      .from(gigProviders)
+      .leftJoin(gigServices, and(
+        eq(gigServices.providerId, gigProviders.id),
+        eq(gigServices.isActive, true)
+      ))
+      .where(eq(gigProviders.isActive, true))
+      .groupBy(gigProviders.id);
+
+    if (filters.city) {
+      return results.filter(r =>
+        r.provider.city.toLowerCase().includes(filters.city!.toLowerCase())
+      );
+    }
+    return results;
+  }
+
+  // ── Gig Services ──────────────────────────────────────────────────
+
+  async addGigService(providerId: string, data: {
+    serviceType: string;
+    customName?: string;
+    description?: string;
+    priceMin: number;
+    priceMax: number;
+    priceUnit?: string;
+    turnaroundDaysMin: number;
+    turnaroundDaysMax: number;
+  }) {
+    const [service] = await db.insert(gigServices).values({
+      providerId,
+      ...data,
+    } as any).returning();
+    return service;
+  }
+
+  async updateGigService(id: string, providerId: string, data: any) {
+    const [updated] = await db
+      .update(gigServices)
+      .set(data)
+      .where(and(eq(gigServices.id, id), eq(gigServices.providerId, providerId)))
+      .returning();
+    return updated;
+  }
+
+  async deleteGigService(id: string, providerId: string) {
+    await db
+      .update(gigServices)
+      .set({ isActive: false })
+      .where(and(eq(gigServices.id, id), eq(gigServices.providerId, providerId)));
+  }
+
+  async getProviderServices(providerId: string) {
+    return db
+      .select()
+      .from(gigServices)
+      .where(and(
+        eq(gigServices.providerId, providerId),
+        eq(gigServices.isActive, true)
+      ));
+  }
+
+  // ── Gig Jobs ──────────────────────────────────────────────────────
+
+  async createGigJob(data: {
+    customerId: string;
+    serviceType: string;
+    garmentDescription: string;
+    alterationDetails: string;
+    garmentImageUrl?: string;
+    productId?: number;
+    deliveryMethod?: string;
+    budgetMin?: number;
+    budgetMax?: number;
+    neededBy?: Date;
+    customerCity?: string;
+    customerLat?: string;
+    customerLng?: string;
+  }) {
+    const [job] = await db.insert(gigJobs).values(data as any).returning();
+    return job;
+  }
+
+  async getGigJob(id: string) {
+    const [job] = await db.select().from(gigJobs).where(eq(gigJobs.id, id));
+    return job || null;
+  }
+
+  async getCustomerGigJobs(customerId: string) {
+    return db
+      .select()
+      .from(gigJobs)
+      .where(eq(gigJobs.customerId, customerId))
+      .orderBy(desc(gigJobs.createdAt));
+  }
+
+  async getProviderGigJobs(providerId: string) {
+    return db
+      .select()
+      .from(gigJobs)
+      .where(eq(gigJobs.providerId, providerId))
+      .orderBy(desc(gigJobs.createdAt));
+  }
+
+  async getOpenGigJobs(city?: string) {
+    const jobs = await db
+      .select()
+      .from(gigJobs)
+      .where(eq(gigJobs.status, "open"))
+      .orderBy(desc(gigJobs.createdAt));
+
+    if (city) {
+      return jobs.filter(j =>
+        j.customerCity?.toLowerCase().includes(city.toLowerCase())
+      );
+    }
+    return jobs;
+  }
+
+  async updateGigJobStatus(id: string, status: string, additionalData?: any) {
+    const [updated] = await db
+      .update(gigJobs)
+      .set({ status, ...additionalData, updatedAt: new Date() })
+      .where(eq(gigJobs.id, id))
+      .returning();
+    return updated;
+  }
+
+  // ── Gig Quotes ────────────────────────────────────────────────────
+
+  async createGigQuote(data: {
+    jobId: string;
+    providerId: string;
+    price: number;
+    turnaroundDays: number;
+    message?: string;
+  }) {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 3);
+
+    const [quote] = await db.insert(gigQuotes).values({
+      ...data,
+      expiresAt,
+    }).returning();
+    return quote;
+  }
+
+  async getQuotesForJob(jobId: string) {
+    return db
+      .select()
+      .from(gigQuotes)
+      .where(eq(gigQuotes.jobId, jobId))
+      .orderBy(asc(gigQuotes.createdAt));
+  }
+
+  async acceptGigQuote(quoteId: string, customerId: string) {
+    const [quote] = await db
+      .select()
+      .from(gigQuotes)
+      .where(eq(gigQuotes.id, quoteId));
+
+    if (!quote) throw new Error("Quote not found");
+
+    await db
+      .update(gigQuotes)
+      .set({ status: "rejected" })
+      .where(and(
+        eq(gigQuotes.jobId, quote.jobId),
+        ne(gigQuotes.id, quoteId)
+      ));
+
+    await db
+      .update(gigQuotes)
+      .set({ status: "accepted" })
+      .where(eq(gigQuotes.id, quoteId));
+
+    const platformFee = Math.round(quote.price * 0.12);
+    const [updatedJob] = await db
+      .update(gigJobs)
+      .set({
+        providerId: quote.providerId,
+        status: "accepted",
+        agreedPrice: quote.price,
+        platformFee,
+        updatedAt: new Date(),
+      })
+      .where(eq(gigJobs.id, quote.jobId))
+      .returning();
+
+    return updatedJob;
+  }
+
+  // ── Gig Messages ──────────────────────────────────────────────────
+
+  async sendGigMessage(data: {
+    jobId: string;
+    senderId: string;
+    content: string;
+    imageUrl?: string;
+  }) {
+    const [message] = await db.insert(gigMessages).values(data).returning();
+    return message;
+  }
+
+  async getGigMessages(jobId: string) {
+    return db
+      .select()
+      .from(gigMessages)
+      .where(eq(gigMessages.jobId, jobId))
+      .orderBy(asc(gigMessages.createdAt));
+  }
+
+  async markMessagesRead(jobId: string, userId: string) {
+    await db
+      .update(gigMessages)
+      .set({ readAt: new Date() })
+      .where(and(
+        eq(gigMessages.jobId, jobId),
+        ne(gigMessages.senderId, userId),
+        isNull(gigMessages.readAt)
+      ));
+  }
+
+  // ── Gig Reviews ───────────────────────────────────────────────────
+
+  async createGigReview(data: {
+    jobId: string;
+    customerId: string;
+    providerId: string;
+    rating: number;
+    reviewText?: string;
+    qualityRating?: number;
+    speedRating?: number;
+    communicationRating?: number;
+  }) {
+    const [review] = await db.insert(gigReviews).values(data).returning();
+
+    const allReviews = await db
+      .select({ rating: gigReviews.rating })
+      .from(gigReviews)
+      .where(eq(gigReviews.providerId, data.providerId));
+
+    const avg = allReviews.reduce((sum, r) => sum + r.rating, 0) / allReviews.length;
+
+    await db
+      .update(gigProviders)
+      .set({
+        averageRating: avg.toFixed(2),
+        totalReviews: allReviews.length,
+        updatedAt: new Date(),
+      })
+      .where(eq(gigProviders.id, data.providerId));
+
+    return review;
+  }
+
+  async getProviderReviews(providerId: string) {
+    return db
+      .select()
+      .from(gigReviews)
+      .where(eq(gigReviews.providerId, providerId))
+      .orderBy(desc(gigReviews.createdAt));
   }
 }
 

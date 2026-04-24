@@ -20,6 +20,7 @@ export function Header() {
   const loggedOutNavItems = [
     { href: "/get-outfit-ideas", label: "Get Outfit Ideas", icon: <Shirt className="w-4 h-4 mr-2" /> },
     { href: "/how-it-works", label: "How It Works", icon: <HelpCircle className="w-4 h-4 mr-2" /> },
+    { href: "/gig", label: "Find Local Help", icon: <Scissors className="w-4 h-4 mr-2" /> },
   ];
 
   const loggedInNavItems = [
@@ -28,6 +29,7 @@ export function Header() {
     { href: "/shop", label: "Shop", icon: <ShoppingBag className="w-4 h-4 mr-2" /> },
     { href: "/closet", label: "My Closet", icon: <Scissors className="w-4 h-4 mr-2" /> },
     { href: "/my-requests", label: "My Requests", icon: <Package className="w-4 h-4 mr-2" /> },
+    { href: "/gig", label: "Local Alterations", icon: <Scissors className="w-4 h-4 mr-2" /> },
   ];
 
   const navItems = customer ? loggedInNavItems : loggedOutNavItems;

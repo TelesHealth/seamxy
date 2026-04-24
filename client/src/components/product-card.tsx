@@ -3,7 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Heart, ExternalLink, Sparkles } from "lucide-react";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { VirtualTryOn } from "./virtual-try-on";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductCardProps {
   id: string;
@@ -42,7 +44,9 @@ export function ProductCard({
 }: ProductCardProps) {
   const [isSaved, setIsSaved] = useState(false);
   const [tryOnOpen, setTryOnOpen] = useState(false);
-  
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+
   const productForTryOn = {
     id,
     name,
@@ -59,6 +63,17 @@ export function ProductCard({
       window.open(affiliateUrl, '_blank', 'noopener,noreferrer');
     }
     onQuickBuy?.();
+    setTimeout(() => {
+      toast({
+        title: "Need it altered?",
+        description: "Find a local seamstress or tailor to get the perfect fit.",
+        action: (
+          <Button size="sm" variant="outline" onClick={() => setLocation("/gig/post-job")}>
+            Find Help
+          </Button>
+        ),
+      });
+    }, 2000);
   };
 
   return (

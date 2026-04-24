@@ -63,6 +63,11 @@ import Closet from "@/pages/closet";
 import GetOutfitIdeas from "@/pages/get-outfit-ideas";
 import HowItWorksPage from "@/pages/how-it-works";
 
+// Gig Economy
+import GigDirectoryPage from "@/pages/gig-directory";
+import GigRegisterPage from "@/pages/gig-register";
+import GigPostJobPage from "@/pages/gig-post-job";
+
 function Router() {
   return (
     <Switch>
@@ -85,6 +90,11 @@ function Router() {
       <Route path="/how-it-works/measure-describe" component={MeasureDescribe} />
       <Route path="/how-it-works/smart-matching" component={SmartMatching} />
       <Route path="/how-it-works/buy-custom-order" component={BuyCustomOrder} />
+
+      {/* Gig Economy */}
+      <Route path="/gig" component={GigDirectoryPage} />
+      <Route path="/gig/register" component={GigRegisterPage} />
+      <Route path="/gig/post-job" component={GigPostJobPage} />
       
       {/* Supplier Portal Routes (No Header) */}
       <Route path="/supplier/login" component={SupplierLogin} />

@@ -4371,4 +4371,342 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ error: error.message });
     }
   });
+
+  // ════════════════════════════════════════════════════════════════
+  // GIG ECONOMY ROUTES
+  // ════════════════════════════════════════════════════════════════
+
+  // Register as a gig provider
+  app.post("/api/v1/gig/register", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const existing = await storage.getGigProviderByUserId(userId);
+      if (existing) return res.status(409).json({ error: "Already registered as a gig provider" });
+
+      const { displayName, bio, city, state, country, locationLat, locationLng, serviceRadiusMiles, offersHomeVisits, offersDropOff, offersShipping } = req.body;
+      if (!displayName || !city) return res.status(400).json({ error: "displayName and city are required" });
+
+      const provider = await storage.createGigProvider({
+        userId, displayName, bio, city, state,
+        country: country || "US", locationLat, locationLng,
+        serviceRadiusMiles: serviceRadiusMiles || 10,
+        offersHomeVisits: offersHomeVisits || false,
+        offersDropOff: offersDropOff !== false,
+        offersShipping: offersShipping || false,
+      });
+      res.status(201).json(provider);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Get current user's provider profile
+  app.get("/api/v1/gig/my-profile", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const provider = await storage.getGigProviderByUserId(userId);
+      if (!provider) return res.status(404).json({ error: "Not registered as a provider" });
+      res.json(provider);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Update provider profile
+  app.patch("/api/v1/gig/my-profile", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const provider = await storage.getGigProviderByUserId(userId);
+      if (!provider) return res.status(404).json({ error: "Provider not found" });
+      const updated = await storage.updateGigProvider(provider.id, userId, req.body);
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Get any provider's public profile
+  app.get("/api/v1/gig/providers/:id", async (req, res) => {
+    try {
+      const provider = await storage.getGigProviderById(req.params.id);
+      if (!provider) return res.status(404).json({ error: "Provider not found" });
+      const services = await storage.getProviderServices(provider.id);
+      const reviews = await storage.getProviderReviews(provider.id);
+      res.json({ ...provider, services, reviews });
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Search providers
+  app.get("/api/v1/gig/providers", async (req, res) => {
+    try {
+      const { city, serviceType, offersHomeVisits, offersShipping } = req.query;
+      const providers = await storage.searchGigProviders({
+        city: city as string,
+        serviceType: serviceType as string,
+        offersHomeVisits: offersHomeVisits === "true",
+        offersShipping: offersShipping === "true",
+      });
+      res.json(providers);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Add a service to provider's catalog
+  app.post("/api/v1/gig/services", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const provider = await storage.getGigProviderByUserId(userId);
+      if (!provider) return res.status(403).json({ error: "Not a registered provider" });
+
+      const { serviceType, customName, description, priceMin, priceMax, priceUnit, turnaroundDaysMin, turnaroundDaysMax } = req.body;
+      if (!serviceType || !priceMin || !priceMax) return res.status(400).json({ error: "serviceType, priceMin, and priceMax are required" });
+
+      const service = await storage.addGigService(provider.id, {
+        serviceType, customName, description,
+        priceMin: Math.round(priceMin * 100),
+        priceMax: Math.round(priceMax * 100),
+        priceUnit: priceUnit || "per_item",
+        turnaroundDaysMin: turnaroundDaysMin || 1,
+        turnaroundDaysMax: turnaroundDaysMax || 5,
+      });
+      res.status(201).json(service);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Get my services
+  app.get("/api/v1/gig/services", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const provider = await storage.getGigProviderByUserId(userId);
+      if (!provider) return res.status(404).json({ error: "Not a provider" });
+      const services = await storage.getProviderServices(provider.id);
+      res.json(services);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Update a service
+  app.patch("/api/v1/gig/services/:id", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const provider = await storage.getGigProviderByUserId(userId);
+      if (!provider) return res.status(403).json({ error: "Not a provider" });
+      const updated = await storage.updateGigService(req.params.id, provider.id, req.body);
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Remove a service
+  app.delete("/api/v1/gig/services/:id", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const provider = await storage.getGigProviderByUserId(userId);
+      if (!provider) return res.status(403).json({ error: "Not a provider" });
+      await storage.deleteGigService(req.params.id, provider.id);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Customer posts a job request
+  app.post("/api/v1/gig/jobs", requireUser, async (req, res) => {
+    try {
+      const customerId = (req.user as any).id;
+      const { serviceType, garmentDescription, alterationDetails, garmentImageUrl, productId, deliveryMethod, budgetMin, budgetMax, neededBy, customerCity, customerLat, customerLng } = req.body;
+
+      if (!serviceType || !garmentDescription || !alterationDetails) {
+        return res.status(400).json({ error: "serviceType, garmentDescription, and alterationDetails are required" });
+      }
+
+      const job = await storage.createGigJob({
+        customerId, serviceType, garmentDescription, alterationDetails,
+        garmentImageUrl, productId,
+        deliveryMethod: deliveryMethod || "drop_off",
+        budgetMin: budgetMin ? Math.round(budgetMin * 100) : undefined,
+        budgetMax: budgetMax ? Math.round(budgetMax * 100) : undefined,
+        neededBy: neededBy ? new Date(neededBy) : undefined,
+        customerCity, customerLat, customerLng,
+      });
+      res.status(201).json(job);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Get customer's own jobs
+  app.get("/api/v1/gig/jobs/mine", requireUser, async (req, res) => {
+    try {
+      const customerId = (req.user as any).id;
+      const jobs = await storage.getCustomerGigJobs(customerId);
+      res.json(jobs);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Get open jobs near a city (for providers to browse)
+  app.get("/api/v1/gig/jobs/open", requireUser, async (req, res) => {
+    try {
+      const { city } = req.query;
+      const jobs = await storage.getOpenGigJobs(city as string);
+      res.json(jobs);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Get jobs assigned to the current provider
+  app.get("/api/v1/gig/jobs/assigned", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const provider = await storage.getGigProviderByUserId(userId);
+      if (!provider) return res.status(403).json({ error: "Not a provider" });
+      const jobs = await storage.getProviderGigJobs(provider.id);
+      res.json(jobs);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Get a single job
+  app.get("/api/v1/gig/jobs/:id", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const job = await storage.getGigJob(req.params.id);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+
+      const provider = await storage.getGigProviderByUserId(userId);
+      const isCustomer = job.customerId === userId;
+      const isProvider = provider && job.providerId === provider.id;
+      if (!isCustomer && !isProvider) return res.status(403).json({ error: "Access denied" });
+
+      const quotes = await storage.getQuotesForJob(job.id);
+      const messages = await storage.getGigMessages(job.id);
+      res.json({ ...job, quotes, messages });
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Update job status (provider marks in_progress or completed)
+  app.patch("/api/v1/gig/jobs/:id/status", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { status } = req.body;
+      const validStatuses = ["in_progress", "completed"];
+      if (!validStatuses.includes(status)) return res.status(400).json({ error: "Invalid status" });
+
+      const provider = await storage.getGigProviderByUserId(userId);
+      const job = await storage.getGigJob(req.params.id);
+      if (!job || !provider || job.providerId !== provider.id) return res.status(403).json({ error: "Access denied" });
+
+      const updated = await storage.updateGigJobStatus(job.id, status);
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Provider submits a quote
+  app.post("/api/v1/gig/jobs/:jobId/quotes", requireUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const provider = await storage.getGigProviderByUserId(userId);
+      if (!provider) return res.status(403).json({ error: "Not a provider" });
+
+      const job = await storage.getGigJob(req.params.jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+      if (job.status !== "open") return res.status(400).json({ error: "Job is no longer open" });
+
+      const { price, turnaroundDays, message } = req.body;
+      if (!price || !turnaroundDays) return res.status(400).json({ error: "price and turnaroundDays are required" });
+
+      const quote = await storage.createGigQuote({
+        jobId: job.id, providerId: provider.id,
+        price: Math.round(price * 100),
+        turnaroundDays, message,
+      });
+      await storage.updateGigJobStatus(job.id, "quoted");
+      res.status(201).json(quote);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Customer accepts a quote
+  app.post("/api/v1/gig/quotes/:quoteId/accept", requireUser, async (req, res) => {
+    try {
+      const customerId = (req.user as any).id;
+      const updatedJob = await storage.acceptGigQuote(req.params.quoteId, customerId);
+      res.json(updatedJob);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Send a message on a job
+  app.post("/api/v1/gig/jobs/:jobId/messages", requireUser, async (req, res) => {
+    try {
+      const senderId = (req.user as any).id;
+      const { content, imageUrl } = req.body;
+      if (!content?.trim()) return res.status(400).json({ error: "Content required" });
+
+      const job = await storage.getGigJob(req.params.jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+
+      const provider = await storage.getGigProviderByUserId(senderId);
+      const isCustomer = job.customerId === senderId;
+      const isProvider = provider && job.providerId === provider.id;
+      if (!isCustomer && !isProvider) return res.status(403).json({ error: "Access denied" });
+
+      const message = await storage.sendGigMessage({ jobId: job.id, senderId, content: content.trim(), imageUrl });
+      res.status(201).json(message);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Leave a review for a completed job
+  app.post("/api/v1/gig/jobs/:jobId/review", requireUser, async (req, res) => {
+    try {
+      const customerId = (req.user as any).id;
+      const job = await storage.getGigJob(req.params.jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+      if (job.customerId !== customerId) return res.status(403).json({ error: "Access denied" });
+      if (job.status !== "completed") return res.status(400).json({ error: "Job not yet completed" });
+      if (!job.providerId) return res.status(400).json({ error: "No provider assigned" });
+
+      const { rating, reviewText, qualityRating, speedRating, communicationRating } = req.body;
+      if (!rating || rating < 1 || rating > 5) return res.status(400).json({ error: "rating must be between 1 and 5" });
+
+      const review = await storage.createGigReview({
+        jobId: job.id, customerId, providerId: job.providerId,
+        rating, reviewText, qualityRating, speedRating, communicationRating,
+      });
+      await storage.updateGigJobStatus(job.id, "reviewed");
+      res.status(201).json(review);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // Get provider reviews
+  app.get("/api/v1/gig/providers/:id/reviews", async (req, res) => {
+    try {
+      const reviews = await storage.getProviderReviews(req.params.id);
+      res.json(reviews);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
 }

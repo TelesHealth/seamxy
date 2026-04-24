@@ -1,6 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const isReplit = !!process.env.REPL_ID;
 
@@ -10,7 +14,7 @@ export default defineConfig(async () => {
   if (isReplit) {
     const { cartographer } = await import("@replit/vite-plugin-cartographer");
     const { devBanner } = await import("@replit/vite-plugin-dev-banner");
-    const { runtimeErrorModal } = await import("@replit/vite-plugin-runtime-error-modal");
+    const runtimeErrorModal = (await import("@replit/vite-plugin-runtime-error-modal")).default;
     plugins.push(cartographer(), devBanner(), runtimeErrorModal());
   }
 

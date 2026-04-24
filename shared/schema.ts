@@ -2231,6 +2231,160 @@ export const contextualPrompts = pgTable("contextual_prompts", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// ============================================
+// GIG ECONOMY — LOCAL ALTERATION SPECIALISTS
+// ============================================
+
+export const gigServiceTypeEnum = pgEnum("gig_service_type", [
+  "hemming",
+  "taking_in",
+  "letting_out",
+  "zipper_repair",
+  "zipper_replacement",
+  "button_repair",
+  "lining_repair",
+  "dress_fitting",
+  "suit_alterations",
+  "trouser_alterations",
+  "sleeve_alterations",
+  "general_alterations",
+  "custom_embroidery",
+  "patch_work",
+  "clothing_repair",
+  "other",
+]);
+
+export const gigProviders = pgTable("gig_providers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  displayName: varchar("display_name", { length: 100 }).notNull(),
+  bio: text("bio"),
+  profileImageUrl: varchar("profile_image_url"),
+  phone: varchar("phone", { length: 20 }),
+  city: varchar("city", { length: 100 }).notNull(),
+  state: varchar("state", { length: 100 }),
+  country: varchar("country", { length: 100 }).notNull().default("US"),
+  locationLat: decimal("location_lat", { precision: 10, scale: 7 }),
+  locationLng: decimal("location_lng", { precision: 10, scale: 7 }),
+  serviceRadiusMiles: integer("service_radius_miles").notNull().default(10),
+  offersHomeVisits: boolean("offers_home_visits").notNull().default(false),
+  offersDropOff: boolean("offers_drop_off").notNull().default(true),
+  offersShipping: boolean("offers_shipping").notNull().default(false),
+  isActive: boolean("is_active").notNull().default(true),
+  isVerified: boolean("is_verified").notNull().default(false),
+  verifiedAt: timestamp("verified_at"),
+  averageRating: decimal("average_rating", { precision: 3, scale: 2 }),
+  totalReviews: integer("total_reviews").notNull().default(0),
+  completedJobs: integer("completed_jobs").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const gigServices = pgTable("gig_services", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  providerId: varchar("provider_id").notNull().references(() => gigProviders.id, { onDelete: "cascade" }),
+  serviceType: gigServiceTypeEnum("service_type").notNull(),
+  customName: varchar("custom_name", { length: 100 }),
+  description: text("description"),
+  priceMin: integer("price_min").notNull(),
+  priceMax: integer("price_max").notNull(),
+  priceUnit: varchar("price_unit", { length: 20 }).notNull().default("per_item"),
+  turnaroundDaysMin: integer("turnaround_days_min").notNull().default(1),
+  turnaroundDaysMax: integer("turnaround_days_max").notNull().default(5),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const gigAvailability = pgTable("gig_availability", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  providerId: varchar("provider_id").notNull().references(() => gigProviders.id, { onDelete: "cascade" }),
+  dayOfWeek: integer("day_of_week").notNull(),
+  isAvailable: boolean("is_available").notNull().default(true),
+  timeStart: varchar("time_start", { length: 5 }).default("09:00"),
+  timeEnd: varchar("time_end", { length: 5 }).default("17:00"),
+});
+
+export const gigJobs = pgTable("gig_jobs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  customerId: varchar("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  providerId: varchar("provider_id").references(() => gigProviders.id, { onDelete: "set null" }),
+  serviceType: gigServiceTypeEnum("service_type").notNull(),
+  garmentDescription: text("garment_description").notNull(),
+  alterationDetails: text("alteration_details").notNull(),
+  garmentImageUrl: varchar("garment_image_url"),
+  productId: integer("product_id"),
+  deliveryMethod: varchar("delivery_method", { length: 20 }).notNull().default("drop_off"),
+  budgetMin: integer("budget_min"),
+  budgetMax: integer("budget_max"),
+  neededBy: timestamp("needed_by"),
+  scheduledAt: timestamp("scheduled_at"),
+  status: varchar("status", { length: 20 }).notNull().default("open"),
+  agreedPrice: integer("agreed_price"),
+  platformFee: integer("platform_fee"),
+  customerCity: varchar("customer_city", { length: 100 }),
+  customerLat: decimal("customer_lat", { precision: 10, scale: 7 }),
+  customerLng: decimal("customer_lng", { precision: 10, scale: 7 }),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  paidAt: timestamp("paid_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const gigQuotes = pgTable("gig_quotes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => gigJobs.id, { onDelete: "cascade" }),
+  providerId: varchar("provider_id").notNull().references(() => gigProviders.id, { onDelete: "cascade" }),
+  price: integer("price").notNull(),
+  turnaroundDays: integer("turnaround_days").notNull(),
+  message: text("message"),
+  status: varchar("status", { length: 20 }).notNull().default("pending"),
+  expiresAt: timestamp("expires_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const gigMessages = pgTable("gig_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => gigJobs.id, { onDelete: "cascade" }),
+  senderId: varchar("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  imageUrl: varchar("image_url"),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const gigReviews = pgTable("gig_reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  jobId: varchar("job_id").notNull().references(() => gigJobs.id, { onDelete: "cascade" }).unique(),
+  customerId: varchar("customer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  providerId: varchar("provider_id").notNull().references(() => gigProviders.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(),
+  reviewText: text("review_text"),
+  qualityRating: integer("quality_rating"),
+  speedRating: integer("speed_rating"),
+  communicationRating: integer("communication_rating"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertGigProviderSchema = createInsertSchema(gigProviders).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGigServiceSchema = createInsertSchema(gigServices).omit({ id: true, createdAt: true });
+export const insertGigJobSchema = createInsertSchema(gigJobs).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertGigQuoteSchema = createInsertSchema(gigQuotes).omit({ id: true, createdAt: true });
+export const insertGigMessageSchema = createInsertSchema(gigMessages).omit({ id: true, createdAt: true });
+export const insertGigReviewSchema = createInsertSchema(gigReviews).omit({ id: true, createdAt: true });
+
+export type GigProvider = typeof gigProviders.$inferSelect;
+export type InsertGigProvider = z.infer<typeof insertGigProviderSchema>;
+export type GigService = typeof gigServices.$inferSelect;
+export type InsertGigService = z.infer<typeof insertGigServiceSchema>;
+export type GigJob = typeof gigJobs.$inferSelect;
+export type InsertGigJob = z.infer<typeof insertGigJobSchema>;
+export type GigQuote = typeof gigQuotes.$inferSelect;
+export type InsertGigQuote = z.infer<typeof insertGigQuoteSchema>;
+export type GigMessage = typeof gigMessages.$inferSelect;
+export type InsertGigMessage = z.infer<typeof insertGigMessageSchema>;
+export type GigReview = typeof gigReviews.$inferSelect;
+export type InsertGigReview = z.infer<typeof insertGigReviewSchema>;
+
 export const insertAnonymousSessionSchema = createInsertSchema(anonymousSessions).omit({
   id: true,
   createdAt: true,
