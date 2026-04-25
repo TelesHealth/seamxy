@@ -2,6 +2,13 @@ import { useState } from "react";
 import { Ruler, ChevronUp, ChevronDown, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { cmToFeetInches, feetInchesToCm } from "@/lib/sizeRecommendation";
@@ -9,9 +16,22 @@ import { cmToFeetInches, feetInchesToCm } from "@/lib/sizeRecommendation";
 interface HeightCalibrationProps {
   initialHeightCm?: number | null;
   onSaved?: (heightCm: number) => void;
+  // Modal mode props
+  open?: boolean;
+  onClose?: () => void;
+  onHeightChange?: (heightCm: number) => void;
+  title?: string;
+  description?: string;
+  showSkip?: boolean;
 }
 
-export function HeightCalibration({ initialHeightCm, onSaved }: HeightCalibrationProps) {
+function HeightCalibrationContent({
+  initialHeightCm,
+  onSaved,
+  onHeightChange,
+  onClose,
+  showSkip,
+}: HeightCalibrationProps) {
   const [unit, setUnit] = useState<"cm" | "ft">("ft");
   const [cm, setCm] = useState<number>(initialHeightCm ?? 170);
   const [isSaving, setIsSaving] = useState(false);
@@ -21,20 +41,26 @@ export function HeightCalibration({ initialHeightCm, onSaved }: HeightCalibratio
   const { feet, inches } = cmToFeetInches(cm);
 
   const adjustCm = (delta: number) => {
-    setCm((prev) => Math.max(120, Math.min(220, prev + delta)));
+    const next = Math.max(120, Math.min(220, cm + delta));
+    setCm(next);
     setSaved(false);
+    onHeightChange?.(next);
   };
 
   const adjustFeet = (delta: number) => {
     const newCm = feetInchesToCm(feet + delta, inches);
-    setCm(Math.max(120, Math.min(220, Math.round(newCm))));
+    const next = Math.max(120, Math.min(220, Math.round(newCm)));
+    setCm(next);
     setSaved(false);
+    onHeightChange?.(next);
   };
 
   const adjustInches = (delta: number) => {
     const newCm = feetInchesToCm(feet, inches + delta);
-    setCm(Math.max(120, Math.min(220, Math.round(newCm))));
+    const next = Math.max(120, Math.min(220, Math.round(newCm)));
+    setCm(next);
     setSaved(false);
+    onHeightChange?.(next);
   };
 
   const handleSave = async () => {
@@ -45,6 +71,7 @@ export function HeightCalibration({ initialHeightCm, onSaved }: HeightCalibratio
         setSaved(true);
         onSaved?.(cm);
         toast({ title: "Height saved", description: "Your measurements will improve fit accuracy." });
+        onClose?.();
       } else {
         toast({ title: "Could not save height", variant: "destructive" });
       }
@@ -56,7 +83,7 @@ export function HeightCalibration({ initialHeightCm, onSaved }: HeightCalibratio
   };
 
   return (
-    <Card className="p-4 space-y-4">
+    <div className="space-y-4">
       <div className="flex items-center gap-2">
         <Ruler className="w-5 h-5 text-primary" />
         <h3 className="font-semibold">Your Height</h3>
@@ -144,6 +171,41 @@ export function HeightCalibration({ initialHeightCm, onSaved }: HeightCalibratio
           "Save Height"
         )}
       </Button>
+
+      {showSkip && onClose && (
+        <Button
+          variant="ghost"
+          className="w-full"
+          onClick={onClose}
+          data-testid="button-skip-height"
+        >
+          Skip for now
+        </Button>
+      )}
+    </div>
+  );
+}
+
+export function HeightCalibration(props: HeightCalibrationProps) {
+  const { open, onClose, title, description } = props;
+
+  if (open !== undefined) {
+    return (
+      <Dialog open={open} onOpenChange={(v) => { if (!v) onClose?.(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{title ?? "Your Height"}</DialogTitle>
+            {description && <DialogDescription>{description}</DialogDescription>}
+          </DialogHeader>
+          <HeightCalibrationContent {...props} />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Card className="p-4">
+      <HeightCalibrationContent {...props} />
     </Card>
   );
 }

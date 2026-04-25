@@ -52,7 +52,7 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 - **Situational Styling Engine**: Full anonymous-first multi-step flow — category selection → situation description → vibe → AI outfit generation → results with "Shop the Look" and "Send me these looks" email capture. Includes lead generation, engagement event tracking, and signed-in users get continuity to their style dashboard. Routes: `/get-outfit-ideas`, `/how-it-works`.
 - **Conversion Funnel**: Post-outfit sign-up prompts, email capture ("Send me these looks"), "Your Picks" saved outfit feature, and progressive feature discovery for registered users.
 - **Gig Economy Layer**: Allows local seamstresses/tailors to list services and match with nearby customers for alterations, including provider registration, job posting, quoting, and messaging.
-- **Virtual Try-On**: Canvas-based studio with clothing layer system, MediaPipe pose detection (`usePoseDetection.ts`), TPS warping (`tpsWarp.ts`), AR camera mode (`useARCamera.ts`), image compression, shadow generation, size recommendations, and shareable session links. TryFit component set: `ARTryOnCanvas`, `PhotoUploader`, `ShareModal`, `HeightCalibration`, `ProcessingOverlay`, `ClothingCard`, `ModelCard` — all in `client/src/components/try-on/`. Live AR mode at `/ar-try-on`.
+- **Virtual Try-On**: Canvas-based studio with clothing layer system, MediaPipe pose detection (`usePoseDetection.ts`), TPS warping (`tpsWarp.ts`), AR camera mode (`useARCamera.ts`), image compression, shadow generation, size recommendations, and shareable session links. TryFit component set: `ARTryOnCanvas`, `PhotoUploader`, `ShareModal`, `HeightCalibration` (supports inline + Dialog modal mode), `ProcessingOverlay`, `ClothingCard`, `ModelCard`, `TryOnCanvas` (store-connected wrapper), `SizeRecommendation`, `CompleteTheLook` — all in `client/src/components/try-on/`. Photo upload flow at `/upload`, studio at `/studio`, live AR mode at `/ar-try-on`.
 - **Style Quiz & Dashboard**: A comprehensive quiz to build user style profiles, feeding into a personalized dashboard with outfit recommendations and a closet management system.
 - **Event Tracking**: `engagement_events` table records key user actions (outfit views, saves, email captures, sign-up prompts shown/accepted) for success metrics analysis.
 
@@ -62,6 +62,8 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 - **Situational Styling**: `client/src/pages/get-outfit-ideas.tsx` (multi-step: category → situation → vibe → results)
 - **How It Works**: `client/src/pages/how-it-works.tsx`
 - **Style Dashboard**: `client/src/pages/style-dashboard.tsx`
+- **Virtual Try-On Upload**: `client/src/pages/Upload.tsx` (photo upload → pose detection → height calibration modal)
+- **Virtual Try-On Studio**: `client/src/pages/Studio.tsx` (canvas with clothing layers, warp controls, share, browse shop)
 - **Virtual Try-On Store**: `client/src/store/tryOnStore.ts` (Zustand)
 - **TPS Warp Library**: `client/src/lib/tpsWarp.ts`
 - **AI Services**: `server/services/anthropic.ts`

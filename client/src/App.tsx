@@ -54,6 +54,8 @@ import ForCreators from "@/pages/for-creators";
 // Virtual Try-On
 import SharedTryOn from "@/pages/shared-tryon";
 import ARTryOn from "@/pages/ar-try-on";
+import UploadPage from "./pages/Upload";
+import StudioPage from "./pages/Studio";
 
 // Style Quiz & Dashboard
 import StyleQuiz from "@/components/style-quiz/style-quiz";
@@ -149,6 +151,8 @@ function Router() {
       <Route path="/creator/:handle" component={CreatorProfile} />
       
       {/* Virtual Try-On */}
+      <Route path="/upload" component={UploadPage} />
+      <Route path="/studio" component={StudioPage} />
       <Route path="/ar-try-on" component={ARTryOn} />
       <Route path="/try-on/shared/:shareCode" component={SharedTryOn} />
       
