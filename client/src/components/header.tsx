@@ -9,7 +9,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import seamxyLogo from "@assets/Seamxy_1761527023424.png";
+import seamxyLogo from "@assets/seamxy-logo.png";
 import { useCustomerAuth } from "@/lib/customer-auth";
 
 export function Header() {
