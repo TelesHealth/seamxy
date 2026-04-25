@@ -578,6 +578,15 @@ export default function StyleDashboard() {
                   <Camera className="w-4 h-4 mr-2" />
                   Upload to Closet
                 </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => setLocation("/upload")}
+                  data-testid="button-virtual-tryon"
+                >
+                  <Camera className="w-4 h-4 mr-2" />
+                  Virtual Try-On
+                </Button>
               </CardContent>
             </Card>
           </div>

@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, ExternalLink, Sparkles } from "lucide-react";
+import { Heart, ExternalLink, Camera } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { VirtualTryOn } from "./virtual-try-on";
@@ -137,25 +137,25 @@ export function ProductCard({
         )}
 
         {/* Buttons */}
-        <div className="flex flex-col gap-2">
+        <div className="flex gap-2 mt-1">
           {showTryOn && (
-            <Button 
-              variant="outline"
-              className="w-full" 
+            <Button
+              className="flex-1"
               onClick={() => setTryOnOpen(true)}
               data-testid={`button-tryon-${id}`}
             >
-              <Sparkles className="w-4 h-4 mr-2" />
+              <Camera className="w-4 h-4 mr-2" />
               Try On
             </Button>
           )}
-          <Button 
-            className="w-full" 
+          <Button
+            variant="outline"
+            className={showTryOn ? "" : "w-full"}
             onClick={handleQuickBuy}
             data-testid={`button-quickbuy-${id}`}
           >
             <ExternalLink className="w-4 h-4 mr-2" />
-            Quick Buy
+            {showTryOn ? "Buy" : "Quick Buy"}
           </Button>
         </div>
       </CardContent>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { User, Shield, LogOut, LogIn, Briefcase, Menu, Shirt, HelpCircle, ShoppingBag, LayoutDashboard, Scissors, Package, Sparkles } from "lucide-react";
+import { User, Shield, LogOut, LogIn, Briefcase, Menu, Shirt, HelpCircle, ShoppingBag, LayoutDashboard, Scissors, Package, Sparkles, Camera } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -19,12 +19,14 @@ export function Header() {
 
   const loggedOutNavItems = [
     { href: "/get-outfit-ideas", label: "Get Outfit Ideas", icon: <Shirt className="w-4 h-4 mr-2" /> },
+    { href: "/upload", label: "Try On", icon: <Camera className="w-4 h-4 mr-2" /> },
     { href: "/how-it-works", label: "How It Works", icon: <HelpCircle className="w-4 h-4 mr-2" /> },
     { href: "/gig", label: "Find Local Help", icon: <Scissors className="w-4 h-4 mr-2" /> },
   ];
 
   const loggedInNavItems = [
     { href: "/get-outfit-ideas", label: "Get Outfit Ideas", icon: <Shirt className="w-4 h-4 mr-2" /> },
+    { href: "/upload", label: "Try On", icon: <Camera className="w-4 h-4 mr-2" /> },
     { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4 mr-2" /> },
     { href: "/shop", label: "Shop", icon: <ShoppingBag className="w-4 h-4 mr-2" /> },
     { href: "/closet", label: "My Closet", icon: <Scissors className="w-4 h-4 mr-2" /> },

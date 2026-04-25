@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Card } from "@/components/ui/card";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Camera } from "lucide-react";
 
 export default function Shop() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,6 +58,22 @@ export default function Shop() {
           <p className="text-lg text-muted-foreground">
             Discover clothing matched to your measurements, style, and budget
           </p>
+          <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 mt-4">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Camera className="w-4 h-4 text-primary" />
+            </div>
+            <p className="text-sm">
+              <span className="font-medium">Want to see how it looks on you?</span>
+              <span className="text-muted-foreground"> Click "Try On" on any item below.</span>
+            </p>
+            <a
+              href="/upload"
+              className="ml-auto text-sm text-primary font-medium whitespace-nowrap hover:underline"
+              data-testid="link-tryon-banner"
+            >
+              Upload Photo →
+            </a>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
