@@ -116,6 +116,20 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  // Update authenticated user's height (for virtual try-on calibration)
+  app.patch("/api/v1/user/height", requireUser as any, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { heightCm } = req.body;
+      if (!heightCm || typeof heightCm !== "number" || heightCm < 100 || heightCm > 250) {
+        return res.status(400).json({ error: "Valid heightCm (100–250) required" });
+      }
+      const user = await storage.updateUser((req as AuthenticatedRequest).user!.id, { heightCm });
+      res.json({ success: true, heightCm: user?.heightCm });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   // Save/update measurements
   app.post("/api/v1/measurements", async (req, res) => {
     try {

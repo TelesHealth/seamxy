@@ -27,7 +27,7 @@ export function useARCamera(): UseARCameraReturn {
   const [bodyDetected, setBodyDetected] = useState(false);
   const [currentLandmarks, setCurrentLandmarks] = useState<BodyLandmark[] | null>(null);
 
-  const { detectPose } = usePoseDetection();
+  const { detectFromImage } = usePoseDetection();
 
   const stopCamera = useCallback(() => {
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -67,13 +67,21 @@ export function useARCamera(): UseARCameraReturn {
           lastFpsTime.current = now;
         }
 
-        if (frameCount.current % 3 === 0) {
-          const landmarks = await detectPose(videoRef.current);
-          if (landmarks) {
-            setCurrentLandmarks(landmarks as unknown as BodyLandmark[]);
-            setBodyDetected(true);
-          } else {
-            setBodyDetected(false);
+        if (frameCount.current % 3 === 0 && videoRef.current) {
+          const vid = videoRef.current;
+          const tmpCanvas = document.createElement("canvas");
+          tmpCanvas.width = vid.videoWidth || 640;
+          tmpCanvas.height = vid.videoHeight || 480;
+          const ctx2d = tmpCanvas.getContext("2d");
+          if (ctx2d) {
+            ctx2d.drawImage(vid, 0, 0);
+            const result = await detectFromImage(tmpCanvas);
+            if (result?.landmarks && result.landmarks.length > 0) {
+              setCurrentLandmarks(result.landmarks as unknown as BodyLandmark[]);
+              setBodyDetected(true);
+            } else {
+              setBodyDetected(false);
+            }
           }
         }
 
@@ -84,7 +92,7 @@ export function useARCamera(): UseARCameraReturn {
     } catch (err) {
       console.error("Camera access failed:", err);
     }
-  }, [facingMode, detectPose, stopCamera]);
+  }, [facingMode, detectFromImage, stopCamera]);
 
   const toggleCamera = useCallback(() => {
     setFacingMode((prev) => (prev === "user" ? "environment" : "user"));

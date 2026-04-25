@@ -1,22 +1,24 @@
-// Client-side image compression before upload
+// Image compression utility for TryFit photo uploads
 
-export interface CompressionOptions {
-  maxWidthOrHeight: number;
-  quality: number;
-  mimeType: string;
+export interface CompressionResult {
+  file: File;
+  originalSize: number;
+  compressedSize: number;
+  compressionRatio: number;
 }
 
-const DEFAULT_OPTIONS: CompressionOptions = {
-  maxWidthOrHeight: 1200,
-  quality: 0.85,
-  mimeType: "image/jpeg",
-};
+export function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
-export async function compressImage(
+export async function compressForUpload(
   file: File,
-  options: Partial<CompressionOptions> = {}
-): Promise<Blob> {
-  const opts = { ...DEFAULT_OPTIONS, ...options };
+  maxWidthOrHeight: number = 1200,
+  quality: number = 0.85
+): Promise<CompressionResult> {
+  const originalSize = file.size;
 
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -26,7 +28,7 @@ export async function compressImage(
       URL.revokeObjectURL(url);
 
       let { width, height } = img;
-      const max = opts.maxWidthOrHeight;
+      const max = maxWidthOrHeight;
 
       if (width > max || height > max) {
         if (width > height) {
@@ -47,11 +49,25 @@ export async function compressImage(
 
       canvas.toBlob(
         (blob) => {
-          if (blob) resolve(blob);
-          else reject(new Error("Canvas toBlob failed"));
+          if (!blob) {
+            reject(new Error("Canvas toBlob failed"));
+            return;
+          }
+
+          const compressedFile = new File([blob], file.name, {
+            type: "image/jpeg",
+            lastModified: Date.now(),
+          });
+
+          resolve({
+            file: compressedFile,
+            originalSize,
+            compressedSize: compressedFile.size,
+            compressionRatio: originalSize / compressedFile.size,
+          });
         },
-        opts.mimeType,
-        opts.quality
+        "image/jpeg",
+        quality
       );
     };
 
