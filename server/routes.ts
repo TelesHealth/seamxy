@@ -4723,4 +4723,323 @@ export function registerRoutes(app: Express) {
       res.status(500).json({ error: "Server error" });
     }
   });
+
+  // ── Social Closet: Style Groups ─────────────────────────────────
+
+  app.post("/api/v1/groups", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { name, description } = req.body;
+      if (!name) return res.status(400).json({ error: "Group name required" });
+      const group = await storage.createStyleGroup({ name, description, ownerId: userId });
+      res.status(201).json(group);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.get("/api/v1/groups", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const groups = await storage.getUserStyleGroups(userId);
+      res.json(groups);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.get("/api/v1/groups/:id", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const group = await storage.getStyleGroup(req.params.id);
+      if (!group) return res.status(404).json({ error: "Group not found" });
+      const isMember = await storage.isGroupMember(group.id, userId);
+      if (!isMember) return res.status(403).json({ error: "Not a member" });
+      const members = await storage.getGroupMembers(group.id);
+      res.json({ ...group, members });
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/v1/groups/join", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { inviteCode } = req.body;
+      const group = await storage.getStyleGroupByInviteCode(inviteCode);
+      if (!group) return res.status(404).json({ error: "Invalid invite code" });
+      const member = await storage.joinStyleGroup(group.id, userId);
+      res.status(201).json({ group, member });
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.delete("/api/v1/groups/:id/leave", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      await storage.leaveStyleGroup(req.params.id, userId);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // ── Social Closet: Borrow Requests ──────────────────────────────
+
+  app.post("/api/v1/borrow-requests", requireUser as any, async (req, res) => {
+    try {
+      const borrowerId = (req.user as any).id;
+      const { closetItemId, lenderId, groupId, occasion, message, requestedFrom, requestedUntil } = req.body;
+      if (!closetItemId || !lenderId || !requestedFrom || !requestedUntil) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+      const request = await storage.createBorrowRequest({
+        closetItemId, borrowerId, lenderId, groupId, occasion, message,
+        requestedFrom: new Date(requestedFrom),
+        requestedUntil: new Date(requestedUntil),
+      });
+      res.status(201).json(request);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.get("/api/v1/borrow-requests", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const requests = await storage.getUserBorrowRequests(userId);
+      res.json(requests);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.patch("/api/v1/borrow-requests/:id/respond", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { action, conditionNote } = req.body;
+      const request = await storage.getBorrowRequest(req.params.id);
+      if (!request) return res.status(404).json({ error: "Request not found" });
+      if (request.lenderId !== userId) return res.status(403).json({ error: "Not the lender" });
+      const status = action === "accept" ? "accepted" : "declined";
+      const updated = await storage.updateBorrowRequestStatus(req.params.id, status, {
+        conditionOnLend: conditionNote,
+        lenderConditionNote: conditionNote,
+        lentConfirmedAt: action === "accept" ? new Date() : null,
+      });
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/v1/borrow-requests/:id/confirm-return", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const request = await storage.getBorrowRequest(req.params.id);
+      if (!request) return res.status(404).json({ error: "Request not found" });
+      const isLender = request.lenderId === userId;
+      const isBorrower = request.borrowerId === userId;
+      if (!isLender && !isBorrower) return res.status(403).json({ error: "Access denied" });
+      const updated = await storage.confirmReturn(req.params.id, userId, isLender);
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // ── Social Closet: Haul Posts ───────────────────────────────────
+
+  app.post("/api/v1/groups/:groupId/hauls", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const isMember = await storage.isGroupMember(req.params.groupId, userId);
+      if (!isMember) return res.status(403).json({ error: "Not a member" });
+      const post = await storage.createHaulPost({ userId, groupId: req.params.groupId, ...req.body });
+      res.status(201).json(post);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.get("/api/v1/groups/:groupId/hauls", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const isMember = await storage.isGroupMember(req.params.groupId, userId);
+      if (!isMember) return res.status(403).json({ error: "Not a member" });
+      const posts = await storage.getGroupHaulPosts(req.params.groupId);
+      res.json(posts);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/v1/hauls/:id/react", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { reaction, comment, suggestedProductId } = req.body;
+      const result = await storage.addHaulReaction({ haulPostId: req.params.id, userId, reaction, comment, suggestedProductId });
+      res.status(201).json(result);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // ── Social Closet: Outfit Polls ─────────────────────────────────
+
+  app.post("/api/v1/groups/:groupId/polls", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const isMember = await storage.isGroupMember(req.params.groupId, userId);
+      if (!isMember) return res.status(403).json({ error: "Not a member" });
+      const { question, occasion, options, hoursOpen = 24 } = req.body;
+      if (!question || !options?.length) return res.status(400).json({ error: "Question and options required" });
+      const closesAt = new Date();
+      closesAt.setHours(closesAt.getHours() + hoursOpen);
+      const poll = await storage.createOutfitPoll({ userId, groupId: req.params.groupId, question, occasion, options, closesAt });
+      res.status(201).json(poll);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.get("/api/v1/groups/:groupId/polls", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const isMember = await storage.isGroupMember(req.params.groupId, userId);
+      if (!isMember) return res.status(403).json({ error: "Not a member" });
+      const polls = await storage.getGroupPolls(req.params.groupId);
+      res.json(polls);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/v1/polls/:id/vote", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { optionIndex, comment } = req.body;
+      const vote = await storage.voteOnPoll({ pollId: req.params.id, userId, optionIndex, comment });
+      const results = await storage.getPollResults(req.params.id);
+      res.json({ vote, results });
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.get("/api/v1/polls/:id/results", requireUser as any, async (req, res) => {
+    try {
+      const results = await storage.getPollResults(req.params.id);
+      res.json(results);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // ── Social Closet: Closet Sales ─────────────────────────────────
+
+  app.post("/api/v1/closet-sales", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const sale = await storage.createClosetSale({ userId, ...req.body });
+      res.status(201).json(sale);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.get("/api/v1/closet-sales", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const sales = await storage.getUserClosetSales(userId);
+      res.json(sales);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/v1/closet-sales/:saleId/interest", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { closetItemId, message } = req.body;
+      const interest = await storage.expressInterestInSaleItem({ saleId: req.params.saleId, closetItemId, interestedUserId: userId, message });
+      res.status(201).json(interest);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // ── Social Closet: Donation Logs ────────────────────────────────
+
+  app.post("/api/v1/donations", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { closetItemIds, destination, destinationName, destinationAddress, donatedAt, estimatedTotalValue } = req.body;
+      const taxYear = new Date(donatedAt || Date.now()).getFullYear();
+      const log = await storage.createDonationLog({
+        userId, closetItemIds, itemDescriptions: req.body.itemDescriptions || {},
+        destination, destinationName, destinationAddress,
+        donatedAt: new Date(donatedAt || Date.now()),
+        estimatedTotalValue, taxYear,
+      });
+      res.status(201).json(log);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.get("/api/v1/donations", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const logs = await storage.getUserDonationLogs(userId);
+      res.json(logs);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.get("/api/v1/donations/tax-summary", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const year = parseInt(req.query.year as string) || new Date().getFullYear();
+      const total = await storage.getUserDonationTotal(userId, year);
+      res.json({ taxYear: year, estimatedTotalValue: total, formattedTotal: `$${(total / 100).toFixed(2)}` });
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  // ── Social Closet: Idle Alerts ──────────────────────────────────
+
+  app.get("/api/v1/closet/idle", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const months = parseInt(req.query.months as string) || 6;
+      const items = await storage.getIdleClosetItems(userId, months);
+      res.json(items);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/v1/closet/:itemId/worn", requireUser as any, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      await storage.markClosetItemWorn(req.params.itemId, userId);
+      res.status(204).send();
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+
+  app.post("/api/v1/closet/idle/:alertId/resolve", requireUser as any, async (req, res) => {
+    try {
+      const { action } = req.body;
+      const resolved = await storage.resolveIdleAlert(req.params.alertId, action);
+      res.json(resolved);
+    } catch (err) {
+      res.status(500).json({ error: "Server error" });
+    }
+  });
 }

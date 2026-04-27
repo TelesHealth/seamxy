@@ -55,6 +55,7 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 - **Virtual Try-On**: Canvas-based studio with clothing layer system, MediaPipe pose detection (`usePoseDetection.ts`), TPS warping (`tpsWarp.ts`), AR camera mode (`useARCamera.ts`), image compression, shadow generation, size recommendations, and shareable session links. TryFit component set: `ARTryOnCanvas`, `PhotoUploader`, `ShareModal`, `HeightCalibration` (supports inline + Dialog modal mode), `ProcessingOverlay`, `ClothingCard`, `ModelCard`, `TryOnCanvas` (store-connected wrapper), `SizeRecommendation`, `CompleteTheLook` — all in `client/src/components/try-on/`. Photo upload flow at `/upload`, studio at `/studio`, live AR mode at `/ar-try-on`.
 - **Style Quiz & Dashboard**: A comprehensive quiz to build user style profiles, feeding into a personalized dashboard with outfit recommendations and a closet management system.
 - **Event Tracking**: `engagement_events` table records key user actions (outfit views, saves, email captures, sign-up prompts shown/accepted) for success metrics analysis.
+- **Social Closet + Lifecycle**: Style Groups (create/join via invite code, share haul posts, run outfit polls, borrow clothes between members). Closet Lifecycle tools: Closet Edit page (`/closet/edit`) surfaces idle items (unworn 6+ months) with lend/sell/donate/keep actions; Donation Logs for tax tracking; Closet Sales for peer-to-peer selling. Borrow Request flow with dual-confirmation return. All backed by 11 new DB tables and full REST API under `/api/v1/groups`, `/api/v1/borrow-requests`, `/api/v1/hauls`, `/api/v1/polls`, `/api/v1/closet-sales`, `/api/v1/donations`, `/api/v1/closet/idle`.
 
 ## Key File Locations
 
@@ -64,6 +65,8 @@ SeamXY's architecture is built on a modern web stack for scalability and rich us
 - **Style Dashboard**: `client/src/pages/style-dashboard.tsx`
 - **Virtual Try-On Upload**: `client/src/pages/Upload.tsx` (photo upload → pose detection → height calibration modal)
 - **Virtual Try-On Studio**: `client/src/pages/Studio.tsx` (canvas with clothing layers, warp controls, share, browse shop)
+- **Style Groups**: `client/src/pages/style-groups.tsx` (create/join, invite code, group feed)
+- **Closet Edit / Let It Go**: `client/src/pages/let-it-go.tsx` (idle item surfacing, lend/sell/donate/keep actions)
 - **Virtual Try-On Store**: `client/src/store/tryOnStore.ts` (Zustand)
 - **TPS Warp Library**: `client/src/lib/tpsWarp.ts`
 - **AI Services**: `server/services/anthropic.ts`

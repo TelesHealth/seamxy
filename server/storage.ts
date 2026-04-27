@@ -94,9 +94,13 @@ import {
   type GigQuote, type InsertGigQuote,
   type GigMessage, type InsertGigMessage,
   type GigReview, type InsertGigReview,
+  // Social Closet
+  styleGroups, styleGroupMembers, borrowRequests, haulPosts, haulPostReactions,
+  outfitPolls, outfitPollVotes, closetSales, closetSaleInterests,
+  donationLogs, closetIdleAlerts,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, gte, lte, desc, asc, ne, isNull, sql, inArray } from "drizzle-orm";
+import { eq, and, gte, lte, desc, asc, ne, isNull, sql, inArray, or, lt } from "drizzle-orm";
 
 export interface IStorage {
   // Users
@@ -2469,6 +2473,238 @@ export class DatabaseStorage implements IStorage {
       .from(gigReviews)
       .where(eq(gigReviews.providerId, providerId))
       .orderBy(desc(gigReviews.createdAt));
+  }
+
+  // ── Style Groups ────────────────────────────────────────────────
+
+  async createStyleGroup(data: { name: string; description?: string; ownerId: string }) {
+    const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const [group] = await db.insert(styleGroups).values({ ...data, inviteCode }).returning();
+    await db.insert(styleGroupMembers).values({ groupId: group.id, userId: data.ownerId, role: "owner" });
+    return group;
+  }
+
+  async getStyleGroup(id: string) {
+    const [group] = await db.select().from(styleGroups).where(eq(styleGroups.id, id));
+    return group || null;
+  }
+
+  async getStyleGroupByInviteCode(code: string) {
+    const [group] = await db.select().from(styleGroups).where(eq(styleGroups.inviteCode, code.toUpperCase()));
+    return group || null;
+  }
+
+  async getUserStyleGroups(userId: string) {
+    return db
+      .select({ group: styleGroups, role: styleGroupMembers.role })
+      .from(styleGroupMembers)
+      .innerJoin(styleGroups, eq(styleGroupMembers.groupId, styleGroups.id))
+      .where(and(eq(styleGroupMembers.userId, userId), eq(styleGroups.isActive, true)));
+  }
+
+  async joinStyleGroup(groupId: string, userId: string) {
+    const [existing] = await db.select().from(styleGroupMembers)
+      .where(and(eq(styleGroupMembers.groupId, groupId), eq(styleGroupMembers.userId, userId)));
+    if (existing) return existing;
+    const [member] = await db.insert(styleGroupMembers).values({ groupId, userId, role: "member" }).returning();
+    return member;
+  }
+
+  async getGroupMembers(groupId: string) {
+    return db
+      .select({ member: styleGroupMembers, user: users })
+      .from(styleGroupMembers)
+      .innerJoin(users, eq(styleGroupMembers.userId, users.id))
+      .where(eq(styleGroupMembers.groupId, groupId));
+  }
+
+  async isGroupMember(groupId: string, userId: string): Promise<boolean> {
+    const [member] = await db.select().from(styleGroupMembers)
+      .where(and(eq(styleGroupMembers.groupId, groupId), eq(styleGroupMembers.userId, userId)));
+    return !!member;
+  }
+
+  async leaveStyleGroup(groupId: string, userId: string) {
+    await db.delete(styleGroupMembers)
+      .where(and(eq(styleGroupMembers.groupId, groupId), eq(styleGroupMembers.userId, userId)));
+  }
+
+  // ── Borrow Requests ─────────────────────────────────────────────
+
+  async createBorrowRequest(data: {
+    closetItemId: string; borrowerId: string; lenderId: string; groupId?: string;
+    occasion?: string; message?: string; requestedFrom: Date; requestedUntil: Date;
+  }) {
+    const [request] = await db.insert(borrowRequests).values(data).returning();
+    return request;
+  }
+
+  async getBorrowRequest(id: string) {
+    const [request] = await db.select().from(borrowRequests).where(eq(borrowRequests.id, id));
+    return request || null;
+  }
+
+  async getUserBorrowRequests(userId: string) {
+    return db.select().from(borrowRequests)
+      .where(or(eq(borrowRequests.borrowerId, userId), eq(borrowRequests.lenderId, userId)))
+      .orderBy(desc(borrowRequests.createdAt));
+  }
+
+  async updateBorrowRequestStatus(id: string, status: string, additionalData?: any) {
+    const [updated] = await db.update(borrowRequests)
+      .set({ status: status as any, ...additionalData, updatedAt: new Date() })
+      .where(eq(borrowRequests.id, id)).returning();
+    return updated;
+  }
+
+  async confirmReturn(requestId: string, userId: string, isLender: boolean) {
+    const now = new Date();
+    const updateData = isLender ? { returnedConfirmedByLender: now } : { returnedConfirmedByBorrower: now };
+    const request = await this.getBorrowRequest(requestId);
+    if (!request) throw new Error("Request not found");
+    await db.update(borrowRequests).set(updateData).where(eq(borrowRequests.id, requestId));
+    const updated = await this.getBorrowRequest(requestId);
+    if (updated?.returnedConfirmedByBorrower && updated?.returnedConfirmedByLender) {
+      await db.update(borrowRequests).set({ status: "returned" }).where(eq(borrowRequests.id, requestId));
+    }
+    return updated;
+  }
+
+  // ── Haul Posts ──────────────────────────────────────────────────
+
+  async createHaulPost(data: {
+    userId: string; groupId: string; title?: string; caption?: string;
+    closetItemIds: string[]; imageUrls?: string[]; videoUrl?: string;
+  }) {
+    const [post] = await db.insert(haulPosts).values(data).returning();
+    return post;
+  }
+
+  async getGroupHaulPosts(groupId: string, limit: number = 20) {
+    return db.select().from(haulPosts)
+      .where(and(eq(haulPosts.groupId, groupId), eq(haulPosts.isActive, true)))
+      .orderBy(desc(haulPosts.createdAt)).limit(limit);
+  }
+
+  async addHaulReaction(data: {
+    haulPostId: string; userId: string; reaction: string; comment?: string; suggestedProductId?: number;
+  }) {
+    await db.delete(haulPostReactions)
+      .where(and(eq(haulPostReactions.haulPostId, data.haulPostId), eq(haulPostReactions.userId, data.userId)));
+    const [reaction] = await db.insert(haulPostReactions).values(data as any).returning();
+    return reaction;
+  }
+
+  // ── Outfit Polls ────────────────────────────────────────────────
+
+  async createOutfitPoll(data: {
+    userId: string; groupId: string; question: string; occasion?: string; options: any[]; closesAt: Date;
+  }) {
+    const [poll] = await db.insert(outfitPolls).values(data).returning();
+    return poll;
+  }
+
+  async getGroupPolls(groupId: string) {
+    return db.select().from(outfitPolls)
+      .where(and(eq(outfitPolls.groupId, groupId), eq(outfitPolls.isActive, true)))
+      .orderBy(desc(outfitPolls.createdAt));
+  }
+
+  async voteOnPoll(data: { pollId: string; userId: string; optionIndex: number; comment?: string }) {
+    await db.delete(outfitPollVotes)
+      .where(and(eq(outfitPollVotes.pollId, data.pollId), eq(outfitPollVotes.userId, data.userId)));
+    const [vote] = await db.insert(outfitPollVotes).values(data).returning();
+    return vote;
+  }
+
+  async getPollResults(pollId: string) {
+    const votes = await db.select().from(outfitPollVotes).where(eq(outfitPollVotes.pollId, pollId));
+    const results: Record<number, number> = {};
+    votes.forEach(v => { results[v.optionIndex] = (results[v.optionIndex] || 0) + 1; });
+    return { votes, results, total: votes.length };
+  }
+
+  // ── Closet Sales ────────────────────────────────────────────────
+
+  async createClosetSale(data: {
+    userId: string; groupId?: string; title: string; description?: string; closetItemIds: string[];
+  }) {
+    const [sale] = await db.insert(closetSales).values(data).returning();
+    return sale;
+  }
+
+  async getClosetSale(id: string) {
+    const [sale] = await db.select().from(closetSales).where(eq(closetSales.id, id));
+    return sale || null;
+  }
+
+  async getUserClosetSales(userId: string) {
+    return db.select().from(closetSales).where(eq(closetSales.userId, userId)).orderBy(desc(closetSales.createdAt));
+  }
+
+  async updateClosetSaleStatus(id: string, status: string) {
+    const [updated] = await db.update(closetSales)
+      .set({ status: status as any, updatedAt: new Date() }).where(eq(closetSales.id, id)).returning();
+    return updated;
+  }
+
+  async expressInterestInSaleItem(data: {
+    saleId: string; closetItemId: string; interestedUserId: string; message?: string;
+  }) {
+    const [interest] = await db.insert(closetSaleInterests).values(data).returning();
+    return interest;
+  }
+
+  // ── Donation Logs ───────────────────────────────────────────────
+
+  async createDonationLog(data: {
+    userId: string; closetItemIds: string[]; itemDescriptions: any; destination: string;
+    destinationName?: string; destinationAddress?: string; donatedAt: Date;
+    estimatedTotalValue?: number; taxYear: number;
+  }) {
+    const [log] = await db.insert(donationLogs).values(data as any).returning();
+    return log;
+  }
+
+  async getUserDonationLogs(userId: string) {
+    return db.select().from(donationLogs).where(eq(donationLogs.userId, userId))
+      .orderBy(desc(donationLogs.donatedAt));
+  }
+
+  async getUserDonationTotal(userId: string, taxYear: number) {
+    const logs = await db.select({ value: donationLogs.estimatedTotalValue })
+      .from(donationLogs)
+      .where(and(eq(donationLogs.userId, userId), eq(donationLogs.taxYear, taxYear)));
+    return logs.reduce((sum, log) => sum + (log.value || 0), 0);
+  }
+
+  // ── Idle Alerts ─────────────────────────────────────────────────
+
+  async getIdleClosetItems(userId: string, idleMonths: number = 6) {
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - idleMonths);
+    return db.select().from(userClosetItems)
+      .where(and(
+        eq(userClosetItems.userId, userId),
+        or(isNull(userClosetItems.lastWorn), lt(userClosetItems.lastWorn, cutoff))
+      ));
+  }
+
+  async createIdleAlert(data: { userId: string; closetItemId: string; idleMonths: number }) {
+    const [alert] = await db.insert(closetIdleAlerts).values(data).returning();
+    return alert;
+  }
+
+  async resolveIdleAlert(id: string, action: string) {
+    const [updated] = await db.update(closetIdleAlerts)
+      .set({ action, actionTakenAt: new Date() }).where(eq(closetIdleAlerts.id, id)).returning();
+    return updated;
+  }
+
+  async markClosetItemWorn(closetItemId: string, userId: string) {
+    await db.update(userClosetItems)
+      .set({ lastWorn: new Date(), timesWorn: sql`times_worn + 1` })
+      .where(and(eq(userClosetItems.id, closetItemId), eq(userClosetItems.userId, userId)));
   }
 }
 

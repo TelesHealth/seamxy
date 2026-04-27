@@ -71,6 +71,10 @@ import GigDirectoryPage from "@/pages/gig-directory";
 import GigRegisterPage from "@/pages/gig-register";
 import GigPostJobPage from "@/pages/gig-post-job";
 
+// Social Closet
+import StyleGroupsPage from "./pages/style-groups";
+import LetItGoPage from "./pages/let-it-go";
+
 function Router() {
   return (
     <Switch>
@@ -98,6 +102,11 @@ function Router() {
       <Route path="/gig" component={GigDirectoryPage} />
       <Route path="/gig/register" component={GigRegisterPage} />
       <Route path="/gig/post-job" component={GigPostJobPage} />
+
+      {/* Social Closet */}
+      <Route path="/groups" component={StyleGroupsPage} />
+      <Route path="/groups/:id" component={StyleGroupsPage} />
+      <Route path="/closet/edit" component={LetItGoPage} />
       
       {/* Supplier Portal Routes (No Header) */}
       <Route path="/supplier/login" component={SupplierLogin} />

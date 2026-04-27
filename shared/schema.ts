@@ -1846,6 +1846,24 @@ export const userStyleProfiles = pgTable("user_style_profiles", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+// ── Social Closet Enums ───────────────────────────────────────────
+export const closetItemStatusEnum = pgEnum("closet_item_status", [
+  "owned", "lent_out", "borrowed", "for_sale", "donated", "sold",
+]);
+export const borrowRequestStatusEnum = pgEnum("borrow_request_status", [
+  "pending", "accepted", "declined", "active", "returned", "overdue",
+]);
+export const closetSaleStatusEnum = pgEnum("closet_sale_status", [
+  "draft", "friends_only", "public", "closed",
+]);
+export const groupMemberRoleEnum = pgEnum("group_member_role", ["owner", "member"]);
+export const reactionTypeEnum = pgEnum("reaction_type", [
+  "love", "fire", "thumbs_up", "thumbs_down", "question",
+]);
+export const donationDestinationEnum = pgEnum("donation_destination", [
+  "goodwill", "salvation_army", "local_shelter", "thrift_store", "other",
+]);
+
 // User closet items (uploaded wardrobe)
 export const userClosetItems = pgTable("user_closet_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1858,9 +1876,18 @@ export const userClosetItems = pgTable("user_closet_items", {
   styleTags: text("style_tags").array(),
   season: text("season"), // "spring", "summer", "fall", "winter", "all"
   aiDetectedAttributes: jsonb("ai_detected_attributes"), // AI-analyzed attributes
+  name: text("name"),
   timesWorn: integer("times_worn").default(0),
   lastWorn: timestamp("last_worn"),
   isFavorite: boolean("is_favorite").default(false),
+  // Social closet fields
+  isLendable: boolean("is_lendable").notNull().default(false),
+  status: closetItemStatusEnum("status").notNull().default("owned"),
+  purchasePrice: integer("purchase_price"),
+  estimatedValue: integer("estimated_value"),
+  condition: varchar("condition", { length: 20 }).default("good"),
+  notes: text("notes"),
+  isPublicInGroup: boolean("is_public_in_group").notNull().default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -2441,6 +2468,144 @@ export type InsertUserSavedItem = z.infer<typeof insertUserSavedItemSchema>;
 
 export type WardrobeGapAnalysis = typeof wardrobeGapAnalysis.$inferSelect;
 export type InsertWardrobeGapAnalysis = z.infer<typeof insertWardrobeGapAnalysisSchema>;
+
+// ── Social Closet Tables ──────────────────────────────────────────
+
+export const styleGroups = pgTable("style_groups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(),
+  description: text("description"),
+  coverImageUrl: varchar("cover_image_url"),
+  ownerId: varchar("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  inviteCode: varchar("invite_code", { length: 20 }).unique().notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const styleGroupMembers = pgTable("style_group_members", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  groupId: varchar("group_id").notNull().references(() => styleGroups.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: groupMemberRoleEnum("role").notNull().default("member"),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+});
+
+export const borrowRequests = pgTable("borrow_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  closetItemId: varchar("closet_item_id").notNull(),
+  borrowerId: varchar("borrower_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  lenderId: varchar("lender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  groupId: varchar("group_id").references(() => styleGroups.id),
+  occasion: varchar("occasion", { length: 200 }),
+  message: text("message"),
+  requestedFrom: timestamp("requested_from").notNull(),
+  requestedUntil: timestamp("requested_until").notNull(),
+  conditionOnLend: varchar("condition_on_lend", { length: 20 }),
+  conditionOnReturn: varchar("condition_on_return", { length: 20 }),
+  lenderConditionNote: text("lender_condition_note"),
+  status: borrowRequestStatusEnum("status").notNull().default("pending"),
+  lentConfirmedAt: timestamp("lent_confirmed_at"),
+  returnedConfirmedByBorrower: timestamp("returned_confirmed_by_borrower"),
+  returnedConfirmedByLender: timestamp("returned_confirmed_by_lender"),
+  borrowerRating: integer("borrower_rating"),
+  lenderRating: integer("lender_rating"),
+  borrowerWouldBuy: boolean("borrower_would_buy").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const haulPosts = pgTable("haul_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  groupId: varchar("group_id").notNull().references(() => styleGroups.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 200 }),
+  caption: text("caption"),
+  closetItemIds: text("closet_item_ids").array().notNull().default(sql`'{}'::text[]`),
+  imageUrls: text("image_urls").array().notNull().default(sql`'{}'::text[]`),
+  videoUrl: varchar("video_url"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const haulPostReactions = pgTable("haul_post_reactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  haulPostId: varchar("haul_post_id").notNull().references(() => haulPosts.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  reaction: reactionTypeEnum("reaction").notNull(),
+  comment: text("comment"),
+  suggestedProductId: integer("suggested_product_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const outfitPolls = pgTable("outfit_polls", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  groupId: varchar("group_id").notNull().references(() => styleGroups.id, { onDelete: "cascade" }),
+  question: varchar("question", { length: 300 }).notNull(),
+  occasion: varchar("occasion", { length: 200 }),
+  options: jsonb("options").notNull(),
+  closesAt: timestamp("closes_at").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const outfitPollVotes = pgTable("outfit_poll_votes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pollId: varchar("poll_id").notNull().references(() => outfitPolls.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  optionIndex: integer("option_index").notNull(),
+  comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const closetSales = pgTable("closet_sales", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  groupId: varchar("group_id").references(() => styleGroups.id),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description"),
+  closetItemIds: text("closet_item_ids").array().notNull().default(sql`'{}'::text[]`),
+  status: closetSaleStatusEnum("status").notNull().default("draft"),
+  friendsOnlyUntil: timestamp("friends_only_until"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const closetSaleInterests = pgTable("closet_sale_interests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  saleId: varchar("sale_id").notNull().references(() => closetSales.id, { onDelete: "cascade" }),
+  closetItemId: varchar("closet_item_id").notNull(),
+  interestedUserId: varchar("interested_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  message: text("message"),
+  status: varchar("status", { length: 20 }).notNull().default("interested"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const donationLogs = pgTable("donation_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  closetItemIds: text("closet_item_ids").array().notNull().default(sql`'{}'::text[]`),
+  itemDescriptions: jsonb("item_descriptions"),
+  destination: donationDestinationEnum("destination").notNull(),
+  destinationName: varchar("destination_name", { length: 200 }),
+  destinationAddress: text("destination_address"),
+  donatedAt: timestamp("donated_at").notNull(),
+  estimatedTotalValue: integer("estimated_total_value"),
+  receiptImageUrl: varchar("receipt_image_url"),
+  taxYear: integer("tax_year").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const closetIdleAlerts = pgTable("closet_idle_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  closetItemId: varchar("closet_item_id").notNull(),
+  alertedAt: timestamp("alerted_at").defaultNow().notNull(),
+  idleMonths: integer("idle_months").notNull(),
+  action: varchar("action", { length: 20 }),
+  actionTakenAt: timestamp("action_taken_at"),
+});
 
 // ── Virtual Try-On Types ──────────────────────────────────────────
 export interface BodyLandmark {

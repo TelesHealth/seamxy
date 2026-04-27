@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { User, Shield, LogOut, LogIn, Briefcase, Menu, Shirt, HelpCircle, ShoppingBag, LayoutDashboard, Scissors, Package, Sparkles, Camera } from "lucide-react";
+import { User, Shield, LogOut, LogIn, Briefcase, Menu, Shirt, HelpCircle, ShoppingBag, LayoutDashboard, Scissors, Package, Sparkles, Camera, Users } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -30,6 +30,7 @@ export function Header() {
     { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4 mr-2" /> },
     { href: "/shop", label: "Shop", icon: <ShoppingBag className="w-4 h-4 mr-2" /> },
     { href: "/closet", label: "My Closet", icon: <Scissors className="w-4 h-4 mr-2" /> },
+    { href: "/groups", label: "My Group", icon: <Users className="w-4 h-4 mr-2" /> },
     { href: "/my-requests", label: "My Requests", icon: <Package className="w-4 h-4 mr-2" /> },
     { href: "/gig", label: "Local Alterations", icon: <Scissors className="w-4 h-4 mr-2" /> },
   ];
