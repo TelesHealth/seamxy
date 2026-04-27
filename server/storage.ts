@@ -2620,7 +2620,7 @@ export class DatabaseStorage implements IStorage {
   async getPollResults(pollId: string) {
     const votes = await db.select().from(outfitPollVotes).where(eq(outfitPollVotes.pollId, pollId));
     const results: Record<number, number> = {};
-    votes.forEach(v => { results[v.optionIndex] = (results[v.optionIndex] || 0) + 1; });
+    votes.forEach((v: any) => { results[(v as any).optionIndex] = (results[(v as any).optionIndex] || 0) + 1; });
     return { votes, results, total: votes.length };
   }
 
@@ -2675,7 +2675,7 @@ export class DatabaseStorage implements IStorage {
     const logs = await db.select({ value: donationLogs.estimatedTotalValue })
       .from(donationLogs)
       .where(and(eq(donationLogs.userId, userId), eq(donationLogs.taxYear, taxYear)));
-    return logs.reduce((sum, log) => sum + (log.value || 0), 0);
+    return logs.reduce((sum: number, log: any) => sum + (log.value || 0), 0);
   }
 
   // ── Idle Alerts ─────────────────────────────────────────────────
