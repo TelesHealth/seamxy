@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Shirt, ChevronRight, Calendar, Sparkles } from "lucide-react";
+import { Shirt, ChevronRight, Calendar, Sparkles, Users, Heart, ShoppingBag, Gift } from "lucide-react";
 
 export default function Home() {
   return (
@@ -107,6 +107,67 @@ export default function Home() {
             <p className="text-xs text-muted-foreground mt-3">
               No account needed to get started
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Closet Feature Section */}
+      <section className="py-20 px-4 bg-background">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-medium mb-4">
+              <Users className="w-4 h-4" />
+              <span>Social Closet</span>
+            </div>
+            <h2 className="font-display text-3xl md:text-4xl font-700 text-foreground mb-4">
+              Your clothes, shared with your people
+            </h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">
+              Create a private group with friends to borrow each other's closets, share haul posts, vote on outfits, and declutter together.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            {[
+              {
+                icon: <Heart className="w-6 h-6" />,
+                title: "Borrow & Lend",
+                description: "Request pieces from friends' closets for any occasion.",
+              },
+              {
+                icon: <Users className="w-6 h-6" />,
+                title: "Haul Posts",
+                description: "Share your latest finds with your group and get real reactions.",
+              },
+              {
+                icon: <ShoppingBag className="w-6 h-6" />,
+                title: "Closet Sales",
+                description: "Sell to friends first before listing publicly.",
+              },
+              {
+                icon: <Gift className="w-6 h-6" />,
+                title: "Let It Go",
+                description: "Donate idle items and log them for tax season.",
+              },
+            ].map((item, i) => (
+              <Card key={i} className="p-6 text-center" data-testid={`card-social-${i}`}>
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
+                  {item.icon}
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
+                <p className="text-muted-foreground text-sm">{item.description}</p>
+              </Card>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link href="/groups">
+              <Button size="lg" data-testid="button-social-closet-cta">
+                <Users className="w-5 h-5 mr-2" />
+                Start a Style Group
+              </Button>
+            </Link>
+            <p className="text-xs text-muted-foreground mt-3">Free to create — invite friends with a code</p>
           </div>
         </div>
       </section>
