@@ -6,15 +6,18 @@ import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@shared/schema";
 
-if (!process.env.DATABASE_URL) {
+// Prefer SUPABASE_DATABASE_URL if set, fall back to DATABASE_URL
+const connectionString = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
+
+if (!connectionString) {
   throw new Error(
     "DATABASE_URL must be set. Did you forget to provision a database?",
   );
 }
 
 // Detect if using Neon serverless or regular PostgreSQL
-const isNeon = process.env.DATABASE_URL.includes('neon.tech') || 
-               process.env.DATABASE_URL.includes('neon.database');
+const isNeon = connectionString.includes('neon.tech') || 
+               connectionString.includes('neon.database');
 
 export let pool: NeonPool | PgPool;
 export let db: any;
@@ -25,7 +28,7 @@ if (isNeon) {
   neonConfig.webSocketConstructor = ws;
   
   const neonPool = new NeonPool({ 
-    connectionString: process.env.DATABASE_URL,
+    connectionString,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
@@ -43,7 +46,7 @@ if (isNeon) {
   console.log('Using standard PostgreSQL driver');
   
   const pgPool = new PgPool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
