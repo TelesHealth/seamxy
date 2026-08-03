@@ -1,232 +1,156 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { User, Shield, LogOut, LogIn, Briefcase, Menu, Shirt, HelpCircle, ShoppingBag, LayoutDashboard, Scissors, Package, Sparkles, Camera, Users } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Menu, X, LogOut, User } from "lucide-react";
 import seamxyLogo from "@assets/seamxy-logo.png";
 import { useCustomerAuth } from "@/lib/customer-auth";
+
+const navItems = [
+  { href: "/", label: "HOME" },
+  { href: "/system", label: "SYSTEM" },
+  { href: "/get-outfit-ideas", label: "FIND LOOK" },
+  { href: "/style-quiz", label: "QUIZ" },
+  { href: "/inspo", label: "INSPO" },
+  { href: "/ai-stylist", label: "CONCIERGE" },
+  { href: "/dashboard", label: "DASHBOARD" },
+  { href: "/upload", label: "TRY-ON" },
+  { href: "/closet", label: "CLOSET" },
+];
 
 export function Header() {
   const [location] = useLocation();
   const { customer, logout } = useCustomerAuth();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const loggedOutNavItems = [
-    { href: "/get-outfit-ideas", label: "Get Outfit Ideas", icon: <Shirt className="w-4 h-4 mr-2" /> },
-    { href: "/upload", label: "Try On", icon: <Camera className="w-4 h-4 mr-2" /> },
-    { href: "/how-it-works", label: "How It Works", icon: <HelpCircle className="w-4 h-4 mr-2" /> },
-    { href: "/gig", label: "Find Local Help", icon: <Scissors className="w-4 h-4 mr-2" /> },
-  ];
-
-  const loggedInNavItems = [
-    { href: "/get-outfit-ideas", label: "Get Outfit Ideas", icon: <Shirt className="w-4 h-4 mr-2" /> },
-    { href: "/upload", label: "Try On", icon: <Camera className="w-4 h-4 mr-2" /> },
-    { href: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4 mr-2" /> },
-    { href: "/shop", label: "Shop", icon: <ShoppingBag className="w-4 h-4 mr-2" /> },
-    { href: "/closet", label: "My Closet", icon: <Scissors className="w-4 h-4 mr-2" /> },
-    { href: "/groups", label: "My Group", icon: <Users className="w-4 h-4 mr-2" /> },
-    { href: "/my-requests", label: "My Requests", icon: <Package className="w-4 h-4 mr-2" /> },
-    { href: "/gig", label: "Local Alterations", icon: <Scissors className="w-4 h-4 mr-2" /> },
-  ];
-
-  const navItems = customer ? loggedInNavItems : loggedOutNavItems;
-
-  const handleNavClick = () => {
-    setMobileMenuOpen(false);
-  };
+  const isActive = (href: string) =>
+    href === "/" ? location === "/" : location.startsWith(href);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+    <>
+      {/* Desktop floating nav */}
+      <header className="sticky top-0 z-50 px-4 pt-4 hidden md:block">
+        <div className="max-w-[1100px] mx-auto bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_4px_32px_rgba(0,0,0,0.08)] px-4 py-2.5 flex items-center gap-4">
+          {/* Logo */}
           <Link href="/">
-            <span className="flex items-center hover-elevate px-3 py-2 rounded-lg cursor-pointer">
-              <img src={seamxyLogo} alt="SeamXY" className="h-8" />
+            <span className="flex items-center gap-2 cursor-pointer flex-shrink-0">
+              <div className="w-8 h-8 bg-[#0B1340] rounded-lg flex items-center justify-center">
+                <span className="text-white font-bold text-sm">S</span>
+              </div>
+              <img src={seamxyLogo} alt="SeamXY" className="h-5 opacity-90" />
             </span>
           </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Nav items */}
+          <nav className="flex items-center gap-0.5 mx-auto">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
-                <Button
-                  variant={location === item.href ? "secondary" : "ghost"}
-                  className="gap-2"
+                <span
+                  className={`
+                    px-3 py-1.5 rounded-full text-[11px] font-500 tracking-widest cursor-pointer transition-all duration-150
+                    ${isActive(item.href)
+                      ? "bg-[#0B1340] text-white"
+                      : "text-foreground/60 hover:text-foreground hover:bg-black/5"
+                    }
+                  `}
                   data-testid={`nav-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                 >
-                  {item.icon}
                   {item.label}
-                </Button>
+                </span>
               </Link>
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-2">
-            {customer && (
-              <>
-                <Link href="/supplier/login">
-                  <Button variant="ghost" size="sm" data-testid="nav-supplier">
-                    <Briefcase className="w-4 h-4 mr-2" />
-                    Supplier Portal
-                  </Button>
-                </Link>
-                <Link href="/admin/login">
-                  <Button variant="ghost" size="icon" data-testid="nav-admin">
-                    <Shield className="w-5 h-5" />
-                  </Button>
-                </Link>
-              </>
-            )}
-
+          {/* Right actions */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             {customer ? (
               <>
                 <Link href="/onboarding">
-                  <Button variant="outline" data-testid="nav-profile">
-                    <User className="w-4 h-4 mr-2" />
-                    {customer.name}
-                  </Button>
+                  <span className="text-[11px] text-muted-foreground tracking-widest cursor-pointer hover:text-foreground transition-colors flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    {customer.name?.split(" ")[0]}
+                  </span>
                 </Link>
-                <Button
-                  variant="ghost"
+                <button
                   onClick={logout}
+                  className="text-[11px] text-muted-foreground tracking-widest hover:text-foreground transition-colors flex items-center gap-1"
                   data-testid="button-logout"
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
+                  <LogOut className="w-3 h-3" />
+                </button>
               </>
             ) : (
               <Link href="/login">
-                <Button variant="ghost" data-testid="button-login-header">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
+                <span className="text-[11px] text-muted-foreground tracking-widest cursor-pointer hover:text-foreground transition-colors mr-1" data-testid="button-login-header">
+                  SIGN IN
+                </span>
               </Link>
             )}
-          </div>
-
-          <div className="md:hidden">
-            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" data-testid="button-mobile-menu">
-                  <Menu className="h-6 w-6" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="right" className="w-72">
-                <SheetHeader>
-                  <SheetTitle>Menu</SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-4 mt-6">
-                  <div className="flex flex-col gap-2">
-                    {navItems.map((item) => (
-                      <Link key={item.href} href={item.href}>
-                        <Button
-                          variant={location === item.href ? "secondary" : "ghost"}
-                          className="w-full justify-start gap-2"
-                          onClick={handleNavClick}
-                          data-testid={`nav-mobile-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
-                        >
-                          {item.icon}
-                          {item.label}
-                        </Button>
-                      </Link>
-                    ))}
-                  </div>
-
-                  <div className="border-t" />
-
-                  {customer && (
-                    <>
-                      <div className="flex flex-col gap-2">
-                        <Link href="/ai-stylist">
-                          <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-ai-stylist">
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            AI Stylist
-                          </Button>
-                        </Link>
-                        <Link href="/style-quiz">
-                          <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-style-quiz">
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            Style Quiz
-                          </Button>
-                        </Link>
-                        <Link href="/makers">
-                          <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-makers">
-                            <Scissors className="w-4 h-4 mr-2" />
-                            Makers
-                          </Button>
-                        </Link>
-                        <Link href="/for-creators">
-                          <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-for-creators">
-                            <Sparkles className="w-4 h-4 mr-2" />
-                            For Creators
-                          </Button>
-                        </Link>
-                      </div>
-
-                      <div className="border-t" />
-
-                      <div className="flex flex-col gap-2">
-                        <Link href="/supplier/login">
-                          <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-supplier">
-                            <Briefcase className="w-4 h-4 mr-2" />
-                            Supplier Portal
-                          </Button>
-                        </Link>
-                        <Link href="/admin/login">
-                          <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-admin">
-                            <Shield className="w-4 h-4 mr-2" />
-                            Admin Portal
-                          </Button>
-                        </Link>
-                      </div>
-
-                      <div className="border-t" />
-                    </>
-                  )}
-
-                  {customer ? (
-                    <div className="flex flex-col gap-2">
-                      <Link href="/onboarding">
-                        <Button variant="outline" className="w-full justify-start" onClick={handleNavClick} data-testid="nav-mobile-profile">
-                          <User className="w-4 h-4 mr-2" />
-                          {customer.name}
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        onClick={() => {
-                          logout();
-                          handleNavClick();
-                        }}
-                        className="w-full justify-start"
-                        data-testid="button-mobile-logout"
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        Logout
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      <Link href="/login">
-                        <Button variant="ghost" className="w-full justify-start" onClick={handleNavClick} data-testid="button-mobile-login">
-                          <LogIn className="w-4 h-4 mr-2" />
-                          Sign In
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </SheetContent>
-            </Sheet>
+            <Link href="/signup">
+              <span className="bg-[#0B1340] hover:bg-[#0B1340]/90 text-white text-[11px] tracking-widest font-500 rounded-full px-5 py-2 cursor-pointer transition-colors" data-testid="button-start-styling">
+                START STYLING
+              </span>
+            </Link>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Mobile nav */}
+      <header className="sticky top-0 z-50 px-3 pt-3 md:hidden">
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] px-4 py-3 flex items-center justify-between">
+          <Link href="/">
+            <span className="flex items-center gap-2 cursor-pointer">
+              <div className="w-7 h-7 bg-[#0B1340] rounded-md flex items-center justify-center">
+                <span className="text-white font-bold text-xs">S</span>
+              </div>
+              <img src={seamxyLogo} alt="SeamXY" className="h-4" />
+            </span>
+          </Link>
+          <div className="flex items-center gap-3">
+            <Link href="/signup">
+              <span className="bg-[#0B1340] text-white text-[10px] tracking-widest font-500 rounded-full px-4 py-1.5 cursor-pointer">
+                START STYLING
+              </span>
+            </Link>
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="p-1" data-testid="button-mobile-menu">
+              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile dropdown */}
+        {mobileOpen && (
+          <div className="mt-2 bg-white/95 backdrop-blur-md rounded-2xl shadow-lg p-4">
+            <div className="grid grid-cols-2 gap-1">
+              {navItems.map((item) => (
+                <Link key={item.href} href={item.href}>
+                  <span
+                    onClick={() => setMobileOpen(false)}
+                    className={`
+                      block px-3 py-2 rounded-xl text-[11px] font-500 tracking-widest cursor-pointer transition-all
+                      ${isActive(item.href)
+                        ? "bg-[#0B1340] text-white"
+                        : "text-foreground/60 hover:bg-black/5 hover:text-foreground"
+                      }
+                    `}
+                    data-testid={`nav-mobile-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
+                  >
+                    {item.label}
+                  </span>
+                </Link>
+              ))}
+            </div>
+            {customer && (
+              <div className="border-t mt-3 pt-3 flex items-center justify-between">
+                <Link href="/onboarding">
+                  <span className="text-xs text-muted-foreground">{customer.name}</span>
+                </Link>
+                <button onClick={logout} className="text-xs text-muted-foreground flex items-center gap-1" data-testid="button-mobile-logout">
+                  <LogOut className="w-3 h-3" /> Sign out
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </header>
+    </>
   );
 }

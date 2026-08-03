@@ -1,265 +1,328 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Shirt, ChevronRight, Calendar, Sparkles, Users, Heart, ShoppingBag, Gift } from "lucide-react";
 
 export default function Home() {
+  const [email, setEmail] = useState("");
+  const [joined, setJoined] = useState(false);
+
+  const handleJoin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) setJoined(true);
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <img
-            src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1920&q=80"
-            alt="Fashion"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
-        </div>
-
-        <div className="relative z-10 max-w-4xl mx-auto px-4 md:px-6 lg:px-8 text-center">
-          <h1 className="font-display text-5xl md:text-6xl lg:text-7xl font-800 text-white mb-6 leading-tight">
-            Know exactly what to wear
-            <br />
-            <span className="text-white/90">for any moment</span>
-          </h1>
-          <p className="text-xl md:text-2xl text-white/80 max-w-2xl mx-auto mb-4">
-            Get outfit ideas for real situations. No account needed. No guesswork.
-          </p>
-          <p className="text-sm text-white/60 mb-10">
-            Try it — takes 30 seconds
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href="/get-outfit-ideas">
-              <Button
-                size="lg"
-                className="px-8 py-6 text-lg backdrop-blur-md bg-white/90 text-foreground border border-white/20"
-                data-testid="button-get-outfit-ideas"
-              >
-                <Shirt className="w-5 h-5 mr-2" />
-                Get Outfit Ideas
-              </Button>
-            </Link>
-          </div>
-          <div className="mt-6">
-            <Link href="/for-creators">
-              <span className="text-white/60 text-sm underline underline-offset-4 cursor-pointer hover:text-white/80 transition-colors" data-testid="link-makers-creators">
-                For Makers & Creators
-                <ChevronRight className="w-3 h-3 inline ml-1" />
-              </span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20 bg-background">
-        <div className="max-w-5xl mx-auto px-4 md:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-3xl md:text-4xl font-700 text-foreground mb-4">
-              How it works
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              No sign-ups, no measurements, no quizzes upfront. Just pick a situation and see what works.
+    <div className="min-h-screen">
+      {/* Hero */}
+      <section className="min-h-[calc(100vh-88px)] flex items-center px-6 md:px-10 py-10">
+        <div className="max-w-7xl mx-auto w-full grid md:grid-cols-[1fr_1.1fr] gap-12 items-center">
+          {/* Left */}
+          <div>
+            <p className="text-[10px] tracking-[0.2em] text-foreground/50 uppercase mb-6 flex items-center gap-3">
+              <span className="w-8 h-px bg-foreground/30 inline-block" />
+              Fashion Intelligence for Real Life
             </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: <Calendar className="w-10 h-10" />,
-                step: "1",
-                title: "Pick a situation",
-                description: "Date night, work meeting, weekend brunch — tell us what you're dressing for.",
-              },
-              {
-                icon: <Sparkles className="w-10 h-10" />,
-                step: "2",
-                title: "Choose your vibe",
-                description: "Polished, bold, relaxed — or skip this and we'll show you a mix.",
-              },
-              {
-                icon: <Shirt className="w-10 h-10" />,
-                step: "3",
-                title: "See outfits that work",
-                description: "Get complete outfit ideas with styling tips and the reasoning behind each look.",
-              },
-            ].map((item, i) => (
-              <Card key={i} className="p-8 text-center" data-testid={`card-step-${i}`}>
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 text-primary mb-6">
-                  {item.icon}
-                </div>
-                <h3 className="font-display text-xl font-600 text-foreground mb-3">
-                  {item.title}
-                </h3>
-                <p className="text-muted-foreground text-sm">
-                  {item.description}
-                </p>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Link href="/get-outfit-ideas">
-              <Button size="lg" data-testid="button-get-started-bottom">
-                Get Outfit Ideas
-                <ChevronRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-            <p className="text-xs text-muted-foreground mt-3">
-              No account needed to get started
+            <h1 className="font-display font-600 leading-[0.88] text-foreground mb-6" style={{ fontSize: "clamp(3.5rem, 8vw, 7rem)" }}>
+              Find the outfit.<br />
+              Feel the <em className="text-[#2236E8] not-italic" style={{ fontStyle: "italic" }}>shift.</em>
+            </h1>
+            <p className="text-foreground/60 text-lg mb-8 max-w-sm leading-relaxed">
+              SeamXY turns your closet, calendar, fit, and taste into one intelligent style system.
             </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Closet Feature Section */}
-      <section className="py-20 px-4 bg-background">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-medium mb-4">
-              <Users className="w-4 h-4" />
-              <span>Social Closet</span>
-            </div>
-            <h2 className="font-display text-3xl md:text-4xl font-700 text-foreground mb-4">
-              Your clothes, shared with your people
-            </h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Create a private group with friends to borrow each other's closets, share haul posts, vote on outfits, and declutter together.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            {[
-              {
-                icon: <Heart className="w-6 h-6" />,
-                title: "Borrow & Lend",
-                description: "Request pieces from friends' closets for any occasion.",
-              },
-              {
-                icon: <Users className="w-6 h-6" />,
-                title: "Haul Posts",
-                description: "Share your latest finds with your group and get real reactions.",
-              },
-              {
-                icon: <ShoppingBag className="w-6 h-6" />,
-                title: "Closet Sales",
-                description: "Sell to friends first before listing publicly.",
-              },
-              {
-                icon: <Gift className="w-6 h-6" />,
-                title: "Let It Go",
-                description: "Donate idle items and log them for tax season.",
-              },
-            ].map((item, i) => (
-              <Card key={i} className="p-6 text-center" data-testid={`card-social-${i}`}>
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 text-primary mb-4">
-                  {item.icon}
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{item.title}</h3>
-                <p className="text-muted-foreground text-sm">{item.description}</p>
-              </Card>
-            ))}
-          </div>
-
-          <div className="text-center">
-            <Link href="/groups">
-              <Button size="lg" data-testid="button-social-closet-cta">
-                <Users className="w-5 h-5 mr-2" />
-                Start a Style Group
-              </Button>
-            </Link>
-            <p className="text-xs text-muted-foreground mt-3">Free to create — invite friends with a code</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Virtual Try-On Feature Section */}
-      <section className="py-16 px-4 bg-muted/30">
-        <div className="max-w-4xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-10 items-center">
-            {/* Left: Text */}
-            <div>
-              <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-4 py-1.5 text-sm font-medium mb-4">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
-                <span>Virtual Try-On</span>
-              </div>
-              <h2 className="text-3xl font-bold mb-4">
-                See it on you before you buy
-              </h2>
-              <p className="text-muted-foreground text-lg mb-6">
-                Upload a photo and try on any item from our shop. See exactly how
-                it fits your body — no guessing, no returns.
-              </p>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Upload your photo or use a pre-built model",
-                  "Try on tops, bottoms, dresses and more",
-                  "See size recommendations based on your measurements",
-                  "Share your looks and get feedback from friends",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-sm">
-                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <svg className="w-3 h-3 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                    </div>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-              <Link href="/upload">
-                <Button size="lg" data-testid="button-tryon-homepage">
-                  <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  Try It On Now
+            <div className="flex gap-3 mb-8">
+              <Link href="/get-outfit-ideas">
+                <Button
+                  className="rounded-full px-7 py-5 bg-[#0B1340] hover:bg-[#0B1340]/90 text-white text-xs tracking-widest uppercase font-500"
+                  data-testid="button-find-my-look"
+                >
+                  Find My Look
                 </Button>
               </Link>
-              <p className="text-xs text-muted-foreground mt-3">
-                No account needed to start
-              </p>
+              <Link href="/system">
+                <Button
+                  variant="outline"
+                  className="rounded-full px-7 py-5 text-xs tracking-widest uppercase font-500 border-foreground/20 hover:bg-foreground/5"
+                  data-testid="button-enter-seamxy"
+                >
+                  Enter SeamXY
+                </Button>
+              </Link>
             </div>
+            {/* Email capture */}
+            {joined ? (
+              <p className="text-sm text-[#2236E8] font-500">You're on the list ✓</p>
+            ) : (
+              <form onSubmit={handleJoin} className="flex gap-2 max-w-sm">
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter email for early access"
+                  className="flex-1 bg-white/70 border border-white/60 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#2236E8]/40 placeholder:text-foreground/40"
+                />
+                <button
+                  type="submit"
+                  className="bg-[#2236E8] hover:bg-[#2236E8]/90 text-white text-xs tracking-widest uppercase font-500 rounded-full px-5 py-3 transition-colors"
+                >
+                  Join
+                </button>
+              </form>
+            )}
+          </div>
 
-            {/* Right: Visual mockup */}
-            <div className="relative">
-              <div className="bg-gray-900 rounded-3xl p-4 shadow-2xl">
-                <div className="bg-gray-800 rounded-2xl overflow-hidden aspect-[3/4] flex flex-col items-center justify-center relative">
-                  <div className="absolute inset-0 bg-gradient-to-b from-gray-700 to-gray-900" />
-                  <div className="relative z-10 text-center px-6">
-                    <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-white/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                    <p className="text-white/60 text-sm">Upload your photo</p>
-                    <p className="text-white/40 text-xs mt-1">or choose a model</p>
-                  </div>
-                  <div className="absolute bottom-4 left-4 right-4 bg-white/10 backdrop-blur-sm rounded-xl px-3 py-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-white text-xs font-medium">Recommended Size</span>
-                      <span className="text-white font-bold text-sm">M</span>
-                    </div>
-                    <div className="mt-1 h-1 bg-white/20 rounded-full">
-                      <div className="h-1 bg-green-400 rounded-full" style={{ width: "88%" }} />
-                    </div>
-                    <p className="text-white/60 text-xs mt-1">88% confidence · Great fit</p>
-                  </div>
+          {/* Right: photo collage */}
+          <div className="relative h-[520px] hidden md:block">
+            {/* Main tall image */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-0 w-[260px] h-[420px] rounded-3xl overflow-hidden shadow-2xl">
+              <img
+                src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=600&q=80"
+                alt="Closet"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            {/* Second image offset right */}
+            <div className="absolute right-0 bottom-0 w-[200px] h-[340px] rounded-3xl overflow-hidden shadow-xl">
+              <img
+                src="https://images.unsplash.com/photo-1445205170230-053b83016050?w=400&q=80"
+                alt="Style"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-4 left-3 right-3">
+                <span className="bg-black/60 backdrop-blur text-white text-[9px] tracking-widest uppercase rounded-full px-3 py-1">
+                  Style OS
+                </span>
+                <p className="font-display text-white text-lg font-600 mt-1 leading-tight px-1">Your wardrobe becomes searchable</p>
+              </div>
+            </div>
+            {/* Floating label cards */}
+            <div className="absolute top-6 left-0 bg-white rounded-2xl shadow-lg px-4 py-3 w-44">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="w-6 h-6 bg-[#0B1340] rounded-md flex items-center justify-center">
+                  <span className="text-white font-bold text-[9px]">S</span>
                 </div>
-                <div className="flex justify-center gap-4 mt-3">
-                  {["Tops", "Bottoms", "Dresses"].map((cat) => (
-                    <div key={cat} className="text-gray-400 text-xs">{cat}</div>
+                <div>
+                  <div className="w-12 h-1.5 bg-foreground/20 rounded-full mb-1" />
+                  <div className="w-8 h-1.5 bg-foreground/10 rounded-full" />
+                </div>
+              </div>
+            </div>
+            {/* Closet Intelligence label */}
+            <div className="absolute bottom-32 left-0 bg-white/90 backdrop-blur rounded-2xl shadow-lg p-4 w-52">
+              <p className="text-[9px] tracking-widest uppercase text-muted-foreground mb-1">Closet Intelligence</p>
+              <p className="font-display text-base font-600 text-foreground leading-tight">From overload to outfit in seconds.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Feature slides */}
+      <section className="px-6 md:px-10 py-16">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-5">
+            {[
+              {
+                label: "FIT LOGIC",
+                title: "Outfits built around how you actually fit.",
+                desc: "Your measurements, proportions, and preferences shape every recommendation.",
+                href: "/get-outfit-ideas",
+                cta: "Find Your Look",
+                dark: false,
+              },
+              {
+                label: "CLOSET FIRST",
+                title: "Style what you already own first.",
+                desc: "Upload your wardrobe and SeamXY shows you what you already have to work with.",
+                href: "/closet",
+                cta: "Manage Closet",
+                dark: true,
+              },
+              {
+                label: "CONCIERGE",
+                title: "Ask what to wear. Get a real answer.",
+                desc: "Type your situation, your mood, or your event and get a styled response in seconds.",
+                href: "/ai-stylist",
+                cta: "Ask SeamXY",
+                dark: false,
+              },
+            ].map((card, i) => (
+              <div
+                key={i}
+                className={`rounded-3xl p-8 flex flex-col justify-between min-h-[280px] ${
+                  card.dark ? "bg-[#0B1340] text-white" : "bg-white"
+                }`}
+              >
+                <div>
+                  <p className={`text-[10px] tracking-widest uppercase mb-4 ${card.dark ? "text-white/40" : "text-foreground/40"}`}>
+                    {card.label}
+                  </p>
+                  <h3 className={`font-display text-2xl font-600 leading-tight mb-3 ${card.dark ? "text-white" : "text-foreground"}`}>
+                    {card.title}
+                  </h3>
+                  <p className={`text-sm leading-relaxed ${card.dark ? "text-white/60" : "text-muted-foreground"}`}>
+                    {card.desc}
+                  </p>
+                </div>
+                <Link href={card.href}>
+                  <Button
+                    className={`mt-6 rounded-full text-xs tracking-widest uppercase px-6 ${
+                      card.dark
+                        ? "bg-white text-[#0B1340] hover:bg-white/90"
+                        : "bg-[#0B1340] text-white hover:bg-[#0B1340]/90"
+                    }`}
+                  >
+                    {card.cta}
+                  </Button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Quiz promo */}
+      <section className="px-6 md:px-10 py-12">
+        <div className="max-w-7xl mx-auto">
+          <div className="bg-white rounded-3xl overflow-hidden grid md:grid-cols-[1fr_1fr] shadow-sm">
+            <div className="p-10 flex flex-col justify-center">
+              <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3">Style Quiz</p>
+              <h2 className="font-display text-4xl md:text-5xl font-600 text-foreground leading-tight mb-4">
+                A quiz that feels like taste, not paperwork.
+              </h2>
+              <p className="text-muted-foreground text-sm mb-6 max-w-xs">
+                Aesthetic, color preferences, fit style, lifestyle — answered in minutes.
+              </p>
+              <Link href="/style-quiz">
+                <Button className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-7 py-5 w-fit">
+                  Take the Quiz
+                </Button>
+              </Link>
+            </div>
+            <div className="bg-[#0B1340] p-10 flex flex-col justify-center">
+              <div className="bg-white/10 rounded-2xl p-5 mb-4 w-fit">
+                <p className="text-[10px] text-white/50 tracking-widest uppercase mb-2">Style Quiz</p>
+                <p className="font-display text-white text-lg font-600 mb-4">How should your clothes make you feel?</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {["Polished", "Magnetic", "Easeful", "Bold"].map((v) => (
+                    <span key={v} className="border border-white/20 text-white text-xs text-center rounded-full py-1.5 px-3">
+                      {v}
+                    </span>
                   ))}
                 </div>
               </div>
-              <div className="absolute -top-3 -right-3 bg-primary text-primary-foreground rounded-full px-3 py-1.5 text-xs font-bold shadow-lg">
-                AI-Powered
+              <div className="flex gap-3">
+                {["Sign up", "Choose taste", "Add context", "Preview"].map((step, i) => (
+                  <div key={i} className="bg-white/10 rounded-xl p-3 flex-1 text-center">
+                    <p className="text-white text-xs font-500">{step}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Try-On */}
+      <section className="px-6 md:px-10 py-12">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_1fr] gap-10 items-center">
+          <div>
+            <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3">Virtual Try-On</p>
+            <h2 className="font-display text-4xl md:text-5xl font-600 text-foreground leading-tight mb-4">
+              See it on you before you own it.
+            </h2>
+            <p className="text-muted-foreground text-sm mb-4 max-w-xs leading-relaxed">
+              Upload a photo, try on any item. Three steps: selfie, fit prediction, swap items.
+            </p>
+            <div className="flex gap-3 mb-6">
+              {[["01", "Self", "Preview yourself"], ["02", "Fit", "Use predictions"], ["03", "Swap", "Change the item"]].map(
+                ([num, title, desc]) => (
+                  <div key={num} className="bg-white rounded-2xl p-4 flex-1 shadow-sm">
+                    <p className="text-[9px] text-muted-foreground mb-1">{num}</p>
+                    <p className="font-display text-lg font-600 text-foreground">{title}</p>
+                    <p className="text-[10px] text-muted-foreground">{desc}</p>
+                  </div>
+                )
+              )}
+            </div>
+            <Link href="/upload">
+              <Button className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-7 py-5">
+                Try It On
+              </Button>
+            </Link>
+          </div>
+          <div className="relative h-72 md:h-96 rounded-3xl overflow-hidden shadow-xl">
+            <img
+              src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80"
+              alt="Try on"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute top-4 right-4 bg-white rounded-full px-3 py-1.5 text-[10px] tracking-widest uppercase font-500 shadow">
+              Predicted Fit
+            </div>
+            <div className="absolute bottom-4 left-4 bg-white rounded-2xl px-4 py-3">
+              <p className="text-[9px] text-muted-foreground tracking-widest uppercase mb-1">Swap Item</p>
+              <div className="flex gap-2">
+                {["#2d2d2d", "#e8d5b0", "#9b8fd6", "#6baad6"].map((c) => (
+                  <div key={c} className="w-6 h-6 rounded-full border-2 border-white shadow" style={{ background: c }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Closet */}
+      <section className="px-6 md:px-10 py-12 pb-24">
+        <div className="max-w-7xl mx-auto grid md:grid-cols-[1fr_1fr] gap-10 items-center">
+          <div className="relative h-72 md:h-96 rounded-3xl overflow-hidden shadow-xl order-2 md:order-1">
+            <img
+              src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80"
+              alt="Closet"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0B1340]/80 to-transparent p-6">
+              <p className="text-[9px] text-white/60 tracking-widest uppercase mb-1">Closet Management</p>
+              <p className="font-display text-white text-2xl font-600 leading-tight">Style what they already own first.</p>
+            </div>
+          </div>
+          <div className="order-1 md:order-2">
+            <p className="text-[10px] tracking-widest uppercase text-muted-foreground mb-3">Sustainable Styling</p>
+            <h2 className="font-display text-4xl md:text-5xl font-600 text-foreground leading-tight mb-4">
+              Your closet. Intelligent.
+            </h2>
+            <p className="text-muted-foreground text-sm mb-8 max-w-xs leading-relaxed">
+              Upload, tag, and organize everything you own. SeamXY learns what you wear, what you skip, and what you need.
+            </p>
+            <div className="flex gap-4">
+              <div className="bg-white rounded-2xl p-5 flex-1 shadow-sm">
+                <p className="text-[9px] text-muted-foreground tracking-widest uppercase mb-2">Free Tier</p>
+                <p className="font-display text-xl font-600 text-foreground mb-1">Work With What You Have</p>
+                <p className="text-xs text-muted-foreground">Basic outfit ideas, weekly edits, closet gaps.</p>
+              </div>
+              <div className="bg-[#0B1340] rounded-2xl p-5 flex-1">
+                <p className="text-[9px] text-white/50 tracking-widest uppercase mb-2">Premium</p>
+                <p className="font-display text-xl font-600 text-white mb-1">Style My Closet</p>
+                <p className="text-xs text-white/60">Advisor audit, capsule planning, curated shopping, and consults.</p>
+              </div>
+            </div>
+            <Link href="/closet">
+              <Button className="mt-6 rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-7 py-5">
+                Open My Closet
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Build CTA sticky */}
+      <div className="fixed bottom-6 right-6 bg-white rounded-2xl shadow-xl p-5 w-56 z-40">
+        <p className="text-[10px] text-muted-foreground tracking-widest uppercase mb-1">Ready when you are</p>
+        <p className="font-display text-xl font-600 text-foreground mb-3 leading-tight">Build your style profile.</p>
+        <Link href="/signup">
+          <Button className="w-full rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 text-white text-xs tracking-widest uppercase py-4">
+            Request Access
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }

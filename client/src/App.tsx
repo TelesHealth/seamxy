@@ -75,6 +75,10 @@ import GigPostJobPage from "@/pages/gig-post-job";
 import StyleGroupsPage from "./pages/style-groups";
 import LetItGoPage from "./pages/let-it-go";
 
+// New Design Pages
+import SystemPage from "./pages/system";
+import InspoPage from "./pages/inspo";
+
 function Router() {
   return (
     <Switch>
@@ -102,6 +106,10 @@ function Router() {
       <Route path="/gig" component={GigDirectoryPage} />
       <Route path="/gig/register" component={GigRegisterPage} />
       <Route path="/gig/post-job" component={GigPostJobPage} />
+
+      {/* New Design Pages */}
+      <Route path="/system" component={SystemPage} />
+      <Route path="/inspo" component={InspoPage} />
 
       {/* Social Closet */}
       <Route path="/groups" component={StyleGroupsPage} />
@@ -181,7 +189,7 @@ export default function App() {
       <CustomerAuthProvider>
         <SupplierAuthProvider>
           <TooltipProvider>
-            <div className="min-h-screen bg-background">
+            <div className="min-h-screen seamxy-bg">
               <Header />
               <main>
                 <Router />
