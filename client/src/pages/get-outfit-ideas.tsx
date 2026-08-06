@@ -1,7 +1,6 @@
 import { useState, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -14,6 +13,7 @@ import { ArrowLeft, ArrowRight, Loader2, Heart, RefreshCw, Send, ChevronRight, C
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { StyleCTA } from "@/components/StyleCTA";
 
 type Step = "category" | "situation" | "vibe" | "loading" | "results";
 
@@ -267,265 +267,339 @@ export default function GetOutfitIdeas() {
   }, [step]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-3xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-        {step !== "category" && step !== "loading" && (
-          <Button variant="ghost" size="sm" onClick={goBack} className="mb-6" data-testid="button-back-step">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-        )}
+    <div className="min-h-screen">
+      {/* Back button */}
+      {step !== "category" && step !== "loading" && (
+        <div className="px-6 md:px-10 pt-6">
+          <div className="max-w-7xl mx-auto">
+            <button
+              onClick={goBack}
+              className="flex items-center gap-2 text-sm text-foreground/50 hover:text-foreground transition-colors"
+              data-testid="button-back-step"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Back
+            </button>
+          </div>
+        </div>
+      )}
 
-        {step === "category" && isReturningVisitor && (
-          <Card className="p-4 mb-6 border-primary/20 bg-primary/5" data-testid="card-welcome-back">
-            <p className="text-sm text-foreground font-500">
-              Welcome back! Your previous picks are gone, but you can save them permanently with a free account.
-            </p>
-            <Link href="/signup">
-              <Button variant="ghost" size="sm" className="mt-2" data-testid="button-welcome-back-signup">
-                Create a free account
-                <ChevronRight className="w-3 h-3 ml-1" />
-              </Button>
-            </Link>
-          </Card>
-        )}
+      {/* ── CATEGORY STEP ── */}
+      {step === "category" && (
+        <div className="px-6 md:px-10 py-12">
+          <div className="max-w-7xl mx-auto">
+            {/* Returning visitor nudge */}
+            {isReturningVisitor && (
+              <div className="mb-8 bg-white rounded-2xl px-5 py-4 shadow-sm flex items-center justify-between gap-4 max-w-lg" data-testid="card-welcome-back">
+                <p className="text-sm text-foreground/70">
+                  Welcome back! Save your picks permanently with a free account.
+                </p>
+                <Link href="/signup">
+                  <Button className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-5 flex-shrink-0" data-testid="button-welcome-back-signup">
+                    Join free
+                  </Button>
+                </Link>
+              </div>
+            )}
 
-        {step === "category" && (
-          <div>
-            <div className="text-center mb-10">
-              <h1 className="font-display text-3xl md:text-4xl font-700 text-foreground mb-3" data-testid="text-category-heading">
-                What are you dressing for?
-              </h1>
-              <p className="text-muted-foreground">
-                Pick a category and we'll help you find the right look.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {categories.map((cat) => (
-                <Card
-                  key={cat.id}
-                  className="p-5 cursor-pointer hover-elevate"
-                  onClick={() => handleCategorySelect(cat.id)}
-                  data-testid={`card-category-${cat.id}`}
-                >
-                  <h3 className="font-display text-lg font-600 text-foreground mb-1">{cat.label}</h3>
-                  <p className="text-sm text-muted-foreground">{cat.examples}</p>
-                </Card>
-              ))}
+            {/* Three-panel editorial layout */}
+            <div className="grid lg:grid-cols-[320px_1fr_260px] gap-6 items-start">
+              {/* Left: category list */}
+              <div>
+                <p className="text-[10px] tracking-[0.2em] text-foreground/50 uppercase mb-5 flex items-center gap-3">
+                  <span className="w-8 h-px bg-foreground/30 inline-block" />
+                  Find Look
+                </p>
+                <h1 className="font-display font-600 text-foreground leading-tight mb-8" style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }} data-testid="text-category-heading">
+                  What are you<br />dressing for?
+                </h1>
+                <div className="space-y-2">
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategorySelect(cat.id)}
+                      className="w-full text-left bg-white rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group"
+                      data-testid={`card-category-${cat.id}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-display font-600 text-foreground group-hover:text-[#2236E8] transition-colors">{cat.label}</p>
+                          <p className="text-xs text-foreground/50 mt-0.5">{cat.examples}</p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-foreground/30 group-hover:text-[#2236E8] transition-colors flex-shrink-0" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Center: hero image */}
+              <div className="hidden lg:block relative rounded-3xl overflow-hidden shadow-xl h-[560px]">
+                <img
+                  src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=900&q=80"
+                  alt="Style"
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1340]/60 via-transparent to-transparent" />
+                <div className="absolute bottom-6 left-6 right-6">
+                  <p className="text-[9px] text-white/60 tracking-widest uppercase mb-1">Outfit Intelligence</p>
+                  <p className="font-display text-white text-2xl font-600 leading-tight">Curated looks for every moment.</p>
+                </div>
+              </div>
+
+              {/* Right: dark navy detail card */}
+              <div className="bg-[#0B1340] rounded-3xl p-7 text-white flex flex-col justify-between min-h-[300px] lg:min-h-[560px]">
+                <div>
+                  <p className="text-[9px] text-white/40 tracking-widest uppercase mb-5">How it works</p>
+                  <div className="space-y-6">
+                    {[
+                      { num: "01", title: "Pick a category", desc: "Work, going out, events, travel…" },
+                      { num: "02", title: "Set your situation", desc: "First date, client meeting, brunch…" },
+                      { num: "03", title: "Choose a vibe", desc: "Polished, bold, relaxed, classic…" },
+                    ].map((s) => (
+                      <div key={s.num} className="flex gap-4">
+                        <span className="text-[9px] text-white/30 tracking-widest mt-0.5 flex-shrink-0">{s.num}</span>
+                        <div>
+                          <p className="font-display font-600 text-white text-base leading-tight">{s.title}</p>
+                          <p className="text-xs text-white/50 mt-0.5">{s.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-8 bg-white/10 rounded-2xl p-4">
+                  <p className="text-xs text-white/50 mb-2">Powered by SeamXY AI</p>
+                  <p className="font-display text-white font-600 leading-tight">Personalized looks, not generic suggestions.</p>
+                </div>
+              </div>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {step === "situation" && (
-          <div>
-            <div className="text-center mb-10">
-              <h2 className="font-display text-2xl md:text-3xl font-700 text-foreground mb-3" data-testid="text-situation-heading">
-                What's the situation?
-              </h2>
-              <p className="text-muted-foreground">
-                Pick one below or type your own.
-              </p>
-            </div>
+      {/* ── SITUATION STEP ── */}
+      {step === "situation" && (
+        <div className="px-6 md:px-10 py-12">
+          <div className="max-w-3xl mx-auto">
+            <p className="text-[10px] tracking-widest uppercase text-foreground/40 mb-4">Find Look / Situation</p>
+            <h2 className="font-display font-600 text-foreground leading-tight mb-2" style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }} data-testid="text-situation-heading">
+              What's the situation?
+            </h2>
+            <p className="text-foreground/50 mb-8">Pick one below or type your own.</p>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
               {(situationsByCategory[selectedCategory] || []).map((sit) => (
-                <Card
+                <button
                   key={sit.id}
-                  className="p-4 cursor-pointer hover-elevate"
                   onClick={() => handleSituationSelect(sit.label)}
+                  className="text-left bg-white rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group flex items-center justify-between"
                   data-testid={`card-situation-${sit.id}`}
                 >
-                  <p className="text-foreground font-500">{sit.label}</p>
-                </Card>
+                  <p className="font-display font-600 text-foreground group-hover:text-[#2236E8] transition-colors">{sit.label}</p>
+                  <ChevronRight className="w-4 h-4 text-foreground/30 group-hover:text-[#2236E8] transition-colors flex-shrink-0" />
+                </button>
               ))}
             </div>
-            <div className="flex gap-2">
+
+            <div className="bg-white rounded-2xl px-5 py-4 shadow-sm flex gap-3 items-center">
               <Input
-                placeholder="Or type your own situation..."
+                placeholder="Or describe your own situation…"
                 value={customSituation}
                 onChange={(e) => setCustomSituation(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === "Enter" && customSituation.trim()) {
-                    setStep("vibe");
-                  }
+                  if (e.key === "Enter" && customSituation.trim()) setStep("vibe");
                 }}
+                className="border-0 shadow-none p-0 text-sm focus-visible:ring-0 placeholder:text-foreground/30"
                 data-testid="input-custom-situation"
               />
               <Button
-                onClick={() => {
-                  if (customSituation.trim()) setStep("vibe");
-                }}
+                onClick={() => { if (customSituation.trim()) setStep("vibe"); }}
                 disabled={!customSituation.trim()}
+                className="rounded-full bg-[#0B1340] text-white px-5 text-xs tracking-widest uppercase flex-shrink-0"
                 data-testid="button-custom-situation-next"
               >
-                <ArrowRight className="w-4 h-4" />
+                Next
               </Button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {step === "vibe" && (
-          <div>
-            <div className="text-center mb-10">
-              <h2 className="font-display text-2xl md:text-3xl font-700 text-foreground mb-3" data-testid="text-vibe-heading">
-                What vibe are you going for?
-              </h2>
-              <p className="text-muted-foreground">
-                This helps us nail the right energy. Or skip it — we'll show you a mix.
-              </p>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+      {/* ── VIBE STEP ── */}
+      {step === "vibe" && (
+        <div className="px-6 md:px-10 py-12">
+          <div className="max-w-3xl mx-auto">
+            <p className="text-[10px] tracking-widest uppercase text-foreground/40 mb-4">Find Look / Vibe</p>
+            <h2 className="font-display font-600 text-foreground leading-tight mb-2" style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }} data-testid="text-vibe-heading">
+              What vibe are you going for?
+            </h2>
+            <p className="text-foreground/50 mb-8">This helps us nail the right energy. Or skip it — we'll show you a mix.</p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
               {vibes.map((v) => (
-                <Card
+                <button
                   key={v.id}
-                  className="p-4 cursor-pointer hover-elevate"
                   onClick={() => handleVibeSelect(v.id)}
+                  className="text-left bg-white rounded-2xl px-5 py-5 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group"
                   data-testid={`card-vibe-${v.id}`}
                 >
-                  <p className="text-foreground font-600 mb-1">{v.label}</p>
-                  <p className="text-xs text-muted-foreground">{v.description}</p>
-                </Card>
+                  <p className="font-display font-600 text-foreground text-lg group-hover:text-[#2236E8] transition-colors">{v.label}</p>
+                  <p className="text-xs text-foreground/50 mt-1">{v.description}</p>
+                </button>
               ))}
             </div>
+
             <div className="text-center">
-              <Button variant="ghost" onClick={handleSkipVibe} data-testid="button-skip-vibe">
+              <button
+                onClick={handleSkipVibe}
+                className="text-sm text-foreground/50 hover:text-foreground transition-colors flex items-center gap-1 mx-auto"
+                data-testid="button-skip-vibe"
+              >
                 Skip — show me a mix
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
-        {step === "loading" && (
-          <div className="flex flex-col items-center justify-center py-24">
-            <Loader2 className="w-10 h-10 animate-spin text-primary mb-6" />
-            <h2 className="font-display text-xl font-600 text-foreground mb-2" data-testid="text-loading">
-              Putting together your looks...
+      {/* ── LOADING STEP ── */}
+      {step === "loading" && (
+        <div className="min-h-[70vh] flex flex-col items-center justify-center px-6">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-[#0B1340] flex items-center justify-center mx-auto mb-8">
+              <Loader2 className="w-7 h-7 animate-spin text-white" />
+            </div>
+            <p className="text-[10px] tracking-widest uppercase text-foreground/40 mb-3">Curating your looks</p>
+            <h2 className="font-display font-600 text-foreground leading-tight mb-2" style={{ fontSize: "clamp(1.8rem, 3vw, 2.5rem)" }} data-testid="text-loading">
+              Putting together your looks…
             </h2>
-            <p className="text-sm text-muted-foreground">
-              Curating outfits for: {customSituation || selectedSituation}
+            <p className="text-sm text-foreground/50">
+              For: {customSituation || selectedSituation}
             </p>
           </div>
-        )}
+        </div>
+      )}
 
-        {step === "results" && results && (
-          <div>
-            <div className="text-center mb-8">
-              <h2 className="font-display text-2xl md:text-3xl font-700 text-foreground mb-2" data-testid="text-results-heading">
-                Your outfit ideas
+      {/* ── RESULTS STEP ── */}
+      {step === "results" && results && (
+        <div className="px-6 md:px-10 py-12">
+          <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="mb-10">
+              <p className="text-[10px] tracking-widest uppercase text-foreground/40 mb-3">Your Outfit Ideas</p>
+              <h2 className="font-display font-600 text-foreground leading-tight mb-2" style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }} data-testid="text-results-heading">
+                {results.situation}
               </h2>
-              <p className="text-muted-foreground text-sm">
-                For: <span className="font-500 text-foreground">{results.situation}</span>
-                {results.vibe && <> &middot; <span className="font-500 text-foreground">{results.vibe}</span> vibe</>}
-              </p>
+              {results.vibe && (
+                <p className="text-foreground/50 text-sm">
+                  Vibe: <span className="font-500 text-foreground">{results.vibe}</span>
+                </p>
+              )}
             </div>
 
-            <div className="space-y-6">
+            {/* Outfit cards grid */}
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-5 mb-10">
               {results.outfits.map((outfit) => (
-                <Card key={outfit.id} className="overflow-visible" data-testid={`card-outfit-${outfit.id}`}>
-                  <div className="p-6">
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-display text-lg font-600 text-foreground mb-1" data-testid={`text-outfit-title-${outfit.id}`}>
-                          {outfit.title}
-                        </h3>
-                        <p className="text-xs text-muted-foreground mb-3">{outfit.overallVibe}</p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleHeart(outfit.id)}
-                        data-testid={`button-heart-${outfit.id}`}
-                      >
-                        <Heart
-                          className={`w-5 h-5 transition-colors ${heartedOutfits.has(outfit.id) ? "fill-red-500 text-red-500" : "text-muted-foreground"}`}
-                        />
-                      </Button>
+                <div key={outfit.id} className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col" data-testid={`card-outfit-${outfit.id}`}>
+                  {/* Card header */}
+                  <div className="bg-[#0B1340] px-6 py-5 flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[9px] text-white/40 tracking-widest uppercase mb-1">Look</p>
+                      <h3 className="font-display font-600 text-white text-lg leading-tight" data-testid={`text-outfit-title-${outfit.id}`}>
+                        {outfit.title}
+                      </h3>
+                      <p className="text-xs text-white/50 mt-1">{outfit.overallVibe}</p>
                     </div>
+                    <button
+                      onClick={() => handleHeart(outfit.id)}
+                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 transition-colors flex items-center justify-center flex-shrink-0"
+                      data-testid={`button-heart-${outfit.id}`}
+                    >
+                      <Heart className={`w-4 h-4 transition-colors ${heartedOutfits.has(outfit.id) ? "fill-red-400 text-red-400" : "text-white/60"}`} />
+                    </button>
+                  </div>
 
-                    <div className="space-y-3 mb-4">
-                      {outfit.items.map((item, idx) => (
-                        <div key={idx} className="flex gap-3 items-start" data-testid={`outfit-item-${outfit.id}-${idx}`}>
-                          <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <p className="text-sm font-500 text-foreground">{item.name}</p>
-                              <Link href={`/shop?q=${encodeURIComponent(item.name + ' ' + item.colorOrPattern)}`}>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-6 text-xs px-2"
-                                  onClick={() => {
-                                    if (results?.sessionId) {
-                                      apiRequest("POST", "/api/v1/outfits/track-event", {
-                                        sessionId: results.sessionId,
-                                        eventType: "shop_click",
-                                        eventData: { outfitId: outfit.id, itemName: item.name, itemType: item.type },
-                                      }).catch(() => {});
-                                    }
-                                  }}
-                                  data-testid={`button-shop-item-${outfit.id}-${idx}`}
-                                >
-                                  <ShoppingBag className="w-3 h-3 mr-1" />
-                                  Shop similar
-                                </Button>
-                              </Link>
-                            </div>
-                            <p className="text-xs text-muted-foreground">{item.description} &middot; {item.colorOrPattern} &middot; {item.priceRange}</p>
+                  {/* Items */}
+                  <div className="px-6 py-5 flex-1 space-y-3">
+                    {outfit.items.map((item, idx) => (
+                      <div key={idx} className="flex gap-3 items-start" data-testid={`outfit-item-${outfit.id}-${idx}`}>
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#2236E8] mt-2 flex-shrink-0" />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <p className="text-sm font-600 text-foreground">{item.name}</p>
+                            <Link href={`/shop?q=${encodeURIComponent(item.name + ' ' + item.colorOrPattern)}`}>
+                              <button
+                                className="text-[10px] text-foreground/40 hover:text-[#2236E8] transition-colors flex items-center gap-1"
+                                onClick={() => {
+                                  if (results?.sessionId) {
+                                    apiRequest("POST", "/api/v1/outfits/track-event", {
+                                      sessionId: results.sessionId,
+                                      eventType: "shop_click",
+                                      eventData: { outfitId: outfit.id, itemName: item.name, itemType: item.type },
+                                    }).catch(() => {});
+                                  }
+                                }}
+                                data-testid={`button-shop-item-${outfit.id}-${idx}`}
+                              >
+                                <ShoppingBag className="w-3 h-3" />
+                                Shop
+                              </button>
+                            </Link>
                           </div>
+                          <p className="text-xs text-foreground/40 mt-0.5">{item.description} · {item.colorOrPattern} · {item.priceRange}</p>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
+                  </div>
 
-                    <div className="bg-muted/50 rounded-md p-4 mb-3">
-                      <p className="text-xs font-600 text-foreground mb-1">Why it works</p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">{outfit.whyItWorks}</p>
-                    </div>
-
+                  {/* Why it works */}
+                  <div className="mx-6 mb-5 bg-foreground/4 rounded-2xl p-4">
+                    <p className="text-[10px] font-600 text-foreground/50 uppercase tracking-widest mb-1">Why it works</p>
+                    <p className="text-xs text-foreground/60 leading-relaxed">{outfit.whyItWorks}</p>
                     {outfit.stylingTip && (
-                      <p className="text-xs text-muted-foreground italic">
-                        Styling tip: {outfit.stylingTip}
-                      </p>
+                      <p className="text-xs text-foreground/40 italic mt-2">Tip: {outfit.stylingTip}</p>
                     )}
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
 
+            {/* Conversion prompt */}
             {showConversionPrompt && !conversionPromptDismissed && (
-              <Card className="p-5 mt-6 border-primary/20 bg-primary/5" data-testid="card-conversion-prompt">
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-600 text-foreground mb-1">
-                      {heartedOutfits.size >= 3
-                        ? "You've got great taste! Save your picks permanently."
-                        : "Enjoying the ideas? Save them for next time."}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Create a free account to keep your favorites, get personalized recommendations, and unlock more features.
-                    </p>
-                  </div>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Link href={`/signup${results?.sessionId ? `?session=${results.sessionId}` : ''}`}>
-                      <Button size="sm" data-testid="button-conversion-signup">
-                        Create account
-                      </Button>
-                    </Link>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setConversionPromptDismissed(true)}
-                      data-testid="button-dismiss-conversion"
-                    >
-                      Not now
-                    </Button>
-                  </div>
+              <div className="bg-[#0B1340] rounded-3xl p-6 mb-8 flex items-center justify-between gap-4 flex-wrap" data-testid="card-conversion-prompt">
+                <div className="flex-1 min-w-0">
+                  <p className="font-display font-600 text-white text-lg mb-1">
+                    {heartedOutfits.size >= 3
+                      ? "You've got great taste! Save your picks permanently."
+                      : "Enjoying the ideas? Save them for next time."}
+                  </p>
+                  <p className="text-sm text-white/50">
+                    Create a free account to keep your favorites and unlock more features.
+                  </p>
                 </div>
-              </Card>
+                <div className="flex gap-2 flex-shrink-0">
+                  <Link href={`/signup${results?.sessionId ? `?session=${results.sessionId}` : ''}`}>
+                    <Button className="rounded-full bg-white text-[#0B1340] text-xs tracking-widest uppercase px-5 hover:bg-white/90" data-testid="button-conversion-signup">
+                      Create account
+                    </Button>
+                  </Link>
+                  <button
+                    onClick={() => setConversionPromptDismissed(true)}
+                    className="text-xs text-white/40 hover:text-white/70 transition-colors px-3"
+                    data-testid="button-dismiss-conversion"
+                  >
+                    Not now
+                  </button>
+                </div>
+              </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
+            {/* Action row */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Button
                 variant="outline"
+                className="rounded-full border-foreground/20 text-xs tracking-widest uppercase px-7"
                 onClick={() => refreshMutation.mutate()}
                 disabled={refreshMutation.isPending}
                 data-testid="button-show-different"
@@ -533,84 +607,98 @@ export default function GetOutfitIdeas() {
                 {refreshMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                 Show me something different
               </Button>
-              <Button variant="ghost" onClick={handleStartOver} data-testid="button-start-over">
+              <button
+                onClick={handleStartOver}
+                className="text-sm text-foreground/50 hover:text-foreground transition-colors"
+                data-testid="button-start-over"
+              >
                 Start over
-              </Button>
+              </button>
             </div>
 
+            {/* Hearted picks floating bar */}
             {heartedOutfits.size > 0 && (
               <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-                <Card className="px-5 py-3 flex items-center gap-3 shadow-lg">
-                  <Heart className="w-4 h-4 fill-red-500 text-red-500" />
-                  <span className="text-sm font-500 text-foreground" data-testid="text-picks-count">
+                <div className="bg-[#0B1340] rounded-2xl px-5 py-3 flex items-center gap-3 shadow-xl">
+                  <Heart className="w-4 h-4 fill-red-400 text-red-400" />
+                  <span className="text-sm font-500 text-white" data-testid="text-picks-count">
                     {heartedOutfits.size} {heartedOutfits.size === 1 ? "pick" : "picks"} saved
                   </span>
-                  <Button size="sm" onClick={() => setShowSendDialog(true)} data-testid="button-send-looks">
+                  <Button
+                    size="sm"
+                    className="rounded-full bg-white text-[#0B1340] text-xs tracking-widest uppercase px-5 hover:bg-white/90"
+                    onClick={() => setShowSendDialog(true)}
+                    data-testid="button-send-looks"
+                  >
                     <Send className="w-3 h-3 mr-2" />
                     Send me these looks
                   </Button>
-                </Card>
+                </div>
               </div>
             )}
           </div>
-        )}
+        </div>
+      )}
 
-        <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {emailSent ? "You're all set!" : "Send your picks to your inbox"}
-              </DialogTitle>
-              <DialogDescription>
-                {emailSent
-                  ? "Check your email — your outfit picks are on the way."
-                  : "We'll email your saved outfits so you can reference them later. No account needed."}
-              </DialogDescription>
-            </DialogHeader>
-            {emailSent ? (
-              <div className="flex flex-col items-center py-4">
-                <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mb-4">
-                  <Check className="w-6 h-6" />
-                </div>
-                <Button variant="ghost" onClick={() => setShowSendDialog(false)} data-testid="button-close-send-dialog">
-                  Close
+      {/* Send dialog */}
+      <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {emailSent ? "You're all set!" : "Send your picks to your inbox"}
+            </DialogTitle>
+            <DialogDescription>
+              {emailSent
+                ? "Check your email — your outfit picks are on the way."
+                : "We'll email your saved outfits so you can reference them later. No account needed."}
+            </DialogDescription>
+          </DialogHeader>
+          {emailSent ? (
+            <div className="flex flex-col items-center py-4">
+              <div className="w-12 h-12 rounded-full bg-[#2236E8]/10 flex items-center justify-center mb-4">
+                <Check className="w-6 h-6 text-[#2236E8]" />
+              </div>
+              <Button variant="ghost" onClick={() => setShowSendDialog(false)} data-testid="button-close-send-dialog">
+                Close
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 pt-2">
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="your@email.com"
+                  value={sendEmail}
+                  onChange={(e) => setSendEmail(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && sendEmail.includes("@")) {
+                      sendLooksMutation.mutate(sendEmail);
+                    }
+                  }}
+                  data-testid="input-send-email"
+                />
+                <Button
+                  onClick={() => sendLooksMutation.mutate(sendEmail)}
+                  disabled={!sendEmail.includes("@") || sendLooksMutation.isPending}
+                  className="rounded-full bg-[#0B1340] text-white"
+                  data-testid="button-submit-send-email"
+                >
+                  {sendLooksMutation.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Mail className="w-4 h-4" />
+                  )}
                 </Button>
               </div>
-            ) : (
-              <div className="flex flex-col gap-4 pt-2">
-                <div className="flex gap-2">
-                  <Input
-                    type="email"
-                    placeholder="your@email.com"
-                    value={sendEmail}
-                    onChange={(e) => setSendEmail(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && sendEmail.includes("@")) {
-                        sendLooksMutation.mutate(sendEmail);
-                      }
-                    }}
-                    data-testid="input-send-email"
-                  />
-                  <Button
-                    onClick={() => sendLooksMutation.mutate(sendEmail)}
-                    disabled={!sendEmail.includes("@") || sendLooksMutation.isPending}
-                    data-testid="button-submit-send-email"
-                  >
-                    {sendLooksMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Mail className="w-4 h-4" />
-                    )}
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  We'll only use this to send your outfits. No spam, no marketing.
-                </p>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
+              <p className="text-xs text-muted-foreground">
+                We'll only use this to send your outfits. No spam, no marketing.
+              </p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <StyleCTA />
     </div>
   );
 }

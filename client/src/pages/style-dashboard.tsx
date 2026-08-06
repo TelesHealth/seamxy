@@ -6,13 +6,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { useCustomerAuth } from "@/lib/customer-auth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { StyleCTA } from "@/components/StyleCTA";
 import {
   Sparkles,
   ShoppingBag,
@@ -22,7 +20,6 @@ import {
   Target,
   TrendingUp,
   MessageCircle,
-  ExternalLink,
   Lock,
   ChevronRight,
   RefreshCw,
@@ -72,34 +69,26 @@ function OutfitCard({ outfit, isLocked = false }: { outfit: OutfitRecommendation
   });
 
   const weatherIcon = {
-    sunny: Sun,
-    rainy: Cloud,
-    cold: Snowflake,
-    hot: Sun,
+    sunny: Sun, rainy: Cloud, cold: Snowflake, hot: Sun,
   }[outfit.weather || "sunny"] || Sun;
-
   const WeatherIcon = weatherIcon;
 
   return (
-    <Card className={`overflow-hidden ${isLocked ? "opacity-75" : ""}`}>
-      <div className="relative aspect-[4/5] bg-muted">
+    <div className={`bg-white rounded-3xl overflow-hidden shadow-sm ${isLocked ? "opacity-75" : ""}`}>
+      <div className="relative aspect-[4/5] bg-foreground/5">
         {isLocked && (
-          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
-            <Lock className="w-8 h-8 text-muted-foreground mb-2" />
-            <p className="text-sm text-muted-foreground">Premium Content</p>
-            <Button size="sm" className="mt-3">Unlock</Button>
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
+            <Lock className="w-8 h-8 text-foreground/30 mb-2" />
+            <p className="text-sm text-foreground/50">Premium Content</p>
+            <Button size="sm" className="mt-3 rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-5">Unlock</Button>
           </div>
         )}
         <div className="grid grid-cols-2 gap-1 p-2 h-full">
           {(outfit.items as any[])?.slice(0, 4).map((item, i) => (
-            <div key={i} className="relative rounded-md overflow-hidden bg-background">
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                className="w-full h-full object-cover"
-              />
+            <div key={i} className="relative rounded-xl overflow-hidden bg-white">
+              <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
               {item.price && (
-                <span className="absolute bottom-1 right-1 text-xs bg-background/80 px-1 rounded">
+                <span className="absolute bottom-1 right-1 text-[10px] bg-white/90 px-1.5 rounded-full">
                   ${item.price}
                 </span>
               )}
@@ -107,209 +96,53 @@ function OutfitCard({ outfit, isLocked = false }: { outfit: OutfitRecommendation
           ))}
         </div>
       </div>
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-2">
+      <div className="p-5">
+        <div className="flex items-start justify-between gap-2 mb-2">
           <div>
-            <h3 className="font-semibold">{outfit.title}</h3>
-            <p className="text-sm text-muted-foreground line-clamp-2">{outfit.description}</p>
+            <h3 className="font-display font-600 text-foreground">{outfit.title}</h3>
+            <p className="text-sm text-foreground/50 line-clamp-2">{outfit.description}</p>
           </div>
           {outfit.weather && (
-            <Badge variant="outline" className="flex-shrink-0">
-              <WeatherIcon className="w-3 h-3 mr-1" />
+            <span className="flex items-center gap-1 text-xs text-foreground/40 flex-shrink-0">
+              <WeatherIcon className="w-3 h-3" />
               {outfit.weather}
-            </Badge>
+            </span>
           )}
         </div>
         {outfit.stylistNotes && (
-          <div className="mt-3 p-2 bg-muted rounded-md text-sm">
-            <p className="text-muted-foreground">{outfit.stylistNotes}</p>
+          <div className="mt-3 bg-foreground/4 rounded-2xl p-3 text-xs text-foreground/60 leading-relaxed">
+            {outfit.stylistNotes}
           </div>
         )}
         {outfit.voiceNoteUrl && (
-          <Button variant="ghost" size="sm" className="mt-2 w-full">
-            <Play className="w-4 h-4 mr-2" />
+          <button className="mt-2 flex items-center gap-2 text-xs text-foreground/50 hover:text-foreground transition-colors">
+            <Play className="w-3.5 h-3.5" />
             Listen to stylist notes
-          </Button>
+          </button>
         )}
-      </CardContent>
-      <CardFooter className="p-4 pt-0 flex gap-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex-1"
-          onClick={() => saveMutation.mutate()}
-          disabled={saveMutation.isPending}
-          data-testid={`button-save-outfit-${outfit.id}`}
-        >
-          <Bookmark className="w-4 h-4 mr-1" />
-          Save
-        </Button>
-        <Button size="sm" className="flex-1" data-testid={`button-shop-outfit-${outfit.id}`}>
-          <ShoppingBag className="w-4 h-4 mr-1" />
-          Shop Look
-        </Button>
-      </CardFooter>
-    </Card>
-  );
-}
-
-function ClosetPreview({ items }: { items: UserClosetItem[] }) {
-  const [, setLocation] = useLocation();
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">My Closet</CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => setLocation("/closet")}>
-            View All
-            <ChevronRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
-        <CardDescription>
-          {items.length} items uploaded
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-4 gap-2">
-          {items.slice(0, 7).map((item) => (
-            <div 
-              key={item.id} 
-              className="aspect-square rounded-md overflow-hidden bg-muted"
-            >
-              <img
-                src={item.imageUrl}
-                alt={item.category}
-                className="w-full h-full object-cover"
-              />
-            </div>
-          ))}
+        <div className="flex gap-2 mt-4">
           <Button
             variant="outline"
-            className="aspect-square flex flex-col items-center justify-center"
-            onClick={() => setLocation("/closet")}
-            data-testid="button-add-closet-item"
+            size="sm"
+            className="flex-1 rounded-full border-foreground/15 text-xs"
+            onClick={() => saveMutation.mutate()}
+            disabled={saveMutation.isPending}
+            data-testid={`button-save-outfit-${outfit.id}`}
           >
-            <Plus className="w-5 h-5" />
-            <span className="text-xs mt-1">Add</span>
+            <Bookmark className="w-3.5 h-3.5 mr-1.5" />
+            Save
+          </Button>
+          <Button
+            size="sm"
+            className="flex-1 rounded-full bg-[#0B1340] text-white text-xs hover:bg-[#0B1340]/90"
+            data-testid={`button-shop-outfit-${outfit.id}`}
+          >
+            <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
+            Shop Look
           </Button>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function StylistMessages({ messages }: { messages: any[] }) {
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Stylist Messages</CardTitle>
-          <Badge variant="secondary">{messages.length} new</Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[200px]">
-          {messages.length === 0 ? (
-            <div className="text-center py-8">
-              <MessageCircle className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">No messages yet</p>
-              <Button variant="ghost" size="sm" className="mt-2">
-                Chat with AI Stylist
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {messages.map((msg, i) => (
-                <div key={i} className="flex gap-3 p-2 rounded-lg hover-elevate">
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={msg.stylistAvatar} />
-                    <AvatarFallback>{msg.stylistName?.[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{msg.stylistName}</p>
-                    <p className="text-sm text-muted-foreground truncate">{msg.preview}</p>
-                  </div>
-                  <span className="text-xs text-muted-foreground">{msg.time}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </CardContent>
-    </Card>
-  );
-}
-
-function GoalsProgress({ goals }: { goals: DashboardData["goals"] }) {
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Target className="w-5 h-5" />
-          Style Goals
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {goals.length === 0 ? (
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground">No goals set yet</p>
-            <Button variant="ghost" size="sm">Set a goal</Button>
-          </div>
-        ) : (
-          goals.map((goal) => (
-            <div key={goal.id} className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>{goal.title}</span>
-                <span className="text-muted-foreground">{goal.progress}/{goal.target}</span>
-              </div>
-              <Progress value={(goal.progress / goal.target) * 100} className="h-2" />
-            </div>
-          ))
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function SavedItemsPreview({ items }: { items: UserSavedItem[] }) {
-  const [, setLocation] = useLocation();
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Heart className="w-5 h-5" />
-            Saved Items
-          </CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => setLocation("/saved")}>
-            View All
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {items.length === 0 ? (
-          <div className="text-center py-4">
-            <p className="text-sm text-muted-foreground">No saved items yet</p>
-            <Button variant="ghost" size="sm" onClick={() => setLocation("/shop")}>
-              Browse Shop
-            </Button>
-          </div>
-        ) : (
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {items.slice(0, 5).map((item, i) => (
-              <div 
-                key={item.id} 
-                className="w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0"
-              >
-                <Shirt className="w-full h-full p-4 text-muted-foreground" />
-              </div>
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
 
@@ -318,7 +151,7 @@ export default function StyleDashboard() {
   const { customer } = useCustomerAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState("today");
+  const [activeTab, setActiveTab] = useState<"today" | "weekly">("today");
 
   const { data, isLoading } = useQuery<DashboardData>({
     queryKey: ["/api/v1/dashboard"],
@@ -338,34 +171,43 @@ export default function StyleDashboard() {
   if (!customer) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center p-8">
-          <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Welcome to SeamXY</h2>
-          <p className="text-muted-foreground mb-6">
+        <div className="bg-white rounded-3xl w-full max-w-md text-center p-10 shadow-sm">
+          <div className="w-14 h-14 rounded-full bg-[#2236E8]/10 flex items-center justify-center mx-auto mb-5">
+            <Sparkles className="w-7 h-7 text-[#2236E8]" />
+          </div>
+          <h2 className="font-display text-3xl font-600 text-foreground mb-2">Welcome to SeamXY</h2>
+          <p className="text-foreground/50 mb-7 text-sm leading-relaxed">
             Sign in to access your personalized style dashboard
           </p>
           <div className="space-y-3">
-            <Button className="w-full" onClick={() => setLocation("/login")}>
+            <Button
+              className="w-full rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase"
+              onClick={() => setLocation("/login")}
+            >
               Sign In
             </Button>
-            <Button variant="outline" className="w-full" onClick={() => setLocation("/signup")}>
+            <Button
+              variant="outline"
+              className="w-full rounded-full border-foreground/15 text-xs tracking-widest uppercase"
+              onClick={() => setLocation("/signup")}
+            >
               Create Account
             </Button>
           </div>
-        </Card>
+        </div>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background p-4 md:p-8">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <Skeleton className="h-12 w-64" />
+      <div className="min-h-screen px-6 md:px-10 py-12">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <Skeleton className="h-10 w-64" />
           <div className="grid md:grid-cols-3 gap-4">
-            <Skeleton className="h-[400px]" />
-            <Skeleton className="h-[400px]" />
-            <Skeleton className="h-[400px]" />
+            <Skeleton className="h-[400px] rounded-3xl" />
+            <Skeleton className="h-[400px] rounded-3xl" />
+            <Skeleton className="h-[400px] rounded-3xl" />
           </div>
         </div>
       </div>
@@ -384,214 +226,334 @@ export default function StyleDashboard() {
   };
 
   const { profile, todaysOutfits, weeklyOutfits, savedItems, closetItems, stylistMessages, subscription, goals } = dashboardData;
+  const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 18 ? "Good afternoon" : "Good evening";
+  const firstName = customer.name?.split(" ")[0] || "";
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">
-              Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}, {customer.name?.split(" ")[0]}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              Here's your personalized style feed for today
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge variant={subscription.tier === "free" ? "secondary" : "default"}>
-              {subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)}
-            </Badge>
-            {subscription.tier === "free" && (
-              <Button size="sm" onClick={() => setLocation("/pricing")}>
-                Upgrade
-                <Sparkles className="w-4 h-4 ml-1" />
-              </Button>
-            )}
-          </div>
-        </div>
+    <div className="min-h-screen">
+      <div className="px-6 md:px-10 py-12">
+        <div className="max-w-7xl mx-auto">
 
-        {/* Style Profile Summary */}
-        {profile?.styleIdentitySummary && (
-          <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-6 h-6 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">Your Style Identity</h3>
-                  <p className="text-sm text-muted-foreground">{profile.styleIdentitySummary}</p>
-                  <Button variant="ghost" size="sm" className="p-0 h-auto mt-2" onClick={() => setLocation("/style-quiz")}>
-                    Update your preferences
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Main Content Grid */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Outfit Feed */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-center justify-between">
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList>
-                  <TabsTrigger value="today" data-testid="tab-today">
-                    <Calendar className="w-4 h-4 mr-2" />
-                    Today
-                  </TabsTrigger>
-                  <TabsTrigger value="weekly" data-testid="tab-weekly">
-                    <TrendingUp className="w-4 h-4 mr-2" />
-                    This Week
-                  </TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refreshMutation.mutate()}
-                disabled={refreshMutation.isPending}
-                data-testid="button-refresh-outfits"
-              >
-                <RefreshCw className={`w-4 h-4 mr-2 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
-                New Ideas
-              </Button>
+          {/* ── Header ── */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+            <div>
+              <p className="text-[10px] tracking-[0.2em] text-foreground/50 uppercase mb-3 flex items-center gap-3">
+                <span className="w-8 h-px bg-foreground/30 inline-block" />
+                Dashboard
+              </p>
+              <h1 className="font-display font-600 text-foreground leading-tight" style={{ fontSize: "clamp(2rem, 4vw, 3.5rem)" }}>
+                {greeting}{firstName ? `, ${firstName}` : ""}.
+              </h1>
+              <p className="text-foreground/50 mt-1">Here's your personalized style feed for today.</p>
             </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-xs tracking-widest uppercase px-3 py-1.5 rounded-full font-500 ${
+                subscription.tier === "free"
+                  ? "bg-foreground/8 text-foreground/60"
+                  : "bg-[#0B1340] text-white"
+              }`}>
+                {subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)}
+              </span>
+              {subscription.tier === "free" && (
+                <Button
+                  size="sm"
+                  className="rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 text-white text-xs tracking-widest uppercase px-5"
+                  onClick={() => setLocation("/pricing")}
+                >
+                  Upgrade
+                  <Sparkles className="w-3.5 h-3.5 ml-1.5" />
+                </Button>
+              )}
+            </div>
+          </div>
 
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-              >
-                {activeTab === "today" ? (
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {todaysOutfits.length === 0 ? (
-                      <Card className="col-span-2 p-12 text-center">
-                        <Shirt className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="font-semibold mb-2">No outfits yet</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Complete your style quiz to get personalized recommendations
-                        </p>
-                        <Button onClick={() => setLocation("/style-quiz")}>
-                          Take Style Quiz
-                        </Button>
-                      </Card>
-                    ) : (
-                      todaysOutfits.map((outfit, i) => (
-                        <OutfitCard 
-                          key={outfit.id} 
-                          outfit={outfit} 
-                          isLocked={!!outfit.isLocked && subscription.tier === "free"}
-                        />
-                      ))
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {weeklyOutfits.length === 0 ? (
-                      <Card className="col-span-2 p-12 text-center">
-                        <Calendar className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                        <h3 className="font-semibold mb-2">Weekly outfits coming soon</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Check back later for your weekly style recommendations
-                        </p>
-                      </Card>
-                    ) : (
-                      weeklyOutfits.map((outfit) => (
-                        <OutfitCard 
-                          key={outfit.id} 
-                          outfit={outfit}
-                          isLocked={!!outfit.isLocked && subscription.tier === "free"}
-                        />
-                      ))
-                    )}
-                  </div>
-                )}
-              </motion.div>
-            </AnimatePresence>
+          {/* ── Style Identity Card ── */}
+          {profile?.styleIdentitySummary && (
+            <div className="bg-white rounded-3xl p-6 mb-8 shadow-sm flex items-start gap-5">
+              <div className="w-12 h-12 rounded-full bg-[#2236E8]/10 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-[#2236E8]" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] tracking-widest uppercase text-foreground/40 mb-1">Your Style Identity</p>
+                <p className="text-sm text-foreground/70 leading-relaxed">{profile.styleIdentitySummary}</p>
+                <button
+                  className="text-xs text-[#2236E8] hover:underline mt-2 flex items-center gap-1"
+                  onClick={() => setLocation("/style-quiz")}
+                >
+                  Update your preferences
+                  <ChevronRight className="w-3 h-3" />
+                </button>
+              </div>
+            </div>
+          )}
 
-            {subscription.tier === "free" && (
-              <Card className="p-4 bg-muted/50">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-primary" />
+          {/* ── Main grid ── */}
+          <div className="grid lg:grid-cols-3 gap-6">
+            {/* ── Left col: Outfits ── */}
+            <div className="lg:col-span-2 space-y-6">
+              {/* Tab row */}
+              <div className="flex items-center justify-between">
+                <div className="flex gap-1 bg-white rounded-full p-1 shadow-sm">
+                  {(["today", "weekly"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className={`rounded-full px-5 py-2 text-xs tracking-widest uppercase font-500 transition-all ${
+                        activeTab === tab
+                          ? "bg-[#0B1340] text-white shadow"
+                          : "text-foreground/50 hover:text-foreground"
+                      }`}
+                      data-testid={`tab-${tab}`}
+                    >
+                      {tab === "today" ? "Today" : "This Week"}
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => refreshMutation.mutate()}
+                  disabled={refreshMutation.isPending}
+                  className="rounded-full border-foreground/15 text-xs tracking-widest uppercase"
+                  data-testid="button-refresh-outfits"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${refreshMutation.isPending ? "animate-spin" : ""}`} />
+                  New Ideas
+                </Button>
+              </div>
+
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                >
+                  {activeTab === "today" ? (
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {todaysOutfits.length === 0 ? (
+                        <div className="col-span-2 bg-white rounded-3xl p-12 text-center shadow-sm">
+                          <div className="w-14 h-14 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-4">
+                            <Shirt className="w-7 h-7 text-foreground/30" />
+                          </div>
+                          <h3 className="font-display font-600 text-foreground mb-2">No outfits yet</h3>
+                          <p className="text-sm text-foreground/50 mb-5">
+                            Complete your style quiz to get personalized recommendations
+                          </p>
+                          <Button
+                            className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-7"
+                            onClick={() => setLocation("/style-quiz")}
+                          >
+                            Take Style Quiz
+                          </Button>
+                        </div>
+                      ) : (
+                        todaysOutfits.map((outfit) => (
+                          <OutfitCard
+                            key={outfit.id}
+                            outfit={outfit}
+                            isLocked={!!outfit.isLocked && subscription.tier === "free"}
+                          />
+                        ))
+                      )}
                     </div>
-                    <div>
-                      <p className="font-medium">
-                        {subscription.outfitsRemaining} outfits remaining this week
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Upgrade for unlimited personalized looks
-                      </p>
+                  ) : (
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {weeklyOutfits.length === 0 ? (
+                        <div className="col-span-2 bg-white rounded-3xl p-12 text-center shadow-sm">
+                          <div className="w-14 h-14 rounded-full bg-foreground/5 flex items-center justify-center mx-auto mb-4">
+                            <Calendar className="w-7 h-7 text-foreground/30" />
+                          </div>
+                          <h3 className="font-display font-600 text-foreground mb-2">Weekly outfits coming soon</h3>
+                          <p className="text-sm text-foreground/50">
+                            Check back later for your weekly style recommendations
+                          </p>
+                        </div>
+                      ) : (
+                        weeklyOutfits.map((outfit) => (
+                          <OutfitCard
+                            key={outfit.id}
+                            outfit={outfit}
+                            isLocked={!!outfit.isLocked && subscription.tier === "free"}
+                          />
+                        ))
+                      )}
+                    </div>
+                  )}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Usage bar */}
+              {subscription.tier === "free" && (
+                <div className="bg-white rounded-3xl p-5 shadow-sm flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 flex-1 min-w-0">
+                    <div className="w-10 h-10 rounded-full bg-[#2236E8]/10 flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-5 h-5 text-[#2236E8]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-600 text-sm text-foreground">{subscription.outfitsRemaining} outfits remaining this week</p>
+                      <p className="text-xs text-foreground/50">Upgrade for unlimited personalized looks</p>
                     </div>
                   </div>
-                  <Button onClick={() => setLocation("/pricing")}>
+                  <Button
+                    className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-5 flex-shrink-0"
+                    onClick={() => setLocation("/pricing")}
+                  >
                     Upgrade
                   </Button>
                 </div>
-              </Card>
-            )}
-          </div>
+              )}
+            </div>
 
-          {/* Right Column - Sidebar Widgets */}
-          <div className="space-y-6">
-            <StylistMessages messages={stylistMessages} />
-            <ClosetPreview items={closetItems} />
-            <SavedItemsPreview items={savedItems} />
-            <GoalsProgress goals={goals} />
-            
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => setLocation("/ai-stylist")}
-                  data-testid="button-chat-stylist"
-                >
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  Chat with AI Stylist
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => setLocation("/shop")}
-                  data-testid="button-browse-shop"
-                >
-                  <ShoppingBag className="w-4 h-4 mr-2" />
-                  Browse Shop
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => setLocation("/closet")}
-                  data-testid="button-manage-closet"
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Upload to Closet
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={() => setLocation("/upload")}
-                  data-testid="button-virtual-tryon"
-                >
-                  <Camera className="w-4 h-4 mr-2" />
-                  Virtual Try-On
-                </Button>
-              </CardContent>
-            </Card>
+            {/* ── Right col: Sidebar ── */}
+            <div className="space-y-5">
+              {/* Advisor Notes */}
+              <div className="bg-[#0B1340] rounded-3xl p-6 text-white">
+                <p className="text-[9px] text-white/40 tracking-widest uppercase mb-3">Advisor Notes</p>
+                {stylistMessages.length === 0 ? (
+                  <div className="text-center py-4">
+                    <MessageCircle className="w-8 h-8 text-white/20 mx-auto mb-3" />
+                    <p className="text-sm text-white/50">No messages yet</p>
+                    <button
+                      className="text-xs text-white/40 hover:text-white/70 transition-colors mt-2 flex items-center gap-1 mx-auto"
+                      onClick={() => setLocation("/ai-stylist")}
+                    >
+                      Chat with AI Stylist
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {stylistMessages.slice(0, 3).map((msg, i) => (
+                      <div key={i} className="flex gap-3 items-start">
+                        <Avatar className="w-7 h-7 flex-shrink-0">
+                          <AvatarImage src={msg.stylistAvatar} />
+                          <AvatarFallback className="bg-white/10 text-white text-xs">{msg.stylistName?.[0]}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-600 text-white/80">{msg.stylistName}</p>
+                          <p className="text-xs text-white/50 truncate">{msg.preview}</p>
+                        </div>
+                        <span className="text-[10px] text-white/30 flex-shrink-0">{msg.time}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Closet preview */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] tracking-widest uppercase text-foreground/40">My Closet</p>
+                  <button
+                    className="text-xs text-[#2236E8] hover:underline flex items-center gap-1"
+                    onClick={() => setLocation("/closet")}
+                  >
+                    View All
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+                <p className="text-sm text-foreground/50 mb-4">{closetItems.length} items uploaded</p>
+                <div className="grid grid-cols-4 gap-2">
+                  {closetItems.slice(0, 7).map((item) => (
+                    <div key={item.id} className="aspect-square rounded-xl overflow-hidden bg-foreground/5">
+                      <img src={item.imageUrl} alt={item.category} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                  <button
+                    className="aspect-square rounded-xl border-2 border-dashed border-foreground/15 flex flex-col items-center justify-center hover:border-foreground/30 transition-colors"
+                    onClick={() => setLocation("/closet")}
+                    data-testid="button-add-closet-item"
+                  >
+                    <Plus className="w-4 h-4 text-foreground/30" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Saved items */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[10px] tracking-widest uppercase text-foreground/40 flex items-center gap-1.5">
+                    <Heart className="w-3.5 h-3.5" />
+                    Saved Items
+                  </p>
+                  <button
+                    className="text-xs text-[#2236E8] hover:underline"
+                    onClick={() => setLocation("/saved")}
+                  >
+                    View All
+                  </button>
+                </div>
+                {savedItems.length === 0 ? (
+                  <div className="text-center py-3">
+                    <p className="text-sm text-foreground/40 mb-2">No saved items yet</p>
+                    <button
+                      className="text-xs text-[#2236E8] hover:underline"
+                      onClick={() => setLocation("/shop")}
+                    >
+                      Browse Shop
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {savedItems.slice(0, 5).map((item) => (
+                      <div key={item.id} className="w-14 h-14 rounded-xl overflow-hidden bg-foreground/5 flex-shrink-0">
+                        <Shirt className="w-full h-full p-3 text-foreground/20" />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Style Goals */}
+              {goals.length > 0 && (
+                <div className="bg-white rounded-3xl p-6 shadow-sm">
+                  <p className="text-[10px] tracking-widest uppercase text-foreground/40 flex items-center gap-1.5 mb-4">
+                    <Target className="w-3.5 h-3.5" />
+                    Style Goals
+                  </p>
+                  <div className="space-y-4">
+                    {goals.map((goal) => (
+                      <div key={goal.id} className="space-y-1.5">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-foreground/70">{goal.title}</span>
+                          <span className="text-foreground/40">{goal.progress}/{goal.target}</span>
+                        </div>
+                        <Progress value={(goal.progress / goal.target) * 100} className="h-1.5" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quick actions */}
+              <div className="bg-white rounded-3xl p-6 shadow-sm">
+                <p className="text-[10px] tracking-widest uppercase text-foreground/40 mb-4">Quick Actions</p>
+                <div className="space-y-2">
+                  {[
+                    { label: "Chat with AI Stylist", icon: MessageCircle, href: "/ai-stylist", testId: "button-chat-stylist" },
+                    { label: "Browse Shop", icon: ShoppingBag, href: "/shop", testId: "button-browse-shop" },
+                    { label: "Upload to Closet", icon: Camera, href: "/closet", testId: "button-manage-closet" },
+                    { label: "Virtual Try-On", icon: Camera, href: "/upload", testId: "button-virtual-tryon" },
+                  ].map(({ label, icon: Icon, href, testId }) => (
+                    <button
+                      key={href}
+                      onClick={() => setLocation(href)}
+                      className="w-full flex items-center gap-3 text-sm text-foreground/60 hover:text-foreground hover:bg-foreground/4 rounded-xl px-3 py-2.5 transition-all"
+                      data-testid={testId}
+                    >
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <StyleCTA />
     </div>
   );
 }
