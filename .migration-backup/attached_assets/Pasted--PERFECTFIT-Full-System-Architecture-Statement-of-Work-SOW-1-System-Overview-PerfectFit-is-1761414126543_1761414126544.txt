@@ -1,0 +1,261 @@
+🧠 PERFECTFIT — Full System Architecture & Statement of Work (SOW)
+1. System Overview
+
+PerfectFit is an AI-driven personalized shopping and tailoring marketplace for men’s fashion.
+It merges:
+
+Measurement-based fit matching
+
+Style recommendations based on age, lifestyle, and hobbies
+
+Budget optimization
+
+Quick Buy retail purchasing
+
+Custom Clothing Network, where users can receive bespoke recommendations and send requests to tailors.
+
+2. Platform Components
+Layer	Core Purpose	Key Tech
+Frontend	Mobile/web app (Flutter) for users & makers	Flutter, Dart
+Backend	Business logic, AI parsing, APIs, matchmaking	Python (FastAPI/Flask)
+Database	User, Maker, Product, Order, RFQ data	PostgreSQL / Firebase
+AI Layer	Style extraction & text understanding	OpenAI API / Hugging Face
+Integrations	Retail APIs, Payment gateways	Amazon, Shopify, Stripe, PayPal
+Hosting	Dev on Replit, Prod on AWS/Firebase	AWS EC2/S3, Firebase Hosting
+3. Functional Modules
+🧍‍♂️ User Features
+
+Measurement input (manual + photo scan)
+
+Style quiz & freehand description
+
+Fit-based + style-based recommendations
+
+Budget sliders
+
+Quick Buy checkout for retail
+
+“Request Custom” for bespoke orders
+
+Order tracking (retail & bespoke)
+
+🧵 Maker (Tailor) Features
+
+Maker sign-up & profile creation
+
+Upload sample garments / fabrics
+
+Set price ranges & lead times
+
+Receive RFQs
+
+Send quotes (price + delivery + materials)
+
+Manage custom orders & deposits
+
+💡 Admin Features
+
+Verify makers
+
+Approve product feeds
+
+Monitor orders & payments
+
+Analytics dashboard
+
+4. Architecture Diagram (Simplified)
+      [ Users (Flutter App) ]                     [ Makers (Web/Flutter Web) ]
+               |                                             |
+               | REST / JSON APIs                            |
+               v                                             v
+     ┌────────────────────────────────────────────────────────────┐
+     │                   Backend (FastAPI / Flask)                │
+     │ ─ Auth, Profiles, Measurements, Fit Engine, Style NLP      │
+     │ ─ Product Aggregator (Retail APIs)                         │
+     │ ─ Recommendation Engine (Fit + Style + Budget)             │
+     │ ─ Quick Buy + Payments (Stripe / PayPal)                   │
+     │ ─ Maker Matching Engine + Bespoke RFQ Router               │
+     └────────────────────────────────────────────────────────────┘
+                      |                  |                  |
+                      v                  v                  v
+            [ PostgreSQL / Firestore ]   [ Stripe ]      [ Amazon, Shopify APIs ]
+
+5. Database Schema (Simplified)
+
+Core Tables:
+
+users (id, name, email, role)
+
+measurements (user_id, chest, waist, etc.)
+
+user_profiles (age, style_tags, hobbies, budget)
+
+products (id, brand, price, fit_score, style_match)
+
+makers (id, specialties, style_tags, price_range, location)
+
+custom_requests (user_id, item_type, budget, notes, status)
+
+quotes (request_id, maker_id, price, lead_time, message)
+
+orders (retail/bespoke, user_id, total, status)
+
+payments (order_id, type, provider, amount, status)
+
+6. Core Backend Services
+Service	Purpose
+ai_parser.py	Converts freehand user text into structured data (age, lifestyle, style, budget).
+recommendation_service.py	Ranks retail items by Fit + Style + Budget.
+maker_match_service.py	Matches users to tailors based on style tags, pricing, and garment type.
+rfq_service.py	Handles custom request creation and quote distribution.
+affiliate_service.py	Creates Quick Buy affiliate checkout URLs.
+payments_service.py	Manages Stripe/PayPal deposits and balances.
+7. User Flow Scenarios
+🔹 Scenario 1: Retail Quick Buy
+
+User enters measurements and preferences.
+
+System fetches matching products (e.g., Amazon, ASOS).
+
+Returns list ranked by Fit + Style + Budget.
+
+User clicks “Quick Buy” → redirected to checkout page or in-app Stripe session.
+
+🔹 Scenario 2: Bespoke Custom Request
+
+User selects “Request Custom Suit.”
+
+AI parses user style & budget.
+
+Makers matching those parameters receive RFQ.
+
+Makers submit quotes (price + delivery + fabric).
+
+User selects one, pays deposit → order created.
+
+Tailor updates production status → final payment upon completion.
+
+8. Scoring Logic
+
+Retail Recommendation
+
+Score = 0.5 * FitScore + 0.3 * StyleMatch + 0.2 * BudgetFit
+
+
+Maker Match
+
+MakerScore = 0.4 * StyleOverlap + 0.3 * BudgetCompatibility + 0.2 * Expertise + 0.1 * LeadTime
+
+9. Monetization Plan
+Revenue Stream	Description
+Affiliate Commissions	Earn % on retail Quick Buy sales.
+Bespoke Commissions	10% platform fee per custom order.
+Maker Subscriptions	Tailors pay $29–$99/month to receive leads.
+Sponsored Listings	Brands pay for visibility or featured spots.
+Premium User Tier	AI stylist + outfit planning ($5.99/mo).
+Data Insights (anonymized)	Sell aggregated trend data to brands.
+10. Development SOW (Statement of Work)
+Phase 1 — Foundations (2 Weeks)
+
+Flask/FastAPI setup on Replit
+
+Auth, user profiles, measurement endpoints
+
+AI parsing endpoint (OpenAI API)
+
+DB schema setup (PostgreSQL)
+
+Swagger API docs
+
+Phase 2 — Retail Discovery (3 Weeks)
+
+Product aggregator (mock + 1 live source)
+
+Recommendation Engine (Fit/Style/Budget scoring)
+
+Flutter UI for search results
+
+Quick Buy integration (affiliate link redirect)
+
+Secure checkout & analytics
+
+Phase 3 — Bespoke Network (4 Weeks)
+
+Maker registration + dashboard
+
+RFQ creation & routing logic
+
+Quote submission flow
+
+Deposit payments (Stripe)
+
+Order management & tracking
+
+Notifications (email/push)
+
+Phase 4 — Testing & Launch (2 Weeks)
+
+Unit/integration tests
+
+Load & security testing
+
+Frontend polish (UX for Quick Buy / RFQ flow)
+
+Replit deployment (MVP)
+
+Post-launch analytics dashboard
+
+11. Deliverables
+Deliverable	Description
+Backend Code (Flask/FastAPI)	Complete API routes & logic with test data.
+Frontend (Flutter)	User and Maker interfaces.
+Database Schema	SQL migration files.
+AI Parser Script	Python module using OpenAI API.
+Payment Gateway Integration	Stripe checkout for retail & deposits.
+Figma Wireframes	Full user journey.
+README.md + Runbook	Setup, environment variables, and API docs.
+12. Security & Compliance
+
+HTTPS everywhere
+
+JWT authentication
+
+Encrypted PII & measurements (AES-256)
+
+Stripe PCI-DSS compliance (no card storage)
+
+GDPR/CCPA compliant data handling
+
+Secure API keys in environment variables
+
+13. Future Enhancements
+Feature	Description
+3D Fit & Try-On	Virtual fitting via AR / 3D avatar models
+AI Fabric Recommender	Suggests fabric types & colors
+Outfit Capsules	Full-outfit Quick Buy bundles
+Voice Assistant / Chat Stylist	Conversational recommendations
+White-Label Platform	License tech to boutiques & tailoring houses
+14. README (Developer Summary)
+🧩 Quick Start on Replit
+
+Clone repo or import ZIP.
+
+In /backend, run:
+
+pip install -r requirements.txt
+python app.py
+
+
+In /frontend, run:
+
+flutter run -d chrome
+
+
+Add .env with:
+
+OPENAI_API_KEY=
+STRIPE_SECRET_KEY=
+POSTGRES_URL=
+
+
+Open Swagger at localhost:8080/docs.

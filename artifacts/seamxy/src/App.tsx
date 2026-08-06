@@ -1,0 +1,206 @@
+import { Switch, Route, Router as WouterRouter } from "wouter";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "./lib/queryClient";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Header } from "@/components/header";
+import { SupplierAuthProvider } from "@/lib/supplier-auth";
+import { CustomerAuthProvider } from "@/lib/customer-auth";
+
+// Pages
+import Home from "@/pages/home";
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
+import Onboarding from "@/pages/onboarding";
+import Shop from "@/pages/shop";
+import Makers from "@/pages/makers";
+import AiStylist from "@/pages/ai-stylist";
+import CustomRequest from "@/pages/custom-request";
+import MyRequests from "@/pages/my-requests";
+import MakerDashboard from "@/pages/maker-dashboard";
+import AdminLogin from "@/pages/admin/login";
+import AdminDashboard from "@/pages/admin/dashboard";
+import NotFound from "@/pages/not-found";
+
+// How It Works Pages
+import MeasureDescribe from "@/pages/measure-describe";
+import SmartMatching from "@/pages/smart-matching";
+import BuyCustomOrder from "@/pages/buy-custom-order";
+
+// Supplier Portal Pages
+import SupplierLogin from "@/pages/supplier/login";
+import SupplierRegister from "@/pages/supplier/register";
+import SupplierDashboard from "@/pages/supplier/dashboard";
+import SupplierProducts from "@/pages/supplier/products";
+import SupplierIntegrations from "@/pages/supplier/integrations";
+import SupplierOrders from "@/pages/supplier/orders";
+import SupplierAnalytics from "@/pages/supplier/analytics";
+import SupplierMessages from "@/pages/supplier/messages";
+import SupplierPortfolio from "@/pages/supplier/portfolio";
+import SupplierCollections from "@/pages/supplier/collections";
+import SupplierRequests from "@/pages/supplier/requests";
+import SupplierAiTraining from "@/pages/supplier/ai-training";
+import SupplierAiPortfolio from "@/pages/supplier/ai-portfolio";
+import SupplierAiPreview from "@/pages/supplier/ai-preview";
+import SupplierStudio from "@/pages/supplier/studio";
+import { SupplierLayout } from "@/pages/supplier/layout";
+
+// Stylist Public Profile
+import StylistProfile from "@/pages/stylist-profile";
+import CreatorProfile from "@/pages/creator-profile";
+import CreatorsDirectory from "@/pages/creators-directory";
+import ForCreators from "@/pages/for-creators";
+
+// Virtual Try-On
+import SharedTryOn from "@/pages/shared-tryon";
+import ARTryOn from "@/pages/ar-try-on";
+import UploadPage from "./pages/Upload";
+import StudioPage from "./pages/Studio";
+
+// Style Quiz & Dashboard
+import StyleQuiz from "@/components/style-quiz/style-quiz";
+import StyleDashboard from "@/pages/style-dashboard";
+import Closet from "@/pages/closet";
+
+// Situational Styling (Stage 0)
+import GetOutfitIdeas from "@/pages/get-outfit-ideas";
+import HowItWorksPage from "@/pages/how-it-works";
+
+// Gig Economy
+import GigDirectoryPage from "@/pages/gig-directory";
+import GigRegisterPage from "@/pages/gig-register";
+import GigPostJobPage from "@/pages/gig-post-job";
+
+// Social Closet
+import StyleGroupsPage from "./pages/style-groups";
+import LetItGoPage from "./pages/let-it-go";
+
+// New Design Pages
+import SystemPage from "./pages/system";
+import InspoPage from "./pages/inspo";
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/get-outfit-ideas" component={GetOutfitIdeas} />
+      <Route path="/how-it-works" component={HowItWorksPage} />
+      <Route path="/login" component={Login} />
+      <Route path="/signup" component={Signup} />
+      <Route path="/onboarding" component={Onboarding} />
+      <Route path="/shop" component={Shop} />
+      <Route path="/makers" component={Makers} />
+      <Route path="/custom-request" component={CustomRequest} />
+      <Route path="/my-requests" component={MyRequests} />
+      <Route path="/maker-dashboard" component={MakerDashboard} />
+      <Route path="/ai-stylist" component={AiStylist} />
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/dashboard" component={AdminDashboard} />
+      
+      {/* How It Works Pages */}
+      <Route path="/how-it-works/measure-describe" component={MeasureDescribe} />
+      <Route path="/how-it-works/smart-matching" component={SmartMatching} />
+      <Route path="/how-it-works/buy-custom-order" component={BuyCustomOrder} />
+
+      {/* Gig Economy */}
+      <Route path="/gig" component={GigDirectoryPage} />
+      <Route path="/gig/register" component={GigRegisterPage} />
+      <Route path="/gig/post-job" component={GigPostJobPage} />
+
+      {/* New Design Pages */}
+      <Route path="/system" component={SystemPage} />
+      <Route path="/inspo" component={InspoPage} />
+
+      {/* Social Closet */}
+      <Route path="/groups" component={StyleGroupsPage} />
+      <Route path="/groups/:id" component={StyleGroupsPage} />
+      <Route path="/closet/edit" component={LetItGoPage} />
+      
+      {/* Supplier Portal Routes (No Header) */}
+      <Route path="/supplier/login" component={SupplierLogin} />
+      <Route path="/supplier/register" component={SupplierRegister} />
+      <Route path="/supplier/dashboard">
+        <SupplierLayout><SupplierDashboard /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/products">
+        <SupplierLayout><SupplierProducts /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/integrations">
+        <SupplierLayout><SupplierIntegrations /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/orders">
+        <SupplierLayout><SupplierOrders /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/analytics">
+        <SupplierLayout><SupplierAnalytics /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/messages">
+        <SupplierLayout><SupplierMessages /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/portfolio">
+        <SupplierLayout><SupplierPortfolio /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/collections">
+        <SupplierLayout><SupplierCollections /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/requests">
+        <SupplierLayout><SupplierRequests /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/ai-training">
+        <SupplierLayout><SupplierAiTraining /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/ai-portfolio">
+        <SupplierLayout><SupplierAiPortfolio /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/ai-preview">
+        <SupplierLayout><SupplierAiPreview /></SupplierLayout>
+      </Route>
+      <Route path="/supplier/studio">
+        <SupplierLayout><SupplierStudio /></SupplierLayout>
+      </Route>
+      
+      {/* Stylist Public Profile */}
+      <Route path="/stylists/:handle" component={StylistProfile} />
+      
+      {/* Creator Studio */}
+      <Route path="/for-creators" component={ForCreators} />
+      <Route path="/creators" component={CreatorsDirectory} />
+      <Route path="/creator/:handle" component={CreatorProfile} />
+      
+      {/* Virtual Try-On */}
+      <Route path="/upload" component={UploadPage} />
+      <Route path="/studio" component={StudioPage} />
+      <Route path="/ar-try-on" component={ARTryOn} />
+      <Route path="/try-on/shared/:shareCode" component={SharedTryOn} />
+      
+      {/* Style Quiz & Dashboard */}
+      <Route path="/style-quiz" component={StyleQuiz} />
+      <Route path="/dashboard" component={StyleDashboard} />
+      <Route path="/closet" component={Closet} />
+      
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <CustomerAuthProvider>
+        <SupplierAuthProvider>
+          <TooltipProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, '')}>
+              <div className="min-h-screen seamxy-bg">
+                <Header />
+                <main>
+                  <Router />
+                </main>
+              </div>
+              <Toaster />
+            </WouterRouter>
+          </TooltipProvider>
+        </SupplierAuthProvider>
+      </CustomerAuthProvider>
+    </QueryClientProvider>
+  );
+}

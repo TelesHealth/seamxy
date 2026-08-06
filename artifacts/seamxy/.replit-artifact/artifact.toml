@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "SeamXY"
+description = "SeamXY is a fashion marketplace and AI styling platform. It connects shoppers with independent makers for custom garments, provides an AI stylist for outfit recommendations, and includes a full supplier/maker portal for managing products, orders, and integrations. The platform serves consumers, fashion makers, stylists, and creators."
+version = "1.0.0"
+id = "artifacts/seamxy"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 21825
+
+[services.development]
+run = "pnpm --filter @workspace/seamxy run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/seamxy", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/seamxy/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21825"
+BASE_PATH = "/"

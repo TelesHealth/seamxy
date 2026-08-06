@@ -1,0 +1,147 @@
+SeamXY Add-On Module: Stylist Portfolios & Personal AI Pages
+Purpose
+
+This module enhances SeamXY’s platform by introducing creator-driven stylist pages where stylists can upload and showcase their designs, connect their portfolios to their personalized AI stylist, and engage directly with users.
+It transforms SeamXY from a recommendation app into a creator marketplace for fashion innovation.
+
+1. Module Overview
+Feature Title
+
+AI Stylist Profile + Portfolio Upload Add-On
+
+Feature Summary
+
+Enable verified stylists to:
+
+Create personal stylist pages on SeamXY (e.g., seamxy.com/stylists/[handle])
+
+Upload and manage image portfolios (designs, styled looks, collections)
+
+Connect their AI stylist persona trained via questionnaire
+
+Display a live AI chat widget for client interactions
+
+Optionally accept RFQs (Request for Quotes) for custom work
+
+2. Feature Components
+A. Stylist Page Builder
+
+Each stylist receives a unique creator page including:
+
+Profile photo, bio, and style tags
+
+“About” section from questionnaire
+
+Portfolio grid with uploaded designs
+
+Embedded “Chat with My AI Stylist” widget
+
+Buttons: Follow, Message, Request Quote
+
+Reviews and social media links
+
+B. Image Upload Manager
+
+Upload up to 20–30 images (.jpg, .png, .webp)
+
+Optional metadata:
+
+Title, Description, Collection Name, Season/Occasion
+
+Tags (e.g., “Streetwear,” “Minimalist,” “Sustainable”)
+
+Secure storage via AWS S3 or Firebase Storage
+
+Optional image analysis via AI Vision for automated tagging and color/style recognition
+
+C. AI Stylist Integration
+
+Links stylist’s AI personality (from questionnaire) to their portfolio page
+
+Chat widget matches stylist’s tone and recommendation logic
+
+AI can learn from user feedback and engagement over time
+
+D. Stylist Dashboard
+
+A simple creator dashboard where stylists can:
+
+Upload and organize portfolio images
+
+Edit bio and personal details
+
+Manage RFQ requests or inquiries
+
+View engagement and profile traffic metrics
+
+3. User Experience Flow
+
+For Stylists:
+
+Sign up → complete AI stylist questionnaire
+
+Auto-generated stylist page created
+
+Upload designs and photos
+
+AI stylist and chat widget activated
+
+For Users:
+
+Browse or search stylist pages (by style, event, or location)
+
+View designer portfolios and chat with their AI stylist
+
+Follow, save looks, or request custom work
+
+4. Technical Requirements
+Function	Stack / Tools
+Image upload & storage	AWS S3 / Firebase
+Database	Firebase Firestore / Supabase
+Authentication	Firebase Auth
+Hosting	Replit Web / AWS Lambda
+Image tagging (optional)	OpenAI GPT-4V / AWS Rekognition
+Page routing	React Router / Flutter Web
+Chat integration	OpenAI API (GPT-4-turbo)
+Admin control	Replit Admin Dashboard
+5. Deliverables
+
+Frontend:
+
+Responsive stylist pages
+
+Portfolio upload interface
+
+Live AI chat component
+
+Backend:
+
+Portfolio CRUD endpoints
+
+Image storage & retrieval API
+
+Stylist profile integration with AI agent
+
+Testing & QA:
+
+Interface testing
+
+Image upload validation
+
+Chat and profile linking verification
+
+Documentation:
+
+API and data schema
+
+Integration guide for existing SeamXY backend
+
+6. Future Enhancements
+
+Video uploads and embedded lookbooks
+
+“Clone My Stylist” feature for influencers
+
+AI lookbook generator from stylist uploads
+
+Affiliate product linking with retailer partnerships

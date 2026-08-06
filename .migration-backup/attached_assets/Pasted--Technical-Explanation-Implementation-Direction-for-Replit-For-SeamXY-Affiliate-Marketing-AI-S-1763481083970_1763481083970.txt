@@ -1,0 +1,302 @@
+✅ Technical Explanation & Implementation Direction for Replit
+(For SeamXY Affiliate Marketing + AI Stylist Platform)
+1. Core Concept
+
+SeamXY is an AI-driven personal styling platform where each stylist has their own AI-trained clone.
+This stylist AI provides real-time fashion advice and generates shoppable product recommendations that link out to affiliate retailers (Amazon, eBay, etc.).
+
+The goal for engineering:
+Build a system where every stylist can create, train, and deploy their own AI clone, and that AI can output product recommendations with dynamic affiliate links.
+
+✅ 2. System Components Developers Must Build
+A. Stylist AI Clone Engine
+
+Each stylist trains their AI using:
+
+Portfolio images (optional for v1)
+
+Written bio + expertise
+
+Style preferences (brands, colors, fit preferences)
+
+Their fashion philosophy
+
+70+ training prompts (SeamXY proprietary set)
+
+Developer direction:
+Design a backend pipeline for AI persona training, storing:
+
+Embeddings
+
+Prompt templates
+
+Stylist metadata
+
+Training data (JSON)
+
+Then each user session invokes chat with:
+System prompt + stylist persona + user input + realtime context.
+
+B. AI Chat Interface (Customer → Stylist AI)
+
+Customers ask questions such as:
+
+“What should I wear to a wedding this weekend?”
+
+“What flatters a pear-shaped body?”
+
+“Help me pick outfits under $150.”
+
+AI must:
+
+Understand user intent
+
+Output reasoning
+
+Recommend products (with images, pricing, descriptions, and affiliate links)
+
+Build full outfits (top, bottom, shoes, accessories)
+
+Developer direction:
+Return chat output in structured format:
+
+{
+  "assistant_response": "...",
+  "product_recommendations": [
+    {
+      "title": "",
+      "image_url": "",
+      "affiliate_link": "",
+      "price": "",
+      "source": ""
+    }
+  ]
+}
+
+C. Affiliate Recommendation Engine
+
+This is the core revenue engine.
+
+Developer direction:
+
+Integrate affiliate APIs (Amazon Associates, eBay Partner Network, others)
+
+Accept search parameters from AI (color, size, budget, style keywords)
+
+Fetch 10–50 products per request
+
+Filter by relevancy + stylist brand preferences
+
+Return structured JSON
+
+Attach proper affiliate tags (dynamic per stylist or per platform)
+
+Affiliate API Examples:
+
+Amazon PA-API 5.0
+
+eBay Browse & Merchandising API
+
+Rakuten / ShareASale links for fashion retailers
+
+Goal:
+AI always produces shoppable links seamlessly.
+
+D. AI Output → Product Link Embedding
+
+When the AI recommends an item, the system must:
+
+Pull product options via affiliate API
+
+Generate a short, trackable affiliate URL
+
+Insert link into AI’s final message
+
+Support multiple retailers per recommendation
+
+Ensure analytics tracking for revenue attribution
+
+E. Stylist Dashboard
+
+Stylists need a dashboard to:
+
+Upload/enter training data
+
+Edit their AI profile
+
+Set brand preferences & exclusions
+
+View analytics:
+
+followers
+
+conversations
+
+affiliate revenue generated
+
+product click-throughs
+
+Developer direction:
+Build a dashboard UI in Flutter/Replit Web with Firebase (or Supabase) backend.
+
+F. Customer Experience (Front-End Flow)
+Customer Onboarding
+
+Users input:
+
+Size
+
+Height/weight
+
+Body type
+
+Budget
+
+Preferred retailers
+
+Occasion
+
+Style preferences
+
+This becomes session context for the AI.
+
+Chat Flow
+
+User → Styled AI Chat → AI Output → Product Recommendations → Retail Links
+
+Front-end feature requirements:
+
+Real-time chat UI (like ChatGPT)
+
+Rich cards for product recommendations
+
+Save favorites
+
+One-click shopping
+
+✅ 3. How to Integrate This Into App Design (Figma + Build)
+Design Requirements for Replit Team
+Screens to Include
+
+Welcome / Signup
+
+Choose Your Stylist
+
+Customer Style Profile Intake
+
+AI Chat Interface
+
+Product Recommendation Card Template
+
+Outfit Builder UI (mix & match)
+
+Stylist Dashboard
+
+Affiliate Product Browser (internal)
+
+Admin Panel (you)
+
+✅ 4. Internal Logic Flow (This goes directly into the Kickoff Doc)
+When a customer asks a question:
+
+User input
+
+Send to AI Model (with stylist persona)
+
+AI determines styling intention
+
+Affiliate Engine runs product search
+
+Results ranked for relevance, fit, brand, & budget
+
+AI composes final message
+
+Product results injected into response
+
+User sees chat response + cards with affiliate links
+
+User clicks → Retail site → Affiliate tracked
+
+✅ 5. Developer Notes (Replit-Specific)
+
+Since you're using Replit for rapid development:
+
+Use Replit Deployments for auto-deployment staging and production versions
+
+Use Replit DB / PostgreSQL or external (Supabase, Firebase)
+
+Use OpenAI or Anthropic API for the AI clone engine
+
+Use serverless functions for:
+
+affiliate API calls
+
+AI persona loading
+
+styling intent parsing
+
+recommendation fusion
+
+Tech Suggestion:
+
+Frontend: Flutter Web or React
+
+Backend: Python FastAPI or Node.js
+
+Data store: Firebase (auth + DB), Supabase, or Replit PostgreSQL
+
+AI: structured response with OpenAI Functions
+
+✅ 6. Simple Section to Paste Into Requirements Document
+
+(You can copy/paste this one directly)
+
+SEAMXY: AFFILIATE + AI FUNCTIONAL REQUIREMENTS (FOR DEVELOPMENT)
+
+SeamXY integrates AI-powered styling with affiliate-driven product recommendations.
+
+Key Functional Areas:
+
+AI Stylist Persona Engine
+
+Each stylist has a unique AI clone trained from portfolio, expertise, and 70+ prompts.
+
+Used in every chat session.
+
+User Chat System
+
+Customers chat with their chosen stylist’s AI clone for personalized advice.
+
+AI generates shoppable outfit recommendations.
+
+Affiliate Integration Layer
+
+Connect to Amazon, eBay, and major retailer APIs.
+
+AI sends search intent → system fetches product data → outputs affiliate links.
+
+Recommendation Cards
+
+Display product title, image, price, retailer name, description, and affiliate link.
+
+Must support multiple items (full outfit creation).
+
+Stylist Dashboard
+
+Manage training data
+
+Set brand preferences
+
+View earnings, activity, and analytics
+
+Analytics & Attribution
+
+Track clicks, conversions, and revenue per stylist and per user session.
+
+Admin Panel
+
+Manage stylists
+
+View platform activity
+
+Approve affiliate integrations + settings

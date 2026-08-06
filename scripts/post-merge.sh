@@ -1,7 +1,4 @@
 #!/bin/bash
 set -e
-
-echo "▶ Installing dependencies..."
-npm install --legacy-peer-deps
-
-echo "▶ Post-merge setup complete."
+pnpm install --frozen-lockfile
+pnpm --filter db push

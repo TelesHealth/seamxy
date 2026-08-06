@@ -1,0 +1,1 @@
+- [SeamXY port lessons](seamxy-port.md) — large fullstack port: kept registerRoutes(), skipped OpenAPI spec, fixed @shared/@assets aliases, Stripe proxy trick for missing secret.

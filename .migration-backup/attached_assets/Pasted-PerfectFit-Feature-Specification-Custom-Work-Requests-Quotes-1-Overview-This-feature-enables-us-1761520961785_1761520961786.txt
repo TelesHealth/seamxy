@@ -1,0 +1,185 @@
+PerfectFit Feature Specification: Custom Work Requests & Quotes
+1. Overview
+
+This feature enables users to request and receive quotes for custom-made clothing—including dresses, suits, gowns, and other tailored apparel. It connects users with verified tailors, designers, and boutiques directly within the PerfectFit ecosystem.
+
+2. Goals
+
+Extend PerfectFit beyond ready-to-wear shopping.
+
+Provide personalized fashion experiences for users.
+
+Enable fashion professionals to receive and respond to custom work requests.
+
+Introduce new monetization opportunities (commissions, subscriptions).
+
+3. User Roles
+3.1. End Users
+
+Create and submit requests for custom clothing.
+
+Upload reference photos, input measurements, and describe desired style.
+
+Receive multiple quotes and design suggestions.
+
+Communicate with designers/tailors via chat or messaging.
+
+Approve or reject proposals.
+
+3.2. Designers / Tailors
+
+Receive notifications for new requests matching their specialties.
+
+Submit quotes, design ideas, estimated delivery time, and price.
+
+Showcase their portfolios and reviews.
+
+Communicate with potential clients.
+
+3.3. Admins
+
+Manage user and designer accounts.
+
+Moderate content (images, quotes, communication).
+
+Set commission percentages or subscription pricing.
+
+Feature premium designers.
+
+4. User Flow
+Step 1 – Create Request
+
+Button: “Request a Custom Design”
+
+Inputs:
+
+Category: (Suit, Dress, Gown, Traditional, Other)
+
+Event Type: (Wedding, Business, Casual, Formal, etc.)
+
+Style Description (free text)
+
+Budget Range (optional)
+
+Measurements (auto-filled from user profile or manual input)
+
+Uploads (images, sketches, inspiration photos)
+
+Step 2 – Matching & Distribution
+
+The system matches the request with designers based on:
+
+Category & Style tags
+
+Budget
+
+Location (if applicable)
+
+Availability
+
+Step 3 – Designer Response
+
+Designers receive notifications and can submit:
+
+Price estimate
+
+Estimated completion date
+
+Message or design sketch
+
+Optional: 3D mockup or past work samples
+
+Step 4 – User Review
+
+User compares proposals and filters by:
+
+Price, turnaround time, designer rating, portfolio quality.
+
+Optional: in-app chat to discuss details before approval.
+
+Step 5 – Acceptance & Payment (Future)
+
+Upon user approval:
+
+Deposit or full payment processed through Stripe or PayPal.
+
+Order marked as “In Progress.”
+
+Designer dashboard updates with order status.
+
+5. Admin Panel Additions
+Feature	Description
+User Management	Add/edit/delete users (both B2C and B2B).
+Quote Oversight	Monitor open and closed requests; track disputes.
+Commission Control	Define platform fees (e.g., 10% per order).
+Verification System	Approve designer profiles and credentials.
+Analytics Dashboard	Display quote volume, conversion rate, average ticket size, etc.
+6. Data Model Updates
+Users Table
+
+Add new fields:
+
+user_type: “customer” | “designer”
+
+portfolio_url: string (for designers)
+
+rating: float
+
+verified: boolean
+
+CustomRequests Table
+Field	Type	Description
+request_id	UUID	Unique request identifier
+user_id	FK	Requesting user
+category	string	e.g., Dress, Suit
+description	text	Freeform style input
+budget_min	float	Minimum budget
+budget_max	float	Maximum budget
+attachments	JSON	Array of image URLs
+status	enum	open, quoted, accepted, in_progress, completed
+created_at	datetime	Timestamp
+Quotes Table
+Field	Type	Description
+quote_id	UUID	Unique quote ID
+request_id	FK	Associated request
+designer_id	FK	Designer submitting quote
+price	float	Quoted price
+message	text	Designer notes
+estimated_days	int	Estimated completion time
+attachments	JSON	Sketches or samples
+status	enum	pending, accepted, rejected
+created_at	datetime	
+7. API Endpoints (Sample)
+Endpoint	Method	Description
+/api/custom-requests	POST	Create a new custom request
+/api/custom-requests/{id}	GET	View request details
+/api/custom-requests/{id}/quotes	POST	Submit a quote
+/api/custom-requests/{id}/quotes	GET	Retrieve all quotes for a request
+/api/quotes/{id}/accept	POST	Accept a quote
+/api/designers	GET	List all active designers
+/api/admin/requests	GET	Admin review panel
+8. Monetization Options
+Model	Description
+Commission per order	5–10% on completed transactions.
+Designer subscription	Paid premium tier for visibility & verified badge.
+Sponsored listings	Paid placement on homepage or recommendations.
+Design request credits	Limit free requests, then paid per request.
+9. UI Additions
+
+“Custom Requests” tab on user dashboard.
+
+“My Quotes” section for designers.
+
+“Submit Custom Work” button in profile.
+
+Admin sidebar: “Manage Custom Requests.”
+
+10. Future Enhancements
+
+AI-assisted quote prediction (“estimated cost for your design”).
+
+In-app secure payments and escrow.
+
+Designer verification badges.
+
+Review & rating system for both parties.

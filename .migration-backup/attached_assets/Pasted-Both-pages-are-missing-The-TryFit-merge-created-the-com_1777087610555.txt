@@ -1,0 +1,237 @@
+Both pages are missing. The TryFit merge created the components but not the full pages. Let me write them now.
+Run this in the Replit agent:
+"Create these two new files exactly as written:"
+File 1: client/src/pages/Upload.tsx
+typescriptimport { useState } from "react";
+import { useLocation } from "wouter";
+import { PhotoUploader } from "@/components/try-on/PhotoUploader";
+import { ProcessingOverlay } from "@/components/try-on/ProcessingOverlay";
+import { HeightCalibration } from "@/components/try-on/HeightCalibration";
+import { useTryOnStore } from "@/store/tryOnStore";
+import { usePoseDetection } from "@/hooks/usePoseDetection";
+import { ArrowLeft } from "lucide-react";
+
+export default function UploadPage() {
+  const [, setLocation] = useLocation();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [showHeightModal, setShowHeightModal] = useState(false);
+  const { setUserPhoto, setProcessingPhoto } = useTryOnStore();
+  const { detectPose } = usePoseDetection();
+
+  const handlePhotoSelected = async (file: File, previewUrl: string) => {
+    setIsProcessing(true);
+    setProgress(20);
+
+    try {
+      const img = new Image();
+      img.src = previewUrl;
+      await new Promise((res) => { img.onload = res; });
+
+      setProgress(50);
+      const landmarks = await detectPose(img);
+      setProgress(80);
+
+      setUserPhoto(previewUrl, landmarks || []);
+      setProgress(100);
+
+      setTimeout(() => {
+        setIsProcessing(false);
+        setShowHeightModal(true);
+      }, 500);
+    } catch (err) {
+      console.error("Pose detection failed:", err);
+      setUserPhoto(previewUrl, []);
+      setIsProcessing(false);
+      setLocation("/studio");
+    }
+  };
+
+  const handleHeightSet = () => {
+    setShowHeightModal(false);
+    setLocation("/studio");
+  };
+
+  if (isProcessing) {
+    return <ProcessingOverlay progress={progress} message="Detecting your body shape..." />;
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="max-w-lg mx-auto px-4 py-8">
+        <div className="flex items-center gap-3 mb-6">
+          <button onClick={() => setLocation("/")} className="p-2 rounded-lg hover:bg-muted transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <h1 className="text-xl font-bold">Virtual Try-On</h1>
+            <p className="text-sm text-muted-foreground">Upload a photo to get started</p>
+          </div>
+        </div>
+
+        <PhotoUploader
+          onPhotoSelected={handlePhotoSelected}
+          onUseModel={() => setLocation("/models")}
+          onUseCamera={() => setLocation("/ar-try-on")}
+        />
+
+        <HeightCalibration
+          open={showHeightModal}
+          onClose={handleHeightSet}
+          onHeightChange={() => {}}
+          title="One more thing"
+          description="Your height helps us recommend the right size"
+          showSkip={true}
+        />
+      </div>
+    </div>
+  );
+}
+File 2: client/src/pages/Studio.tsx
+typescriptimport { useState } from "react";
+import { useLocation } from "wouter";
+import { useTryOnStore } from "@/store/tryOnStore";
+import { TryOnCanvas } from "@/components/try-on/TryOnCanvas";
+import { SizeRecommendation } from "@/components/try-on/SizeRecommendation";
+import { CompleteTheLook } from "@/components/try-on/CompleteTheLook";
+import { ShareModal } from "@/components/try-on/ShareModal";
+import { ArrowLeft, Share2, RotateCcw, Camera } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Slider } from "@/components/ui/slider";
+import { Link } from "wouter";
+
+export default function StudioPage() {
+  const [, setLocation] = useLocation();
+  const [showShare, setShowShare] = useState(false);
+  const [resultImageUrl, setResultImageUrl] = useState<string | null>(null);
+
+  const {
+    userPhotoUrl,
+    clothingLayers,
+    warpEnabled,
+    warpStrength,
+    shadowOpacity,
+    brightness,
+    setWarpEnabled,
+    setWarpStrength,
+    setShadowOpacity,
+    setBrightness,
+    removeClothingLayer,
+    resetStudio,
+  } = useTryOnStore();
+
+  if (!userPhotoUrl) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-8">
+        <p className="text-muted-foreground mb-4">No photo loaded yet.</p>
+        <Button onClick={() => setLocation("/upload")}>Upload a Photo</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-white flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+        <button onClick={() => setLocation("/upload")} className="p-2 rounded-lg hover:bg-white/10">
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <h1 className="font-semibold">Try-On Studio</h1>
+        <div className="flex gap-2">
+          <Link href="/ar-try-on">
+            <button className="p-2 rounded-lg hover:bg-white/10">
+              <Camera className="w-5 h-5" />
+            </button>
+          </Link>
+          <button onClick={() => setShowShare(true)} className="p-2 rounded-lg hover:bg-white/10">
+            <Share2 className="w-5 h-5" />
+          </button>
+          <button onClick={resetStudio} className="p-2 rounded-lg hover:bg-white/10">
+            <RotateCcw className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Canvas */}
+      <div className="flex-1 p-4">
+        <TryOnCanvas
+          className="h-[60vh] max-h-[500px]"
+          onResultGenerated={setResultImageUrl}
+        />
+      </div>
+
+      {/* Controls */}
+      <div className="bg-gray-900 rounded-t-3xl p-4 space-y-4">
+        {/* Clothing layers */}
+        {clothingLayers.length > 0 && (
+          <div>
+            <p className="text-sm font-medium text-white/70 mb-2">Selected Items</p>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              {clothingLayers.map((layer) => (
+                <div key={layer.productId} className="relative flex-shrink-0">
+                  <div className="w-16 h-20 bg-white/10 rounded-xl overflow-hidden">
+                    <img src={layer.imageUrl} alt={layer.name} className="w-full h-full object-cover" />
+                  </div>
+                  <button
+                    onClick={() => removeClothingLayer(layer.productId)}
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Warp toggle */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-white/70">Body Warping</span>
+          <button
+            onClick={() => setWarpEnabled(!warpEnabled)}
+            className={`w-12 h-6 rounded-full transition-colors ${warpEnabled ? "bg-primary" : "bg-white/20"}`}
+          />
+        </div>
+
+        {warpEnabled && (
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-white/50">
+              <span>Warp Strength</span><span>{warpStrength}%</span>
+            </div>
+            <Slider value={[warpStrength]} onValueChange={([v]) => setWarpStrength(v)} min={0} max={100} step={5} />
+          </div>
+        )}
+
+        {/* Browse shop link */}
+        <Link href="/shop">
+          <Button variant="outline" className="w-full border-white/20 text-white hover:bg-white/10">
+            Browse Shop to Add Items
+          </Button>
+        </Link>
+
+        {/* Size recommendation for first item */}
+        {clothingLayers[0] && (
+          <SizeRecommendation productId={clothingLayers[0].productId} brand="" />
+        )}
+
+        {/* Complete the Look */}
+        {clothingLayers[0] && (
+          <CompleteTheLook productId={clothingLayers[0].productId} />
+        )}
+      </div>
+
+      <ShareModal
+        isOpen={showShare}
+        onClose={() => setShowShare(false)}
+        resultImageUrl={resultImageUrl}
+      />
+    </div>
+  );
+}
+Then open client/src/App.tsx and add these routes:
+typescriptimport UploadPage from "./pages/Upload";
+import StudioPage from "./pages/Studio";
+
+// Add to Route block:
+<Route path="/upload" component={UploadPage} />
+<Route path="/studio" component={StudioPage} />
