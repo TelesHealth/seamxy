@@ -1,0 +1,28 @@
+kind = "slides"
+previewPath = "/slides/seamxy-investor-deck/"
+title = "SeamXY — Investor Pitch Deck"
+description = "A detailed investor pitch deck for SeamXY, the AI-powered personal style operating system. Covers problem, solution, product, market, business model, traction, and the ask."
+version = "1.0.0"
+id = "artifacts/seamxy-investor-deck"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/slides/seamxy-investor-deck/" ]
+localPort = 24072
+
+[services.development]
+run = "pnpm --filter @workspace/seamxy-investor-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/seamxy-investor-deck", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/seamxy-investor-deck/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24072"
+BASE_PATH = "/slides/seamxy-investor-deck/"

@@ -1,0 +1,106 @@
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440001",
+    "position": 1,
+    "filepath": "src/pages/slides/Cover.tsx",
+    "title": "SeamXY",
+    "description": "Cover — Style, sorted.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440002",
+    "position": 2,
+    "filepath": "src/pages/slides/Problem.tsx",
+    "title": "The Problem",
+    "description": "Full closet. Empty ideas.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440003",
+    "position": 3,
+    "filepath": "src/pages/slides/Solution.tsx",
+    "title": "The Solution",
+    "description": "The personal style operating system.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440004",
+    "position": 4,
+    "filepath": "src/pages/slides/Market.tsx",
+    "title": "Market Opportunity",
+    "description": "$1.7T fashion market — TAM, SAM, SOM",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440005",
+    "position": 5,
+    "filepath": "src/pages/slides/Product.tsx",
+    "title": "The Product",
+    "description": "Nine destinations. One intelligence layer.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440006",
+    "position": 6,
+    "filepath": "src/pages/slides/HowItWorks.tsx",
+    "title": "How It Works",
+    "description": "Four inputs. One intelligence.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440007",
+    "position": 7,
+    "filepath": "src/pages/slides/Audiences.tsx",
+    "title": "Who We Serve",
+    "description": "Three audiences. One platform.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440008",
+    "position": 8,
+    "filepath": "src/pages/slides/BusinessModel.tsx",
+    "title": "Business Model",
+    "description": "Six revenue streams. One platform.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440009",
+    "position": 9,
+    "filepath": "src/pages/slides/Traction.tsx",
+    "title": "Platform Depth",
+    "description": "Production-grade from day one.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440010",
+    "position": 10,
+    "filepath": "src/pages/slides/Competitive.tsx",
+    "title": "Competitive Landscape",
+    "description": "No one else connects all the dots.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440011",
+    "position": 11,
+    "filepath": "src/pages/slides/GoToMarket.tsx",
+    "title": "Go-to-Market",
+    "description": "Guest-first. Quiz-to-member. Creator-led.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440012",
+    "position": 12,
+    "filepath": "src/pages/slides/Team.tsx",
+    "title": "The Team",
+    "description": "Built by people who wear clothes and understand technology.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440013",
+    "position": 13,
+    "filepath": "src/pages/slides/TheAsk.tsx",
+    "title": "The Ask",
+    "description": "Ready to scale.",
+    "speakerNotes": ""
+  }
+]
