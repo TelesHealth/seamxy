@@ -193,7 +193,7 @@ export default function AiStylist() {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-16 sm:pb-0">
       {/* ── HERO ── */}
       <section className="px-6 md:px-10 py-14">
         <div className="max-w-7xl mx-auto">
@@ -206,17 +206,45 @@ export default function AiStylist() {
               </p>
               <h1
                 className="font-display font-600 leading-[0.9] text-foreground mb-3"
-                style={{ fontSize: "clamp(3rem, 7vw, 5.5rem)" }}
+                style={{ fontSize: "clamp(2.5rem, 7vw, 5.5rem)" }}
               >
                 Ask what<br />
                 to wear.
               </h1>
-              <p className="text-foreground/50 text-lg mb-8 max-w-sm leading-relaxed">
+              <p className="text-foreground/50 text-base lg:text-lg mb-6 max-w-sm leading-relaxed">
                 Your AI style advisor, on call. Pick a stylist and start a conversation.
               </p>
 
+              {/* Mobile: compact horizontal stylist picker */}
+              <div className="lg:hidden mb-6">
+                <p className="text-[10px] tracking-widest uppercase text-foreground/40 mb-3">Choose Stylist</p>
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+                  {availablePersonas.map((persona: any) => (
+                    <button
+                      key={persona.id}
+                      onClick={() => setSelectedPersona(persona)}
+                      className={`flex-shrink-0 rounded-2xl px-3 py-2 transition-all flex items-center gap-2 border ${
+                        selectedPersona.id === persona.id
+                          ? "bg-[#0B1340] text-white border-transparent shadow-md"
+                          : "bg-white text-foreground border-foreground/8 hover:shadow-sm"
+                      }`}
+                    >
+                      <Avatar className="w-7 h-7 flex-shrink-0">
+                        <AvatarImage src={persona.avatarUrl} />
+                        <AvatarFallback className={selectedPersona.id === persona.id ? "bg-white/10 text-white text-xs" : "text-xs"}>
+                          {persona.name[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className={`text-xs font-600 whitespace-nowrap ${selectedPersona.id === persona.id ? "text-white" : "text-foreground"}`}>
+                        {persona.name.split(" ")[0]}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Quick prompt pills */}
-              <div className="flex flex-wrap gap-2 mb-8">
+              <div className="flex flex-wrap gap-2 mb-6">
                 {quickPrompts.map((prompt) => (
                   <button
                     key={prompt}

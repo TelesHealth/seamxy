@@ -53,7 +53,7 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-16 sm:pb-0">
       <div className="px-6 md:px-10 py-14">
         <div className="max-w-7xl mx-auto">
           {/* Hero */}
@@ -76,15 +76,15 @@ export default function UploadPage() {
               </p>
 
               {/* Step cards */}
-              <div className="flex gap-3">
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
                 {[
                   { num: "01", title: "Self", desc: "Preview yourself" },
                   { num: "02", title: "Fit", desc: "Use predictions" },
                   { num: "03", title: "Swap", desc: "Change the item" },
                 ].map(({ num, title, desc }) => (
-                  <div key={num} className="bg-white rounded-2xl p-4 flex-1 shadow-sm">
+                  <div key={num} className="bg-white rounded-2xl p-3 sm:p-4 shadow-sm">
                     <p className="text-[9px] text-muted-foreground mb-1">{num}</p>
-                    <p className="font-display text-lg font-600 text-foreground">{title}</p>
+                    <p className="font-display text-base sm:text-lg font-600 text-foreground">{title}</p>
                     <p className="text-[10px] text-muted-foreground">{desc}</p>
                   </div>
                 ))}

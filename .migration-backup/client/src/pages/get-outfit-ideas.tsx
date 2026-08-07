@@ -267,7 +267,7 @@ export default function GetOutfitIdeas() {
   }, [step]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-16 sm:pb-0">
       {/* Back button */}
       {step !== "category" && step !== "loading" && (
         <div className="px-6 md:px-10 pt-6">
@@ -333,7 +333,7 @@ export default function GetOutfitIdeas() {
                 </div>
               </div>
 
-              {/* Center: hero image */}
+              {/* Center: hero image — hidden on mobile */}
               <div className="hidden lg:block relative rounded-3xl overflow-hidden shadow-xl h-[560px]">
                 <img
                   src="https://images.unsplash.com/photo-1558769132-cb1aea458c5e?w=900&q=80"
@@ -347,27 +347,27 @@ export default function GetOutfitIdeas() {
                 </div>
               </div>
 
-              {/* Right: dark navy detail card */}
-              <div className="bg-[#0B1340] rounded-3xl p-7 text-white flex flex-col justify-between min-h-[300px] lg:min-h-[560px]">
+              {/* Right: dark navy detail card — compact on mobile, full height on desktop */}
+              <div className="bg-[#0B1340] rounded-3xl p-6 lg:p-7 text-white flex flex-col justify-between lg:min-h-[560px]">
                 <div>
-                  <p className="text-[9px] text-white/40 tracking-widest uppercase mb-5">How it works</p>
-                  <div className="space-y-6">
+                  <p className="text-[9px] text-white/40 tracking-widest uppercase mb-4 lg:mb-5">How it works</p>
+                  <div className="grid grid-cols-3 gap-3 lg:grid-cols-1 lg:space-y-0 lg:gap-0 lg:space-y-6">
                     {[
                       { num: "01", title: "Pick a category", desc: "Work, going out, events, travel…" },
                       { num: "02", title: "Set your situation", desc: "First date, client meeting, brunch…" },
                       { num: "03", title: "Choose a vibe", desc: "Polished, bold, relaxed, classic…" },
                     ].map((s) => (
-                      <div key={s.num} className="flex gap-4">
-                        <span className="text-[9px] text-white/30 tracking-widest mt-0.5 flex-shrink-0">{s.num}</span>
+                      <div key={s.num} className="lg:flex lg:gap-4">
+                        <span className="text-[9px] text-white/30 tracking-widest block mb-1 lg:mt-0.5 lg:flex-shrink-0">{s.num}</span>
                         <div>
-                          <p className="font-display font-600 text-white text-base leading-tight">{s.title}</p>
-                          <p className="text-xs text-white/50 mt-0.5">{s.desc}</p>
+                          <p className="font-display font-600 text-white text-sm lg:text-base leading-tight">{s.title}</p>
+                          <p className="text-[10px] lg:text-xs text-white/50 mt-0.5 hidden sm:block">{s.desc}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-                <div className="mt-8 bg-white/10 rounded-2xl p-4">
+                <div className="mt-5 lg:mt-8 bg-white/10 rounded-2xl p-4 hidden lg:block">
                   <p className="text-xs text-white/50 mb-2">Powered by SeamXY AI</p>
                   <p className="font-display text-white font-600 leading-tight">Personalized looks, not generic suggestions.</p>
                 </div>

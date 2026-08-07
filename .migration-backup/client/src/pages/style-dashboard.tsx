@@ -230,7 +230,7 @@ export default function StyleDashboard() {
   const firstName = customer.name?.split(" ")[0] || "";
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-16 sm:pb-0">
       <div className="px-6 md:px-10 py-12">
         <div className="max-w-7xl mx-auto">
 
