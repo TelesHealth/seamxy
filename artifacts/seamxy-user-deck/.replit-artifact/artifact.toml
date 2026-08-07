@@ -1,0 +1,28 @@
+kind = "slides"
+previewPath = "/slides/seamxy-user-deck/"
+title = "SeamXY — Product Overview for Users"
+description = "A warm, editorial product overview deck for SeamXY users explaining every feature in plain language, from Find Look to the AI Concierge to Virtual Try-On."
+version = "1.0.0"
+id = "artifacts/seamxy-user-deck"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/slides/seamxy-user-deck/" ]
+localPort = 22370
+
+[services.development]
+run = "pnpm --filter @workspace/seamxy-user-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/seamxy-user-deck", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/seamxy-user-deck/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "22370"
+BASE_PATH = "/slides/seamxy-user-deck/"

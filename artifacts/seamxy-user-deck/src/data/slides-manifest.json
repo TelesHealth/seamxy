@@ -1,0 +1,114 @@
+[
+  {
+    "id": "a1b2c3d4-0001-4001-8001-000000000001",
+    "position": 1,
+    "filepath": "src/pages/slides/Slide01Cover.tsx",
+    "title": "Style, sorted.",
+    "description": "SeamXY cover slide — editorial hero image with brand headline.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0002-4002-8002-000000000002",
+    "position": 2,
+    "filepath": "src/pages/slides/Slide02WhatIs.tsx",
+    "title": "What is SeamXY?",
+    "description": "Your personal style operating system — AI meets your wardrobe.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0003-4003-8003-000000000003",
+    "position": 3,
+    "filepath": "src/pages/slides/Slide03FindLook.tsx",
+    "title": "Find Look",
+    "description": "Describe your day, get an outfit. No account needed.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0004-4004-8004-000000000004",
+    "position": 4,
+    "filepath": "src/pages/slides/Slide04StyleQuiz.tsx",
+    "title": "Style Quiz",
+    "description": "Five minutes to understand your taste. Powers every recommendation.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0005-4005-8005-000000000005",
+    "position": 5,
+    "filepath": "src/pages/slides/Slide05Inspo.tsx",
+    "title": "Inspo",
+    "description": "Editorial inspiration curated to your vibe.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0006-4006-8006-000000000006",
+    "position": 6,
+    "filepath": "src/pages/slides/Slide06Dashboard.tsx",
+    "title": "Your Dashboard",
+    "description": "Your daily outfit, weekly edit, and wardrobe gaps — all in one place.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0007-4007-8007-000000000007",
+    "position": 7,
+    "filepath": "src/pages/slides/Slide07Concierge.tsx",
+    "title": "AI Concierge",
+    "description": "Ask anything. Get a real styled answer, any time.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0008-4008-8008-000000000008",
+    "position": 8,
+    "filepath": "src/pages/slides/Slide08TryOn.tsx",
+    "title": "Virtual Try-On",
+    "description": "Upload a photo. Try on any item. Share the look.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0009-4009-8009-000000000009",
+    "position": 9,
+    "filepath": "src/pages/slides/Slide09Closet.tsx",
+    "title": "Your Closet",
+    "description": "Everything you own, organized. Know what you have. Wear it more.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0010-4010-8010-000000000010",
+    "position": 10,
+    "filepath": "src/pages/slides/Slide10LetItGo.tsx",
+    "title": "Let It Go",
+    "description": "Surface what's sitting idle. Lend, sell, donate, or keep — your choice.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0011-4011-8011-000000000011",
+    "position": 11,
+    "filepath": "src/pages/slides/Slide11Groups.tsx",
+    "title": "Style Groups",
+    "description": "Share your closet with friends. Borrow. Vote on outfits. Sell to people you trust.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0012-4012-8012-000000000012",
+    "position": 12,
+    "filepath": "src/pages/slides/Slide12Alterations.tsx",
+    "title": "Local Alterations",
+    "description": "Find a tailor near you. Get a quote. Get it fitted.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0013-4013-8013-000000000013",
+    "position": 13,
+    "filepath": "src/pages/slides/Slide13Pricing.tsx",
+    "title": "Free vs. Pro",
+    "description": "What's included in each tier, clearly laid out.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-0014-4014-8014-000000000014",
+    "position": 14,
+    "filepath": "src/pages/slides/Slide14GetStarted.tsx",
+    "title": "Get Started",
+    "description": "Sign up free. Take the quiz. See your first outfit.",
+    "speakerNotes": ""
+  }
+]
