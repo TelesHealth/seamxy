@@ -12,3 +12,16 @@ id = "muE9sMn9iSesctHTQTCa5"
 uri = "file://.local/outputs/SeamXY---Internal-Team-Deck.pdf"
 type = "pdf"
 title = "SeamXY — Internal Team Deck.pdf"
+
+[[outputs]]
+id = "N3YchK1KXrzExd-Udxfae"
+uri = "file://.local/outputs/SeamXY---Overview-Deck.pdf"
+type = "pdf"
+title = "SeamXY — Overview Deck.pdf"
+
+[[outputs]]
+id = "4rgdd42g8eggDbzpj9wOe"
+uri = "file://CODEBASE.md"
+type = "text"
+title = "SeamXY Codebase Reference"
+description = "Full engineering reference covering monorepo layout, tech stack, auth tracks, all frontend routes, all API endpoints, 90+ database tables, AI architecture, try-on pipeline, brand tokens, and environment variables."
