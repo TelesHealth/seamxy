@@ -8,6 +8,10 @@ export default function SystemPage() {
       <div className="max-w-7xl mx-auto px-8 w-full grid md:grid-cols-2 gap-16 items-center py-20">
         {/* Left */}
         <div>
+          <p className="text-[10px] tracking-[0.2em] text-[#CC1519] uppercase mb-6 flex items-center gap-3">
+            <span className="w-8 h-px bg-[#CC1519] inline-block" />
+            One Style World
+          </p>
           <h1 className="font-display text-6xl md:text-7xl lg:text-8xl font-600 text-foreground leading-[0.9] mb-8">
             Everything needed to get dressed, in one place.
           </h1>
@@ -16,7 +20,7 @@ export default function SystemPage() {
           </p>
           <div className="flex gap-4">
             <Link href="/get-outfit-ideas">
-              <Button className="rounded-full px-7 py-5 bg-[#0B1340] hover:bg-[#0B1340]/90 text-white text-sm tracking-widest uppercase font-500">
+              <Button className="rounded-full px-7 py-5 bg-[#CC1519] hover:bg-[#CC1519]/90 text-white text-sm tracking-widest uppercase font-500">
                 Try the Finder
               </Button>
             </Link>
@@ -34,13 +38,19 @@ export default function SystemPage() {
             <img src={seamxyLogo} alt="SeamXY" className="h-12 opacity-80" />
           </div>
           <div className="absolute top-8 right-0 w-48 h-14 bg-white/80 backdrop-blur rounded-full shadow-lg flex items-center justify-center">
-            <span className="text-sm font-500 text-foreground tracking-wide">FIT LOGIC</span>
+            <span className="text-sm font-500 text-foreground tracking-wide">CLOSET</span>
+          </div>
+          <div className="absolute top-28 right-0 w-44 h-14 bg-white/80 backdrop-blur rounded-full shadow-lg flex items-center justify-center">
+            <span className="text-sm font-500 text-foreground tracking-wide">CALENDAR</span>
           </div>
           <div className="absolute bottom-24 right-8 w-52 h-14 bg-white/80 backdrop-blur rounded-full shadow-lg flex items-center justify-center">
+            <span className="text-sm font-500 text-foreground tracking-wide">FIT LOGIC</span>
+          </div>
+          <div className="absolute bottom-36 left-2 w-48 h-14 bg-white/80 backdrop-blur rounded-full shadow-lg flex items-center justify-center">
             <span className="text-sm font-500 text-foreground tracking-wide">INSPIRATION</span>
           </div>
-          <div className="absolute bottom-4 left-8 bg-white rounded-2xl shadow-xl px-5 py-4">
-            <span className="text-sm font-600 text-foreground tracking-wide">DIGITAL STYLE CONCIERGE</span>
+          <div className="absolute bottom-4 left-8 bg-[#CC1519] rounded-2xl shadow-xl px-5 py-4">
+            <span className="text-sm font-600 text-white tracking-wide">DIGITAL STYLE CONCIERGE</span>
           </div>
           <div className="absolute top-32 left-16 w-56 h-64 rounded-3xl overflow-hidden shadow-xl">
             <img
@@ -57,7 +67,7 @@ export default function SystemPage() {
         <p className="text-[10px] text-muted-foreground tracking-widest uppercase mb-1">Ready when you are</p>
         <p className="font-display text-xl font-600 text-foreground mb-3 leading-tight">Build your style profile.</p>
         <Link href="/signup">
-          <Button className="w-full rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 text-white text-xs tracking-widest uppercase py-4">
+          <Button className="w-full rounded-full bg-[#CC1519] hover:bg-[#CC1519]/90 text-white text-xs tracking-widest uppercase py-4">
             Request Access
           </Button>
         </Link>

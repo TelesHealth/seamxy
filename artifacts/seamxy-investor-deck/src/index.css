@@ -13,13 +13,13 @@
 }
 
 :root {
-  --slide-primary: #0B1340;
-  --slide-accent: #2236E8;
-  --slide-bg: #FAF9F6;
-  --slide-text: #0B1340;
+  --slide-primary: #111111;
+  --slide-accent: #CC1519;
+  --slide-bg: #FAF6F2;
+  --slide-text: #111111;
   --slide-muted: #7A756F;
-  --slide-warm: #F5E8E0;
-  --slide-navy-light: #1A2560;
+  --slide-warm: #FAE8E8;
+  --slide-navy-light: #CC1519;
   --font-display-family: 'Cormorant Garamond', Georgia, serif;
   --font-body-family: 'Inter', system-ui, sans-serif;
   color-scheme: light;

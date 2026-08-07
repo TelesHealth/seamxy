@@ -19,7 +19,7 @@ export default function Competitive() {
         {/* Header row */}
         <div
           className="flex rounded-t-[0.8vw]"
-          style={{ background: '#0B1340', padding: '1.5vh 1.5vw' }}
+          style={{ background: '#111111', padding: '1.5vh 1.5vw' }}
         >
           <div style={{ flex: '2', paddingRight: '1vw' }}>
             <p className="font-body font-semibold text-bg" style={{ fontSize: '1.3vw' }}>Feature</p>

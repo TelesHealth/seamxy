@@ -39,7 +39,7 @@ export default function HowItWorks() {
         {/* Arrow */}
         <div className="flex flex-col items-center" style={{ width: '8vw' }}>
           <div className="bg-accent" style={{ height: '0.25vh', width: '6vw' }} />
-          <div style={{ width: 0, height: 0, borderTop: '1.2vh solid transparent', borderBottom: '1.2vh solid transparent', borderLeft: '1.8vw solid #2236E8', marginLeft: '0.2vw' }} />
+          <div style={{ width: 0, height: 0, borderTop: '1.2vh solid transparent', borderBottom: '1.2vh solid transparent', borderLeft: '1.8vw solid #CC1519', marginLeft: '0.2vw' }} />
         </div>
 
         {/* AI Core */}
@@ -47,7 +47,7 @@ export default function HowItWorks() {
           className="flex flex-col items-center justify-center text-center rounded-[1.5vw]"
           style={{
             flex: '1.2',
-            background: '#2236E8',
+            background: '#CC1519',
             padding: '5vh 2vw',
             minHeight: '35vh',
           }}
@@ -61,7 +61,7 @@ export default function HowItWorks() {
         {/* Arrow */}
         <div className="flex flex-col items-center" style={{ width: '8vw' }}>
           <div className="bg-accent" style={{ height: '0.25vh', width: '6vw' }} />
-          <div style={{ width: 0, height: 0, borderTop: '1.2vh solid transparent', borderBottom: '1.2vh solid transparent', borderLeft: '1.8vw solid #2236E8', marginLeft: '0.2vw' }} />
+          <div style={{ width: 0, height: 0, borderTop: '1.2vh solid transparent', borderBottom: '1.2vh solid transparent', borderLeft: '1.8vw solid #CC1519', marginLeft: '0.2vw' }} />
         </div>
 
         {/* Outputs column */}

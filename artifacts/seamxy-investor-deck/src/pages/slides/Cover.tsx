@@ -2,7 +2,7 @@ const base = import.meta.env.BASE_URL;
 
 export default function Cover() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden" style={{ background: '#0B1340' }}>
+    <div className="relative w-screen h-screen overflow-hidden" style={{ background: '#111111' }}>
       {/* Hero image — right half */}
       <div className="absolute right-0 top-0 w-[55vw] h-full">
         <img
@@ -15,7 +15,7 @@ export default function Cover() {
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(to right, #0B1340 0%, rgba(11,19,64,0.88) 18%, rgba(11,19,64,0.35) 55%, transparent 100%)',
+              'linear-gradient(to right, #111111 0%, rgba(11,19,64,0.88) 18%, rgba(11,19,64,0.35) 55%, transparent 100%)',
           }}
         />
       </div>
@@ -23,7 +23,7 @@ export default function Cover() {
       {/* Bottom vignette */}
       <div
         className="absolute bottom-0 left-0 w-full"
-        style={{ height: '20vh', background: 'linear-gradient(to top, #0B1340 0%, transparent 100%)' }}
+        style={{ height: '20vh', background: 'linear-gradient(to top, #111111 0%, transparent 100%)' }}
       />
 
       {/* Left content */}

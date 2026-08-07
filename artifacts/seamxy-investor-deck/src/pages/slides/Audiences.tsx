@@ -50,7 +50,7 @@ export default function Audiences() {
 
         {/* Communities */}
         <div className="flex-1 flex flex-col">
-          <div style={{ height: '0.5vh', width: '100%', marginBottom: '3vh', background: '#0B1340' }} />
+          <div style={{ height: '0.5vh', width: '100%', marginBottom: '3vh', background: '#111111' }} />
           <p
             className="font-display font-bold text-primary mb-[2.5vh]"
             style={{ fontSize: '2.8vw', lineHeight: 1.1 }}
@@ -62,19 +62,19 @@ export default function Audiences() {
           </p>
           <div className="flex flex-col gap-[1.5vh]">
             <div className="flex items-start gap-[1vw]">
-              <div className="rounded-full mt-[0.6vh]" style={{ width: '0.5vw', height: '0.5vw', flexShrink: 0, background: '#0B1340' }} />
+              <div className="rounded-full mt-[0.6vh]" style={{ width: '0.5vw', height: '0.5vw', flexShrink: 0, background: '#111111' }} />
               <p className="font-body text-primary" style={{ fontSize: '1.45vw' }}>Shared closet access and borrowing</p>
             </div>
             <div className="flex items-start gap-[1vw]">
-              <div className="rounded-full mt-[0.6vh]" style={{ width: '0.5vw', height: '0.5vw', flexShrink: 0, background: '#0B1340' }} />
+              <div className="rounded-full mt-[0.6vh]" style={{ width: '0.5vw', height: '0.5vw', flexShrink: 0, background: '#111111' }} />
               <p className="font-body text-primary" style={{ fontSize: '1.45vw' }}>Outfit polls before deciding</p>
             </div>
             <div className="flex items-start gap-[1vw]">
-              <div className="rounded-full mt-[0.6vh]" style={{ width: '0.5vw', height: '0.5vw', flexShrink: 0, background: '#0B1340' }} />
+              <div className="rounded-full mt-[0.6vh]" style={{ width: '0.5vw', height: '0.5vw', flexShrink: 0, background: '#111111' }} />
               <p className="font-body text-primary" style={{ fontSize: '1.45vw' }}>Haul posts with group reactions</p>
             </div>
             <div className="flex items-start gap-[1vw]">
-              <div className="rounded-full mt-[0.6vh]" style={{ width: '0.5vw', height: '0.5vw', flexShrink: 0, background: '#0B1340' }} />
+              <div className="rounded-full mt-[0.6vh]" style={{ width: '0.5vw', height: '0.5vw', flexShrink: 0, background: '#111111' }} />
               <p className="font-body text-primary" style={{ fontSize: '1.45vw' }}>Friends-first closet sales</p>
             </div>
           </div>

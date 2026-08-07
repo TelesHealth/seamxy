@@ -1,6 +1,6 @@
 export default function TheAsk() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden flex" style={{ background: '#0B1340' }}>
+    <div className="relative w-screen h-screen overflow-hidden flex" style={{ background: '#111111' }}>
       {/* Left: closing brand */}
       <div
         className="flex flex-col justify-between"
@@ -40,7 +40,7 @@ export default function TheAsk() {
 
         <div className="flex flex-col gap-[3vh]">
           {/* Item 1 */}
-          <div style={{ borderLeft: '0.35vw solid #2236E8', paddingLeft: '1.8vw' }}>
+          <div style={{ borderLeft: '0.35vw solid #CC1519', paddingLeft: '1.8vw' }}>
             <div className="flex justify-between items-baseline mb-[0.8vh]">
               <p className="font-body font-semibold text-bg" style={{ fontSize: '1.6vw' }}>Growth & Distribution</p>
               <p className="font-display font-bold text-accent" style={{ fontSize: '2.2vw' }}>40%</p>

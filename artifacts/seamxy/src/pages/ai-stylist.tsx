@@ -232,7 +232,7 @@ export default function AiStylist() {
               {/* Chat window */}
               <div className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col" style={{ height: 440 }}>
                 {/* Chat header */}
-                <div className="bg-[#0B1340] px-6 py-4 flex items-center gap-3">
+                <div className="bg-[#111111] px-6 py-4 flex items-center gap-3">
                   <Avatar className="w-10 h-10 border-2 border-white/20">
                     <AvatarImage src={selectedPersona.avatarUrl} />
                     <AvatarFallback className="bg-white/10 text-white">{selectedPersona.name[0]}</AvatarFallback>
@@ -247,8 +247,8 @@ export default function AiStylist() {
                 <ScrollArea className="flex-1 px-6 py-4">
                   {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center py-8">
-                      <div className="w-12 h-12 rounded-full bg-[#2236E8]/10 flex items-center justify-center mb-4">
-                        <Sparkles className="w-6 h-6 text-[#2236E8]" />
+                      <div className="w-12 h-12 rounded-full bg-[#CC1519]/10 flex items-center justify-center mb-4">
+                        <Sparkles className="w-6 h-6 text-[#CC1519]" />
                       </div>
                       <p className="text-sm text-foreground/50 max-w-xs">
                         {userId
@@ -273,7 +273,7 @@ export default function AiStylist() {
                           <div className={`flex-1 max-w-[80%] ${message.role === 'user' ? 'text-right' : ''}`}>
                             <div className={`inline-block px-4 py-3 rounded-2xl text-sm ${
                               message.role === 'user'
-                                ? 'bg-[#0B1340] text-white'
+                                ? 'bg-[#111111] text-white'
                                 : 'bg-foreground/5 text-foreground'
                             }`}>
                               {message.content}
@@ -303,7 +303,7 @@ export default function AiStylist() {
                     <button
                       onClick={() => handleSend()}
                       disabled={sendMessageMutation.isPending || !input.trim() || !userId}
-                      className="w-8 h-8 rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 disabled:opacity-40 transition-colors flex items-center justify-center flex-shrink-0"
+                      className="w-8 h-8 rounded-full bg-[#CC1519] hover:bg-[#CC1519]/90 disabled:opacity-40 transition-colors flex items-center justify-center flex-shrink-0"
                       data-testid="button-send-message"
                     >
                       {sendMessageMutation.isPending
@@ -326,7 +326,7 @@ export default function AiStylist() {
                     onClick={() => setSelectedPersona(persona)}
                     className={`w-full text-left rounded-2xl px-4 py-3 transition-all flex items-center gap-3 ${
                       selectedPersona.id === persona.id
-                        ? 'bg-[#0B1340] text-white shadow-md'
+                        ? 'bg-[#CC1519] text-white shadow-md'
                         : 'bg-white text-foreground hover:shadow-sm hover:-translate-y-0.5'
                     }`}
                     data-testid={`button-persona-${persona.id}`}
@@ -346,7 +346,7 @@ export default function AiStylist() {
                       </p>
                     </div>
                     {selectedPersona.id === persona.id && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-[#2236E8] flex-shrink-0" />
+                      <div className="w-1.5 h-1.5 rounded-full bg-[#CC1519] flex-shrink-0" />
                     )}
                   </button>
                 ))}
@@ -354,11 +354,11 @@ export default function AiStylist() {
 
               {/* Sign-in nudge for logged-out users */}
               {!userId && (
-                <div className="mt-5 bg-[#0B1340] rounded-2xl p-5 text-white">
+                <div className="mt-5 bg-[#111111] rounded-2xl p-5 text-white">
                   <p className="text-[9px] text-white/40 tracking-widest uppercase mb-2">Unlock the full experience</p>
                   <p className="font-display font-600 text-base mb-3 leading-tight">Sign in to start chatting with your personal stylist.</p>
                   <a href="/login">
-                    <Button className="w-full rounded-full bg-white text-[#0B1340] text-xs tracking-widest uppercase hover:bg-white/90">
+                    <Button className="w-full rounded-full bg-white text-[#111111] text-xs tracking-widest uppercase hover:bg-white/90">
                       Sign in
                     </Button>
                   </a>

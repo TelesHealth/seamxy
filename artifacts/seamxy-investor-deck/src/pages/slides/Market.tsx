@@ -18,7 +18,7 @@ export default function Market() {
       {/* Three market tiers */}
       <div className="flex gap-[2.5vw] flex-1 items-center">
         {/* TAM */}
-        <div className="flex-1 flex flex-col" style={{ borderTop: '0.4vh solid #2236E8', paddingTop: '3vh' }}>
+        <div className="flex-1 flex flex-col" style={{ borderTop: '0.4vh solid #CC1519', paddingTop: '3vh' }}>
           <p className="font-body text-accent uppercase tracking-widest mb-[2vh]" style={{ fontSize: '1.1vw', letterSpacing: '0.2em' }}>TAM</p>
           <p
             className="font-display font-bold text-primary mb-[2vh]"
@@ -34,7 +34,7 @@ export default function Market() {
         <div className="bg-muted self-stretch" style={{ width: '0.1vw', opacity: 0.3 }} />
 
         {/* SAM */}
-        <div className="flex-1 flex flex-col" style={{ borderTop: '0.4vh solid #0B1340', paddingTop: '3vh' }}>
+        <div className="flex-1 flex flex-col" style={{ borderTop: '0.4vh solid #111111', paddingTop: '3vh' }}>
           <p className="font-body text-muted uppercase tracking-widest mb-[2vh]" style={{ fontSize: '1.1vw', letterSpacing: '0.2em' }}>SAM</p>
           <p
             className="font-display font-bold text-primary mb-[2vh]"
@@ -50,7 +50,7 @@ export default function Market() {
         <div className="bg-muted self-stretch" style={{ width: '0.1vw', opacity: 0.3 }} />
 
         {/* SOM */}
-        <div className="flex-1 flex flex-col" style={{ borderTop: '0.4vh solid #0B1340', paddingTop: '3vh' }}>
+        <div className="flex-1 flex flex-col" style={{ borderTop: '0.4vh solid #111111', paddingTop: '3vh' }}>
           <p className="font-body text-muted uppercase tracking-widest mb-[2vh]" style={{ fontSize: '1.1vw', letterSpacing: '0.2em' }}>SOM</p>
           <p
             className="font-display font-bold text-primary mb-[2vh]"

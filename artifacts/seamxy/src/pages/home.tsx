@@ -24,7 +24,7 @@ export default function Home() {
             </p>
             <h1 className="font-display font-600 leading-[0.88] text-foreground mb-6" style={{ fontSize: "clamp(3.5rem, 8vw, 7rem)" }}>
               Find the outfit.<br />
-              Feel the <em className="text-[#2236E8] not-italic" style={{ fontStyle: "italic" }}>shift.</em>
+              Feel the <em className="text-[#CC1519] not-italic" style={{ fontStyle: "italic" }}>shift.</em>
             </h1>
             <p className="text-foreground/60 text-lg mb-8 max-w-sm leading-relaxed">
               SeamXY turns your closet, calendar, fit, and taste into one intelligent style system.
@@ -32,7 +32,7 @@ export default function Home() {
             <div className="flex gap-3 mb-8">
               <Link href="/get-outfit-ideas">
                 <Button
-                  className="rounded-full px-7 py-5 bg-[#0B1340] hover:bg-[#0B1340]/90 text-white text-xs tracking-widest uppercase font-500"
+                  className="rounded-full px-7 py-5 bg-[#CC1519] hover:bg-[#CC1519]/90 text-white text-xs tracking-widest uppercase font-500"
                   data-testid="button-find-my-look"
                 >
                   Find My Look
@@ -50,7 +50,7 @@ export default function Home() {
             </div>
             {/* Email capture */}
             {joined ? (
-              <p className="text-sm text-[#2236E8] font-500">You're on the list ✓</p>
+              <p className="text-sm text-[#CC1519] font-500">You're on the list ✓</p>
             ) : (
               <form onSubmit={handleJoin} className="flex gap-2 max-w-sm">
                 <input
@@ -58,11 +58,11 @@ export default function Home() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email for early access"
-                  className="flex-1 bg-white/70 border border-white/60 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#2236E8]/40 placeholder:text-foreground/40"
+                  className="flex-1 bg-white/70 border border-white/60 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-1 focus:ring-[#CC1519]/40 placeholder:text-foreground/40"
                 />
                 <button
                   type="submit"
-                  className="bg-[#2236E8] hover:bg-[#2236E8]/90 text-white text-xs tracking-widest uppercase font-500 rounded-full px-5 py-3 transition-colors"
+                  className="bg-[#CC1519] hover:bg-[#CC1519]/90 text-white text-xs tracking-widest uppercase font-500 rounded-full px-5 py-3 transition-colors"
                 >
                   Join
                 </button>
@@ -97,7 +97,7 @@ export default function Home() {
             {/* Floating label cards */}
             <div className="absolute top-6 left-0 bg-white rounded-2xl shadow-lg px-4 py-3 w-44">
               <div className="flex items-center gap-2 mb-1">
-                <div className="w-6 h-6 bg-[#0B1340] rounded-md flex items-center justify-center">
+                <div className="w-6 h-6 bg-[#111111] rounded-md flex items-center justify-center">
                   <span className="text-white font-bold text-[9px]">S</span>
                 </div>
                 <div>
@@ -148,7 +148,7 @@ export default function Home() {
               <div
                 key={i}
                 className={`rounded-3xl p-8 flex flex-col justify-between min-h-[280px] ${
-                  card.dark ? "bg-[#0B1340] text-white" : "bg-white"
+                  card.dark ? "bg-[#111111] text-white" : "bg-white"
                 }`}
               >
                 <div>
@@ -166,8 +166,8 @@ export default function Home() {
                   <Button
                     className={`mt-6 rounded-full text-xs tracking-widest uppercase px-6 ${
                       card.dark
-                        ? "bg-white text-[#0B1340] hover:bg-white/90"
-                        : "bg-[#0B1340] text-white hover:bg-[#0B1340]/90"
+                        ? "bg-white text-[#111111] hover:bg-white/90"
+                        : "bg-[#CC1519] text-white hover:bg-[#CC1519]/90"
                     }`}
                   >
                     {card.cta}
@@ -192,12 +192,12 @@ export default function Home() {
                 Aesthetic, color preferences, fit style, lifestyle — answered in minutes.
               </p>
               <Link href="/style-quiz">
-                <Button className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-7 py-5 w-fit">
+                <Button className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-7 py-5 w-fit">
                   Take the Quiz
                 </Button>
               </Link>
             </div>
-            <div className="bg-[#0B1340] p-10 flex flex-col justify-center">
+            <div className="bg-[#111111] p-10 flex flex-col justify-center">
               <div className="bg-white/10 rounded-2xl p-5 mb-4 w-fit">
                 <p className="text-[10px] text-white/50 tracking-widest uppercase mb-2">Style Quiz</p>
                 <p className="font-display text-white text-lg font-600 mb-4">How should your clothes make you feel?</p>
@@ -244,7 +244,7 @@ export default function Home() {
               )}
             </div>
             <Link href="/upload">
-              <Button className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-7 py-5">
+              <Button className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-7 py-5">
                 Try It On
               </Button>
             </Link>
@@ -279,7 +279,7 @@ export default function Home() {
               alt="Closet"
               className="w-full h-full object-cover"
             />
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#0B1340]/80 to-transparent p-6">
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-[#111111]/80 to-transparent p-6">
               <p className="text-[9px] text-white/60 tracking-widest uppercase mb-1">Closet Management</p>
               <p className="font-display text-white text-2xl font-600 leading-tight">Style what they already own first.</p>
             </div>
@@ -298,14 +298,14 @@ export default function Home() {
                 <p className="font-display text-xl font-600 text-foreground mb-1">Work With What You Have</p>
                 <p className="text-xs text-muted-foreground">Basic outfit ideas, weekly edits, closet gaps.</p>
               </div>
-              <div className="bg-[#0B1340] rounded-2xl p-5 flex-1">
+              <div className="bg-[#111111] rounded-2xl p-5 flex-1">
                 <p className="text-[9px] text-white/50 tracking-widest uppercase mb-2">Premium</p>
                 <p className="font-display text-xl font-600 text-white mb-1">Style My Closet</p>
                 <p className="text-xs text-white/60">Advisor audit, capsule planning, curated shopping, and consults.</p>
               </div>
             </div>
             <Link href="/closet">
-              <Button className="mt-6 rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-7 py-5">
+              <Button className="mt-6 rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-7 py-5">
                 Open My Closet
               </Button>
             </Link>
@@ -318,7 +318,7 @@ export default function Home() {
         <p className="text-[10px] text-muted-foreground tracking-widest uppercase mb-1">Ready when you are</p>
         <p className="font-display text-xl font-600 text-foreground mb-3 leading-tight">Build your style profile.</p>
         <Link href="/signup">
-          <Button className="w-full rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 text-white text-xs tracking-widest uppercase py-4">
+          <Button className="w-full rounded-full bg-[#CC1519] hover:bg-[#CC1519]/90 text-white text-xs tracking-widest uppercase py-4">
             Request Access
           </Button>
         </Link>

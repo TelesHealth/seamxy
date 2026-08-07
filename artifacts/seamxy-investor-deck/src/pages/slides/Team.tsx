@@ -60,7 +60,7 @@ export default function Team() {
         <div className="flex flex-col" style={{ flex: '1' }}>
           <p className="font-body font-semibold text-primary mb-[2.5vh]" style={{ fontSize: '1.7vw' }}>Stack signals execution depth</p>
 
-          <div className="rounded-[1vw] flex flex-col gap-[1.8vh]" style={{ background: '#0B1340', padding: '3vh 2.5vw', flex: 1 }}>
+          <div className="rounded-[1vw] flex flex-col gap-[1.8vh]" style={{ background: '#111111', padding: '3vh 2.5vw', flex: 1 }}>
             <div>
               <p className="font-body uppercase tracking-widest text-accent mb-[0.8vh]" style={{ fontSize: '1vw', letterSpacing: '0.18em' }}>AI Layer</p>
               <p className="font-body text-bg" style={{ fontSize: '1.4vw' }}>Anthropic Claude claude-opus-4-5 · Tool Use API · 9 Personas</p>

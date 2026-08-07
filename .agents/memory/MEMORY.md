@@ -1,1 +1,2 @@
 - [SeamXY port lessons](seamxy-port.md) — large fullstack port: kept registerRoutes(), skipped OpenAPI spec, fixed @shared/@assets aliases, Stripe proxy trick for missing secret.
+- [SeamXY brand tokens](seamxy-brand-tokens.md) — authoritative palette after crimson rebrand; use these for all new work.

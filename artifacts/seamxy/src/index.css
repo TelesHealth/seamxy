@@ -5,10 +5,10 @@
 /* ── SeamXY Global Gradient Background ── */
 .seamxy-bg {
   background:
-    radial-gradient(ellipse 65% 90% at -5% 50%, rgba(196, 181, 249, 0.45) 0%, transparent 65%),
-    radial-gradient(ellipse 55% 65% at 55% 10%, rgba(248, 215, 185, 0.38) 0%, transparent 60%),
-    radial-gradient(ellipse 55% 70% at 100% 65%, rgba(196, 220, 248, 0.42) 0%, transparent 60%),
-    #f2f0f9;
+    radial-gradient(ellipse 65% 90% at -5% 50%, rgba(255, 170, 170, 0.32) 0%, transparent 65%),
+    radial-gradient(ellipse 55% 65% at 55% 10%, rgba(255, 230, 225, 0.30) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 70% at 100% 65%, rgba(200, 218, 255, 0.35) 0%, transparent 60%),
+    #FAF6F2;
   min-height: 100vh;
 }
 
@@ -58,7 +58,7 @@
 
   --popover-border: 0 0% 86%;
 
-  --primary: 232 82% 52%;
+  --primary: 359 81% 44%;
 
   --primary-foreground: 0 0% 100%;
 
@@ -79,7 +79,7 @@
   --destructive-foreground: 0 72% 98%;
 
   --input: 0 0% 72%;
-  --ring: 210 85% 45%;
+  --ring: 359 81% 44%;
   --chart-1: 210 85% 32%;
   --chart-2: 25 88% 38%;
   --chart-3: 280 75% 35%;
@@ -176,9 +176,9 @@
 
   --popover-border: 0 0% 20%;
 
-  --primary: 210 85% 48%;
+  --primary: 359 81% 50%;
 
-  --primary-foreground: 210 85% 98%;
+  --primary-foreground: 0 0% 100%;
 
   --secondary: 0 2% 18%;
 
@@ -197,7 +197,7 @@
   --destructive-foreground: 0 72% 98%;
 
   --input: 0 0% 32%;
-  --ring: 210 85% 48%;
+  --ring: 359 81% 50%;
   --chart-1: 210 85% 68%;
   --chart-2: 25 88% 65%;
   --chart-3: 280 75% 68%;

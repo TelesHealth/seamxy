@@ -36,7 +36,7 @@ export default function InspoPage() {
         <div className="mb-10">
           <h1 className="font-display text-5xl md:text-6xl font-600 text-foreground leading-tight">
             Style intelligence,<br />
-            <em className="text-[#2236E8]">visually.</em>
+            <em className="text-[#CC1519]">visually.</em>
           </h1>
         </div>
 
@@ -68,12 +68,12 @@ export default function InspoPage() {
             <h2 className="font-display text-3xl font-600 text-foreground mb-3">Quiet luxury, revisited.</h2>
             <p className="text-muted-foreground text-sm mb-6">Cream base, black structure, soft trouser, minimal shoe, one chrome accent.</p>
             <Link href="/get-outfit-ideas">
-              <Button className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-6">
+              <Button className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-6">
                 Find My Look
               </Button>
             </Link>
           </div>
-          <div className="bg-[#0B1340] rounded-3xl p-8">
+          <div className="bg-[#111111] rounded-3xl p-8">
             <p className="text-[10px] tracking-widest uppercase text-white/50 mb-2">Trending</p>
             <h2 className="font-display text-3xl font-600 text-white mb-3">Power Workwear moment.</h2>
             <p className="text-white/60 text-sm mb-6">Meetings, travel, and client dinners — one wardrobe that does all three.</p>
@@ -91,7 +91,7 @@ export default function InspoPage() {
         <p className="text-[10px] text-muted-foreground tracking-widest uppercase mb-1">Ready when you are</p>
         <p className="font-display text-xl font-600 text-foreground mb-3 leading-tight">Build your style profile.</p>
         <Link href="/signup">
-          <Button className="w-full rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 text-white text-xs tracking-widest uppercase py-4">
+          <Button className="w-full rounded-full bg-[#CC1519] hover:bg-[#CC1519]/90 text-white text-xs tracking-widest uppercase py-4">
             Request Access
           </Button>
         </Link>

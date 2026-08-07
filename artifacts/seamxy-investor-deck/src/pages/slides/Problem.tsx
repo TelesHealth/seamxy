@@ -25,14 +25,14 @@ export default function Problem() {
         </div>
 
         {/* Card 2 */}
-        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#E8ECF8', padding: '3.5vh 2.5vw' }}>
+        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#FAE8E8', padding: '3.5vh 2.5vw' }}>
           <p className="font-display font-bold text-primary mb-[2vh]" style={{ fontSize: '3.5vw', lineHeight: 1.0 }}>Zero</p>
           <p className="font-body font-semibold text-primary mb-[1.5vh]" style={{ fontSize: '1.6vw' }}>system connecting the dots</p>
           <p className="font-body text-muted" style={{ fontSize: '1.45vw', lineHeight: 1.5 }}>Shopping, styling, fitting, and social inspiration live in separate apps with no shared intelligence between them.</p>
         </div>
 
         {/* Card 3 */}
-        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#0B1340', padding: '3.5vh 2.5vw' }}>
+        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#111111', padding: '3.5vh 2.5vw' }}>
           <p className="font-display font-bold text-accent mb-[2vh]" style={{ fontSize: '3.5vw', lineHeight: 1.0 }}>$1.7T</p>
           <p className="font-body font-semibold text-bg mb-[1.5vh]" style={{ fontSize: '1.6vw' }}>fashion market, fragmented</p>
           <p className="font-body" style={{ fontSize: '1.45vw', lineHeight: 1.5, color: 'rgba(250,249,246,0.7)' }}>The global fashion industry runs on guesswork — brands, stylists, and shoppers lack a unified intelligence layer.</p>

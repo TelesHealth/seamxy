@@ -23,13 +23,13 @@ export default function Product() {
         </div>
 
         {/* AI Concierge */}
-        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#E8ECF8', padding: '2.5vh 2vw' }}>
+        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#FAE8E8', padding: '2.5vh 2vw' }}>
           <p className="font-body font-semibold text-primary mb-[1vh]" style={{ fontSize: '1.55vw' }}>AI Concierge</p>
           <p className="font-body text-muted" style={{ fontSize: '1.35vw', lineHeight: 1.5 }}>Conversational Claude-powered styling. 9 distinct stylist personas. Tool Use API makes recommendations shoppable. Session history persisted.</p>
         </div>
 
         {/* Virtual Try-On */}
-        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#0B1340', padding: '2.5vh 2vw' }}>
+        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#111111', padding: '2.5vh 2vw' }}>
           <p className="font-body font-semibold text-bg mb-[1vh]" style={{ fontSize: '1.55vw' }}>Virtual Try-On</p>
           <p className="font-body" style={{ fontSize: '1.35vw', lineHeight: 1.5, color: 'rgba(250,249,246,0.7)' }}>MediaPipe pose detection identifies 33 body landmarks. TPS warping deforms garments to fit. Live AR mode via webcam. Shareable try-on links.</p>
         </div>
@@ -38,7 +38,7 @@ export default function Product() {
       {/* Bottom row: 2 cards */}
       <div className="flex gap-[2vw]" style={{ flex: '1' }}>
         {/* Dashboard */}
-        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#1A2560', padding: '2.5vh 2vw' }}>
+        <div className="flex-1 rounded-[1vw] flex flex-col" style={{ background: '#111111', padding: '2.5vh 2vw' }}>
           <p className="font-body font-semibold text-bg mb-[1vh]" style={{ fontSize: '1.55vw' }}>Member Dashboard</p>
           <p className="font-body" style={{ fontSize: '1.35vw', lineHeight: 1.5, color: 'rgba(250,249,246,0.7)' }}>Daily AI outfit, weekly edit, wardrobe gap analysis, advisor notes. Weather-aware. Powered by style quiz + closet + body measurements.</p>
         </div>

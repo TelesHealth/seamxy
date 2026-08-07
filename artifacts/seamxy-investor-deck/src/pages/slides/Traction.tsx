@@ -18,7 +18,7 @@ export default function Traction() {
       <div className="flex gap-[3vw] flex-1">
         {/* Row 1 */}
         <div className="flex flex-col gap-[3vh] flex-1">
-          <div className="flex-1 flex flex-col justify-center rounded-[1vw]" style={{ background: '#0B1340', padding: '3vh 3vw' }}>
+          <div className="flex-1 flex flex-col justify-center rounded-[1vw]" style={{ background: '#111111', padding: '3vh 3vw' }}>
             <p
               className="font-display font-bold text-accent mb-[1.5vh]"
               style={{ fontSize: '6vw', lineHeight: 1.0 }}
@@ -42,7 +42,7 @@ export default function Traction() {
         </div>
 
         <div className="flex flex-col gap-[3vh] flex-1">
-          <div className="flex-1 flex flex-col justify-center rounded-[1vw]" style={{ background: '#E8ECF8', padding: '3vh 3vw' }}>
+          <div className="flex-1 flex flex-col justify-center rounded-[1vw]" style={{ background: '#FAE8E8', padding: '3vh 3vw' }}>
             <p
               className="font-display font-bold text-primary mb-[1.5vh]"
               style={{ fontSize: '6vw', lineHeight: 1.0 }}
@@ -53,7 +53,7 @@ export default function Traction() {
             <p className="font-body text-muted" style={{ fontSize: '1.4vw', lineHeight: 1.4 }}>Home, System, Find Look, Quiz, Inspo, Concierge, Dashboard, Try-On, Closet — all built and live</p>
           </div>
 
-          <div className="flex-1 flex flex-col justify-center rounded-[1vw]" style={{ background: '#1A2560', padding: '3vh 3vw' }}>
+          <div className="flex-1 flex flex-col justify-center rounded-[1vw]" style={{ background: '#111111', padding: '3vh 3vw' }}>
             <p
               className="font-display font-bold text-accent mb-[1.5vh]"
               style={{ fontSize: '6vw', lineHeight: 1.0 }}

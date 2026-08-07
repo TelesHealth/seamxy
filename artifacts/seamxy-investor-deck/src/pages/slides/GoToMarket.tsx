@@ -30,12 +30,12 @@ export default function GoToMarket() {
 
         {/* Connector */}
         <div className="flex items-center" style={{ width: '3vw', flexShrink: 0 }}>
-          <div style={{ width: '100%', height: '0.15vh', background: '#2236E8' }} />
-          <div style={{ width: 0, height: 0, borderTop: '0.8vh solid transparent', borderBottom: '0.8vh solid transparent', borderLeft: '1.2vw solid #2236E8' }} />
+          <div style={{ width: '100%', height: '0.15vh', background: '#CC1519' }} />
+          <div style={{ width: 0, height: 0, borderTop: '0.8vh solid transparent', borderBottom: '0.8vh solid transparent', borderLeft: '1.2vw solid #CC1519' }} />
         </div>
 
         {/* Step 2 */}
-        <div className="flex flex-col flex-1" style={{ borderTop: '0.4vh solid #2236E8', paddingTop: '3vh' }}>
+        <div className="flex flex-col flex-1" style={{ borderTop: '0.4vh solid #CC1519', paddingTop: '3vh' }}>
           <p className="font-body text-accent mb-[2vh]" style={{ fontSize: '1.2vw', letterSpacing: '0.15em' }}>STAGE 02</p>
           <p className="font-display font-bold text-bg mb-[2vh]" style={{ fontSize: '2.5vw', lineHeight: 1.1 }}>Quiz activation</p>
           <p className="font-body mb-[3vh]" style={{ fontSize: '1.45vw', color: 'rgba(250,249,246,0.7)', lineHeight: 1.6 }}>
@@ -48,8 +48,8 @@ export default function GoToMarket() {
 
         {/* Connector */}
         <div className="flex items-center" style={{ width: '3vw', flexShrink: 0 }}>
-          <div style={{ width: '100%', height: '0.15vh', background: '#2236E8' }} />
-          <div style={{ width: 0, height: 0, borderTop: '0.8vh solid transparent', borderBottom: '0.8vh solid transparent', borderLeft: '1.2vw solid #2236E8' }} />
+          <div style={{ width: '100%', height: '0.15vh', background: '#CC1519' }} />
+          <div style={{ width: 0, height: 0, borderTop: '0.8vh solid transparent', borderBottom: '0.8vh solid transparent', borderLeft: '1.2vw solid #CC1519' }} />
         </div>
 
         {/* Step 3 */}
@@ -66,8 +66,8 @@ export default function GoToMarket() {
 
         {/* Connector */}
         <div className="flex items-center" style={{ width: '3vw', flexShrink: 0 }}>
-          <div style={{ width: '100%', height: '0.15vh', background: '#2236E8' }} />
-          <div style={{ width: 0, height: 0, borderTop: '0.8vh solid transparent', borderBottom: '0.8vh solid transparent', borderLeft: '1.2vw solid #2236E8' }} />
+          <div style={{ width: '100%', height: '0.15vh', background: '#CC1519' }} />
+          <div style={{ width: 0, height: 0, borderTop: '0.8vh solid transparent', borderBottom: '0.8vh solid transparent', borderLeft: '1.2vw solid #CC1519' }} />
         </div>
 
         {/* Step 4 */}

@@ -114,7 +114,7 @@ function UploadModal({
           {!previewUrl ? (
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-foreground/15 rounded-2xl p-8 text-center cursor-pointer hover:border-[#2236E8]/40 transition-colors"
+              className="border-2 border-dashed border-foreground/15 rounded-2xl p-8 text-center cursor-pointer hover:border-[#CC1519]/40 transition-colors"
             >
               <Camera className="w-10 h-10 text-foreground/20 mx-auto mb-3" />
               <p className="font-600 text-foreground/70">Click to upload</p>
@@ -140,7 +140,7 @@ function UploadModal({
               {isAnalyzing && (
                 <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-2xl">
                   <div className="text-center">
-                    <Sparkles className="w-8 h-8 text-[#2236E8] mx-auto animate-pulse" />
+                    <Sparkles className="w-8 h-8 text-[#CC1519] mx-auto animate-pulse" />
                     <p className="text-sm mt-2 text-foreground/70">AI analyzing image…</p>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ function UploadModal({
             <div className="flex gap-2">
               <Button variant="outline" className="rounded-full" onClick={() => onOpenChange(false)}>Cancel</Button>
               <Button
-                className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase"
+                className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase"
                 onClick={handleSubmit}
                 disabled={!selectedFile || !category}
                 data-testid="button-save-closet-item"
@@ -297,7 +297,7 @@ export default function Closet() {
             Sign in to start building your wardrobe
           </p>
           <Button
-            className="w-full rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase"
+            className="w-full rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase"
             onClick={() => setLocation("/login")}
           >
             Sign In
@@ -359,7 +359,7 @@ export default function Closet() {
               <Button
                 onClick={() => setUploadOpen(true)}
                 disabled={isAtLimit}
-                className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-5"
+                className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-5"
                 data-testid="button-upload-item"
               >
                 <Plus className="w-4 h-4 mr-2" />
@@ -381,7 +381,7 @@ export default function Closet() {
                 </div>
               </div>
               <Button
-                className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-5 flex-shrink-0"
+                className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-5 flex-shrink-0"
                 onClick={() => setLocation("/pricing")}
               >
                 Upgrade
@@ -400,7 +400,7 @@ export default function Closet() {
                     onClick={() => setFilterCategory("all")}
                     className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-all ${
                       filterCategory === "all"
-                        ? "bg-[#0B1340] text-white"
+                        ? "bg-[#CC1519] text-white"
                         : "text-foreground/60 hover:bg-foreground/4 hover:text-foreground"
                     }`}
                   >
@@ -415,7 +415,7 @@ export default function Closet() {
                       onClick={() => setFilterCategory(cat.id)}
                       className={`w-full flex items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-all ${
                         filterCategory === cat.id
-                          ? "bg-[#0B1340] text-white"
+                          ? "bg-[#CC1519] text-white"
                           : "text-foreground/60 hover:bg-foreground/4 hover:text-foreground"
                       }`}
                     >
@@ -430,7 +430,7 @@ export default function Closet() {
 
               {/* Gap analysis */}
               {gapAnalysis && (
-                <div className="bg-[#0B1340] rounded-3xl p-5 text-white">
+                <div className="bg-[#111111] rounded-3xl p-5 text-white">
                   <div className="flex items-center justify-between mb-3">
                     <p className="text-[9px] text-white/40 tracking-widest uppercase">Wardrobe Analysis</p>
                     <span className="text-xs bg-white/10 rounded-full px-2.5 py-1 text-white/70">
@@ -478,7 +478,7 @@ export default function Closet() {
                       onClick={() => setActiveTab(tab)}
                       className={`rounded-full px-4 py-1.5 text-xs tracking-widest uppercase font-500 transition-all ${
                         activeTab === tab
-                          ? "bg-[#0B1340] text-white shadow"
+                          ? "bg-[#CC1519] text-white shadow"
                           : "text-foreground/50 hover:text-foreground"
                       }`}
                     >
@@ -501,13 +501,13 @@ export default function Closet() {
                 <div className="flex gap-1 bg-white rounded-full p-1 shadow-sm ml-auto">
                   <button
                     onClick={() => setViewMode("grid")}
-                    className={`rounded-full p-1.5 transition-all ${viewMode === "grid" ? "bg-[#0B1340] text-white" : "text-foreground/40 hover:text-foreground"}`}
+                    className={`rounded-full p-1.5 transition-all ${viewMode === "grid" ? "bg-[#CC1519] text-white" : "text-foreground/40 hover:text-foreground"}`}
                   >
                     <Grid3X3 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => setViewMode("list")}
-                    className={`rounded-full p-1.5 transition-all ${viewMode === "list" ? "bg-[#0B1340] text-white" : "text-foreground/40 hover:text-foreground"}`}
+                    className={`rounded-full p-1.5 transition-all ${viewMode === "list" ? "bg-[#CC1519] text-white" : "text-foreground/40 hover:text-foreground"}`}
                   >
                     <List className="w-3.5 h-3.5" />
                   </button>
@@ -530,7 +530,7 @@ export default function Closet() {
                   </p>
                   {items.length === 0 && (
                     <Button
-                      className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-7"
+                      className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-7"
                       onClick={() => setUploadOpen(true)}
                     >
                       <Plus className="w-4 h-4 mr-2" />

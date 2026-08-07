@@ -80,7 +80,7 @@ function OutfitCard({ outfit, isLocked = false }: { outfit: OutfitRecommendation
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center">
             <Lock className="w-8 h-8 text-foreground/30 mb-2" />
             <p className="text-sm text-foreground/50">Premium Content</p>
-            <Button size="sm" className="mt-3 rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-5">Unlock</Button>
+            <Button size="sm" className="mt-3 rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-5">Unlock</Button>
           </div>
         )}
         <div className="grid grid-cols-2 gap-1 p-2 h-full">
@@ -134,7 +134,7 @@ function OutfitCard({ outfit, isLocked = false }: { outfit: OutfitRecommendation
           </Button>
           <Button
             size="sm"
-            className="flex-1 rounded-full bg-[#0B1340] text-white text-xs hover:bg-[#0B1340]/90"
+            className="flex-1 rounded-full bg-[#CC1519] text-white text-xs hover:bg-[#CC1519]/90"
             data-testid={`button-shop-outfit-${outfit.id}`}
           >
             <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
@@ -172,8 +172,8 @@ export default function StyleDashboard() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="bg-white rounded-3xl w-full max-w-md text-center p-10 shadow-sm">
-          <div className="w-14 h-14 rounded-full bg-[#2236E8]/10 flex items-center justify-center mx-auto mb-5">
-            <Sparkles className="w-7 h-7 text-[#2236E8]" />
+          <div className="w-14 h-14 rounded-full bg-[#CC1519]/10 flex items-center justify-center mx-auto mb-5">
+            <Sparkles className="w-7 h-7 text-[#CC1519]" />
           </div>
           <h2 className="font-display text-3xl font-600 text-foreground mb-2">Welcome to SeamXY</h2>
           <p className="text-foreground/50 mb-7 text-sm leading-relaxed">
@@ -181,7 +181,7 @@ export default function StyleDashboard() {
           </p>
           <div className="space-y-3">
             <Button
-              className="w-full rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase"
+              className="w-full rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase"
               onClick={() => setLocation("/login")}
             >
               Sign In
@@ -250,14 +250,14 @@ export default function StyleDashboard() {
               <span className={`text-xs tracking-widest uppercase px-3 py-1.5 rounded-full font-500 ${
                 subscription.tier === "free"
                   ? "bg-foreground/8 text-foreground/60"
-                  : "bg-[#0B1340] text-white"
+                  : "bg-[#111111] text-white"
               }`}>
                 {subscription.tier.charAt(0).toUpperCase() + subscription.tier.slice(1)}
               </span>
               {subscription.tier === "free" && (
                 <Button
                   size="sm"
-                  className="rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 text-white text-xs tracking-widest uppercase px-5"
+                  className="rounded-full bg-[#CC1519] hover:bg-[#CC1519]/90 text-white text-xs tracking-widest uppercase px-5"
                   onClick={() => setLocation("/pricing")}
                 >
                   Upgrade
@@ -270,14 +270,14 @@ export default function StyleDashboard() {
           {/* ── Style Identity Card ── */}
           {profile?.styleIdentitySummary && (
             <div className="bg-white rounded-3xl p-6 mb-8 shadow-sm flex items-start gap-5">
-              <div className="w-12 h-12 rounded-full bg-[#2236E8]/10 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-6 h-6 text-[#2236E8]" />
+              <div className="w-12 h-12 rounded-full bg-[#CC1519]/10 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-[#CC1519]" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] tracking-widest uppercase text-foreground/40 mb-1">Your Style Identity</p>
                 <p className="text-sm text-foreground/70 leading-relaxed">{profile.styleIdentitySummary}</p>
                 <button
-                  className="text-xs text-[#2236E8] hover:underline mt-2 flex items-center gap-1"
+                  className="text-xs text-[#CC1519] hover:underline mt-2 flex items-center gap-1"
                   onClick={() => setLocation("/style-quiz")}
                 >
                   Update your preferences
@@ -300,7 +300,7 @@ export default function StyleDashboard() {
                       onClick={() => setActiveTab(tab)}
                       className={`rounded-full px-5 py-2 text-xs tracking-widest uppercase font-500 transition-all ${
                         activeTab === tab
-                          ? "bg-[#0B1340] text-white shadow"
+                          ? "bg-[#CC1519] text-white shadow"
                           : "text-foreground/50 hover:text-foreground"
                       }`}
                       data-testid={`tab-${tab}`}
@@ -341,7 +341,7 @@ export default function StyleDashboard() {
                             Complete your style quiz to get personalized recommendations
                           </p>
                           <Button
-                            className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-7"
+                            className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-7"
                             onClick={() => setLocation("/style-quiz")}
                           >
                             Take Style Quiz
@@ -387,8 +387,8 @@ export default function StyleDashboard() {
               {subscription.tier === "free" && (
                 <div className="bg-white rounded-3xl p-5 shadow-sm flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4 flex-1 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-[#2236E8]/10 flex items-center justify-center flex-shrink-0">
-                      <Sparkles className="w-5 h-5 text-[#2236E8]" />
+                    <div className="w-10 h-10 rounded-full bg-[#CC1519]/10 flex items-center justify-center flex-shrink-0">
+                      <Sparkles className="w-5 h-5 text-[#CC1519]" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-600 text-sm text-foreground">{subscription.outfitsRemaining} outfits remaining this week</p>
@@ -396,7 +396,7 @@ export default function StyleDashboard() {
                     </div>
                   </div>
                   <Button
-                    className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-5 flex-shrink-0"
+                    className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-5 flex-shrink-0"
                     onClick={() => setLocation("/pricing")}
                   >
                     Upgrade
@@ -408,7 +408,7 @@ export default function StyleDashboard() {
             {/* ── Right col: Sidebar ── */}
             <div className="space-y-5">
               {/* Advisor Notes */}
-              <div className="bg-[#0B1340] rounded-3xl p-6 text-white">
+              <div className="bg-[#111111] rounded-3xl p-6 text-white">
                 <p className="text-[9px] text-white/40 tracking-widest uppercase mb-3">Advisor Notes</p>
                 {stylistMessages.length === 0 ? (
                   <div className="text-center py-4">
@@ -446,7 +446,7 @@ export default function StyleDashboard() {
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-[10px] tracking-widest uppercase text-foreground/40">My Closet</p>
                   <button
-                    className="text-xs text-[#2236E8] hover:underline flex items-center gap-1"
+                    className="text-xs text-[#CC1519] hover:underline flex items-center gap-1"
                     onClick={() => setLocation("/closet")}
                   >
                     View All
@@ -478,7 +478,7 @@ export default function StyleDashboard() {
                     Saved Items
                   </p>
                   <button
-                    className="text-xs text-[#2236E8] hover:underline"
+                    className="text-xs text-[#CC1519] hover:underline"
                     onClick={() => setLocation("/saved")}
                   >
                     View All
@@ -488,7 +488,7 @@ export default function StyleDashboard() {
                   <div className="text-center py-3">
                     <p className="text-sm text-foreground/40 mb-2">No saved items yet</p>
                     <button
-                      className="text-xs text-[#2236E8] hover:underline"
+                      className="text-xs text-[#CC1519] hover:underline"
                       onClick={() => setLocation("/shop")}
                     >
                       Browse Shop

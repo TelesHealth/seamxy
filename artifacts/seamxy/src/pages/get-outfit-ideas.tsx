@@ -295,7 +295,7 @@ export default function GetOutfitIdeas() {
                   Welcome back! Save your picks permanently with a free account.
                 </p>
                 <Link href="/signup">
-                  <Button className="rounded-full bg-[#0B1340] text-white text-xs tracking-widest uppercase px-5 flex-shrink-0" data-testid="button-welcome-back-signup">
+                  <Button className="rounded-full bg-[#CC1519] text-white text-xs tracking-widest uppercase px-5 flex-shrink-0" data-testid="button-welcome-back-signup">
                     Join free
                   </Button>
                 </Link>
@@ -323,10 +323,10 @@ export default function GetOutfitIdeas() {
                     >
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="font-display font-600 text-foreground group-hover:text-[#2236E8] transition-colors">{cat.label}</p>
+                          <p className="font-display font-600 text-foreground group-hover:text-[#CC1519] transition-colors">{cat.label}</p>
                           <p className="text-xs text-foreground/50 mt-0.5">{cat.examples}</p>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-foreground/30 group-hover:text-[#2236E8] transition-colors flex-shrink-0" />
+                        <ChevronRight className="w-4 h-4 text-foreground/30 group-hover:text-[#CC1519] transition-colors flex-shrink-0" />
                       </div>
                     </button>
                   ))}
@@ -340,7 +340,7 @@ export default function GetOutfitIdeas() {
                   alt="Style"
                   className="w-full h-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1340]/60 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#111111]/60 via-transparent to-transparent" />
                 <div className="absolute bottom-6 left-6 right-6">
                   <p className="text-[9px] text-white/60 tracking-widest uppercase mb-1">Outfit Intelligence</p>
                   <p className="font-display text-white text-2xl font-600 leading-tight">Curated looks for every moment.</p>
@@ -348,7 +348,7 @@ export default function GetOutfitIdeas() {
               </div>
 
               {/* Right: dark navy detail card */}
-              <div className="bg-[#0B1340] rounded-3xl p-7 text-white flex flex-col justify-between min-h-[300px] lg:min-h-[560px]">
+              <div className="bg-[#111111] rounded-3xl p-7 text-white flex flex-col justify-between min-h-[300px] lg:min-h-[560px]">
                 <div>
                   <p className="text-[9px] text-white/40 tracking-widest uppercase mb-5">How it works</p>
                   <div className="space-y-6">
@@ -395,8 +395,8 @@ export default function GetOutfitIdeas() {
                   className="text-left bg-white rounded-2xl px-5 py-4 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group flex items-center justify-between"
                   data-testid={`card-situation-${sit.id}`}
                 >
-                  <p className="font-display font-600 text-foreground group-hover:text-[#2236E8] transition-colors">{sit.label}</p>
-                  <ChevronRight className="w-4 h-4 text-foreground/30 group-hover:text-[#2236E8] transition-colors flex-shrink-0" />
+                  <p className="font-display font-600 text-foreground group-hover:text-[#CC1519] transition-colors">{sit.label}</p>
+                  <ChevronRight className="w-4 h-4 text-foreground/30 group-hover:text-[#CC1519] transition-colors flex-shrink-0" />
                 </button>
               ))}
             </div>
@@ -415,7 +415,7 @@ export default function GetOutfitIdeas() {
               <Button
                 onClick={() => { if (customSituation.trim()) setStep("vibe"); }}
                 disabled={!customSituation.trim()}
-                className="rounded-full bg-[#0B1340] text-white px-5 text-xs tracking-widest uppercase flex-shrink-0"
+                className="rounded-full bg-[#CC1519] text-white px-5 text-xs tracking-widest uppercase flex-shrink-0"
                 data-testid="button-custom-situation-next"
               >
                 Next
@@ -443,7 +443,7 @@ export default function GetOutfitIdeas() {
                   className="text-left bg-white rounded-2xl px-5 py-5 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5 group"
                   data-testid={`card-vibe-${v.id}`}
                 >
-                  <p className="font-display font-600 text-foreground text-lg group-hover:text-[#2236E8] transition-colors">{v.label}</p>
+                  <p className="font-display font-600 text-foreground text-lg group-hover:text-[#CC1519] transition-colors">{v.label}</p>
                   <p className="text-xs text-foreground/50 mt-1">{v.description}</p>
                 </button>
               ))}
@@ -467,7 +467,7 @@ export default function GetOutfitIdeas() {
       {step === "loading" && (
         <div className="min-h-[70vh] flex flex-col items-center justify-center px-6">
           <div className="text-center">
-            <div className="w-16 h-16 rounded-full bg-[#0B1340] flex items-center justify-center mx-auto mb-8">
+            <div className="w-16 h-16 rounded-full bg-[#CC1519] flex items-center justify-center mx-auto mb-8">
               <Loader2 className="w-7 h-7 animate-spin text-white" />
             </div>
             <p className="text-[10px] tracking-widest uppercase text-foreground/40 mb-3">Curating your looks</p>
@@ -503,7 +503,7 @@ export default function GetOutfitIdeas() {
               {results.outfits.map((outfit) => (
                 <div key={outfit.id} className="bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col" data-testid={`card-outfit-${outfit.id}`}>
                   {/* Card header */}
-                  <div className="bg-[#0B1340] px-6 py-5 flex items-start justify-between gap-3">
+                  <div className="bg-[#111111] px-6 py-5 flex items-start justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-[9px] text-white/40 tracking-widest uppercase mb-1">Look</p>
                       <h3 className="font-display font-600 text-white text-lg leading-tight" data-testid={`text-outfit-title-${outfit.id}`}>
@@ -524,13 +524,13 @@ export default function GetOutfitIdeas() {
                   <div className="px-6 py-5 flex-1 space-y-3">
                     {outfit.items.map((item, idx) => (
                       <div key={idx} className="flex gap-3 items-start" data-testid={`outfit-item-${outfit.id}-${idx}`}>
-                        <div className="w-1.5 h-1.5 rounded-full bg-[#2236E8] mt-2 flex-shrink-0" />
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#CC1519] mt-2 flex-shrink-0" />
                         <div className="flex-1">
                           <div className="flex items-center justify-between gap-2 flex-wrap">
                             <p className="text-sm font-600 text-foreground">{item.name}</p>
                             <Link href={`/shop?q=${encodeURIComponent(item.name + ' ' + item.colorOrPattern)}`}>
                               <button
-                                className="text-[10px] text-foreground/40 hover:text-[#2236E8] transition-colors flex items-center gap-1"
+                                className="text-[10px] text-foreground/40 hover:text-[#CC1519] transition-colors flex items-center gap-1"
                                 onClick={() => {
                                   if (results?.sessionId) {
                                     apiRequest("POST", "/api/v1/outfits/track-event", {
@@ -567,7 +567,7 @@ export default function GetOutfitIdeas() {
 
             {/* Conversion prompt */}
             {showConversionPrompt && !conversionPromptDismissed && (
-              <div className="bg-[#0B1340] rounded-3xl p-6 mb-8 flex items-center justify-between gap-4 flex-wrap" data-testid="card-conversion-prompt">
+              <div className="bg-[#111111] rounded-3xl p-6 mb-8 flex items-center justify-between gap-4 flex-wrap" data-testid="card-conversion-prompt">
                 <div className="flex-1 min-w-0">
                   <p className="font-display font-600 text-white text-lg mb-1">
                     {heartedOutfits.size >= 3
@@ -580,7 +580,7 @@ export default function GetOutfitIdeas() {
                 </div>
                 <div className="flex gap-2 flex-shrink-0">
                   <Link href={`/signup${results?.sessionId ? `?session=${results.sessionId}` : ''}`}>
-                    <Button className="rounded-full bg-white text-[#0B1340] text-xs tracking-widest uppercase px-5 hover:bg-white/90" data-testid="button-conversion-signup">
+                    <Button className="rounded-full bg-white text-[#111111] text-xs tracking-widest uppercase px-5 hover:bg-white/90" data-testid="button-conversion-signup">
                       Create account
                     </Button>
                   </Link>
@@ -619,14 +619,14 @@ export default function GetOutfitIdeas() {
             {/* Hearted picks floating bar */}
             {heartedOutfits.size > 0 && (
               <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40">
-                <div className="bg-[#0B1340] rounded-2xl px-5 py-3 flex items-center gap-3 shadow-xl">
+                <div className="bg-[#111111] rounded-2xl px-5 py-3 flex items-center gap-3 shadow-xl">
                   <Heart className="w-4 h-4 fill-red-400 text-red-400" />
                   <span className="text-sm font-500 text-white" data-testid="text-picks-count">
                     {heartedOutfits.size} {heartedOutfits.size === 1 ? "pick" : "picks"} saved
                   </span>
                   <Button
                     size="sm"
-                    className="rounded-full bg-white text-[#0B1340] text-xs tracking-widest uppercase px-5 hover:bg-white/90"
+                    className="rounded-full bg-white text-[#111111] text-xs tracking-widest uppercase px-5 hover:bg-white/90"
                     onClick={() => setShowSendDialog(true)}
                     data-testid="button-send-looks"
                   >
@@ -655,8 +655,8 @@ export default function GetOutfitIdeas() {
           </DialogHeader>
           {emailSent ? (
             <div className="flex flex-col items-center py-4">
-              <div className="w-12 h-12 rounded-full bg-[#2236E8]/10 flex items-center justify-center mb-4">
-                <Check className="w-6 h-6 text-[#2236E8]" />
+              <div className="w-12 h-12 rounded-full bg-[#CC1519]/10 flex items-center justify-center mb-4">
+                <Check className="w-6 h-6 text-[#CC1519]" />
               </div>
               <Button variant="ghost" onClick={() => setShowSendDialog(false)} data-testid="button-close-send-dialog">
                 Close
@@ -680,7 +680,7 @@ export default function GetOutfitIdeas() {
                 <Button
                   onClick={() => sendLooksMutation.mutate(sendEmail)}
                   disabled={!sendEmail.includes("@") || sendLooksMutation.isPending}
-                  className="rounded-full bg-[#0B1340] text-white"
+                  className="rounded-full bg-[#CC1519] text-white"
                   data-testid="button-submit-send-email"
                 >
                   {sendLooksMutation.isPending ? (

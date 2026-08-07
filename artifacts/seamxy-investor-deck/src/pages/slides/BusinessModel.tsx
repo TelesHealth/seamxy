@@ -19,7 +19,7 @@ export default function BusinessModel() {
         {/* Column 1 */}
         <div className="flex flex-col gap-[2vh] flex-1">
           {/* Stream 1 */}
-          <div className="flex-1 rounded-[1vw] flex flex-col justify-between" style={{ background: '#0B1340', padding: '2.5vh 2vw' }}>
+          <div className="flex-1 rounded-[1vw] flex flex-col justify-between" style={{ background: '#111111', padding: '2.5vh 2vw' }}>
             <div>
               <p className="font-body font-semibold text-bg mb-[1vh]" style={{ fontSize: '1.55vw' }}>Pro Membership</p>
               <p className="font-body" style={{ fontSize: '1.35vw', color: 'rgba(250,249,246,0.65)', lineHeight: 1.45 }}>Monthly/annual subscription. Unlimited Concierge, full closet, dashboard, capsule planning, curated shopping.</p>
@@ -40,7 +40,7 @@ export default function BusinessModel() {
         {/* Column 2 */}
         <div className="flex flex-col gap-[2vh] flex-1">
           {/* Stream 3 */}
-          <div className="flex-1 rounded-[1vw] flex flex-col justify-between" style={{ background: '#E8ECF8', padding: '2.5vh 2vw' }}>
+          <div className="flex-1 rounded-[1vw] flex flex-col justify-between" style={{ background: '#FAE8E8', padding: '2.5vh 2vw' }}>
             <div>
               <p className="font-body font-semibold text-primary mb-[1vh]" style={{ fontSize: '1.55vw' }}>Gig Economy Fee</p>
               <p className="font-body text-muted" style={{ fontSize: '1.35vw', lineHeight: 1.45 }}>Platform fee on every completed alteration, repair, or custom tailoring job matched through SeamXY.</p>
@@ -70,7 +70,7 @@ export default function BusinessModel() {
           </div>
 
           {/* Stream 6 */}
-          <div className="flex-1 rounded-[1vw] flex flex-col justify-between" style={{ background: '#1A2560', padding: '2.5vh 2vw' }}>
+          <div className="flex-1 rounded-[1vw] flex flex-col justify-between" style={{ background: '#111111', padding: '2.5vh 2vw' }}>
             <div>
               <p className="font-body font-semibold text-bg mb-[1vh]" style={{ fontSize: '1.55vw' }}>Creator Revenue Share</p>
               <p className="font-body" style={{ fontSize: '1.35vw', lineHeight: 1.45, color: 'rgba(250,249,246,0.65)' }}>Stylists monetize via subscriptions, tips, and custom requests. Platform takes 20%; creator keeps 80%.</p>
