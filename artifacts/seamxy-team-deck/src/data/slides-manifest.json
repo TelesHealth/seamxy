@@ -1,0 +1,114 @@
+[
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-000000000001",
+    "position": 1,
+    "filepath": "src/pages/slides/Cover.tsx",
+    "title": "Cover",
+    "description": "SeamXY: How It's Built — internal engineering reference deck",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-000000000002",
+    "position": 2,
+    "filepath": "src/pages/slides/ProductMap.tsx",
+    "title": "Product Map",
+    "description": "All 9 nav destinations with routes and auth requirements",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-000000000003",
+    "position": 3,
+    "filepath": "src/pages/slides/GuestFeatures.tsx",
+    "title": "Guest Features",
+    "description": "Home, System, Find Look, Style Quiz, Inspo — no account required",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-000000000004",
+    "position": 4,
+    "filepath": "src/pages/slides/MemberFeatures.tsx",
+    "title": "Member Features",
+    "description": "Dashboard, Concierge, Virtual Try-On, Closet — auth required",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-000000000005",
+    "position": 5,
+    "filepath": "src/pages/slides/SocialCommerce.tsx",
+    "title": "Social & Commerce",
+    "description": "Style Groups, Let It Go, Shop, Gig Economy, Makers",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-000000000006",
+    "position": 6,
+    "filepath": "src/pages/slides/B2BPlatform.tsx",
+    "title": "B2B Platform",
+    "description": "Creator Studio, Supplier Portal, Admin Panel",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-000000000007",
+    "position": 7,
+    "filepath": "src/pages/slides/AIArchitecture.tsx",
+    "title": "AI Architecture",
+    "description": "Claude claude-opus-4-5, Tool Use API, 9 personas, session persistence",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-000000000008",
+    "position": 8,
+    "filepath": "src/pages/slides/TryOnArch.tsx",
+    "title": "Virtual Try-On Architecture",
+    "description": "MediaPipe pose detection, TPS warping, AR mode, share tokens",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-000000000009",
+    "position": 9,
+    "filepath": "src/pages/slides/TechStack.tsx",
+    "title": "Tech Stack",
+    "description": "React 18, Express, Drizzle ORM, Supabase, AWS S3, Stripe, Anthropic, MediaPipe",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-00000000000a",
+    "position": 10,
+    "filepath": "src/pages/slides/DatabaseSchema.tsx",
+    "title": "Database & Schema",
+    "description": "Key tables, relationships, and three auth tracks",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-00000000000b",
+    "position": 11,
+    "filepath": "src/pages/slides/APISurface.tsx",
+    "title": "API Surface",
+    "description": "Key route groups and representative endpoints",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-00000000000c",
+    "position": 12,
+    "filepath": "src/pages/slides/Monetization.tsx",
+    "title": "Subscription & Monetization",
+    "description": "Free vs. Pro tiers, Stripe webhooks, and revenue streams",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-00000000000d",
+    "position": 13,
+    "filepath": "src/pages/slides/DesignSystem.tsx",
+    "title": "Design System",
+    "description": "Brand tokens, Cormorant Garamond + Inter, gradient palette, component library",
+    "speakerNotes": ""
+  },
+  {
+    "id": "f1a2b3c4-d5e6-4f78-9a0b-00000000000e",
+    "position": 14,
+    "filepath": "src/pages/slides/Roadmap.tsx",
+    "title": "Task Queue & Roadmap",
+    "description": "Current proposed tasks, in-progress work, and implementation status",
+    "speakerNotes": ""
+  }
+]

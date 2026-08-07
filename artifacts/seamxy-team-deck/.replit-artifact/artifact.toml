@@ -1,0 +1,28 @@
+kind = "slides"
+previewPath = "/slides/seamxy-team-deck/"
+title = "SeamXY — Internal Team Deck"
+description = "Comprehensive internal reference deck covering the full feature map, tech stack, AI architecture, database schema, API surface, and roadmap."
+version = "1.0.0"
+id = "artifacts/seamxy-team-deck"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/slides/seamxy-team-deck/" ]
+localPort = 23321
+
+[services.development]
+run = "pnpm --filter @workspace/seamxy-team-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/seamxy-team-deck", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/seamxy-team-deck/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23321"
+BASE_PATH = "/slides/seamxy-team-deck/"

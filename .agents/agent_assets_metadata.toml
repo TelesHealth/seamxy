@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "z-gYWG9W1s7uBdeJHBMi9"
+uri = "file://.local/outputs/SeamXY---Investor-Pitch-Deck.pdf"
+type = "pdf"
+title = "SeamXY — Investor Pitch Deck.pdf"
+
+[[outputs]]
+id = "muE9sMn9iSesctHTQTCa5"
+uri = "file://.local/outputs/SeamXY---Internal-Team-Deck.pdf"
+type = "pdf"
+title = "SeamXY — Internal Team Deck.pdf"
