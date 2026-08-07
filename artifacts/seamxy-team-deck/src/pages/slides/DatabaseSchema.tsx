@@ -7,7 +7,7 @@ export default function DatabaseSchema() {
         {/* Header */}
         <div style={{ marginBottom: '3vh' }}>
           <div style={{ fontFamily: 'Inter, system-ui, sans-serif', fontSize: '1.4vw', letterSpacing: '0.25em', color: '#CC1519', fontWeight: 500, marginBottom: '1vh' }}>
-            SUPABASE POSTGRESQL · DRIZZLE ORM · shared/schema.ts
+            NEON POSTGRESQL · DRIZZLE ORM · lib/db/src/schema/schema.ts
           </div>
           <div style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: '4.2vw', fontWeight: 700, color: '#FAF6F2', lineHeight: 1.05 }}>
             Database &amp; Schema

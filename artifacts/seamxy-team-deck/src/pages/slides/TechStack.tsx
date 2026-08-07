@@ -3,7 +3,7 @@ export default function TechStack() {
     { layer: 'Frontend', tech: 'React 18 + Wouter + TanStack Query + Tailwind CSS + shadcn/ui' },
     { layer: 'State (try-on)', tech: 'Zustand' },
     { layer: 'Backend', tech: 'Express.js + TypeScript (~4,700 line routes.ts)' },
-    { layer: 'Database', tech: 'PostgreSQL via Supabase — hosted, auto-scaled' },
+    { layer: 'Database', tech: 'PostgreSQL via Neon — serverless, auto-scaled' },
     { layer: 'ORM', tech: 'Drizzle ORM — schema-first, type-safe queries' },
     { layer: 'AI', tech: 'Anthropic Claude claude-opus-4-5 via Tool Use API' },
     { layer: 'File Storage', tech: 'AWS S3 — closet photos, try-on images, maker portfolios' },
