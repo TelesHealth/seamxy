@@ -1,0 +1,122 @@
+[
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567001",
+    "position": 1,
+    "filepath": "src/pages/slides/Slide01Cover.tsx",
+    "title": "SeamXY",
+    "description": "Cover — Style, sorted.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567002",
+    "position": 2,
+    "filepath": "src/pages/slides/Slide02Problem.tsx",
+    "title": "The Problem",
+    "description": "Getting dressed shouldn't be this hard.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567003",
+    "position": 3,
+    "filepath": "src/pages/slides/Slide03OneLine.tsx",
+    "title": "SeamXY in One Line",
+    "description": "The personal style OS. AI meets your wardrobe.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567004",
+    "position": 4,
+    "filepath": "src/pages/slides/Slide04Audiences.tsx",
+    "title": "Three Audiences",
+    "description": "For individuals. For friend groups. For businesses.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567005",
+    "position": 5,
+    "filepath": "src/pages/slides/Slide05TheSystem.tsx",
+    "title": "The System",
+    "description": "Four inputs. One intelligence.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567006",
+    "position": 6,
+    "filepath": "src/pages/slides/Slide06FindLook.tsx",
+    "title": "Find Look",
+    "description": "Situational styling for any moment.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567007",
+    "position": 7,
+    "filepath": "src/pages/slides/Slide07Concierge.tsx",
+    "title": "AI Concierge",
+    "description": "Ask what to wear. Get a styled answer.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567008",
+    "position": 8,
+    "filepath": "src/pages/slides/Slide08TryOn.tsx",
+    "title": "Virtual Try-On",
+    "description": "See it on you before you own it.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567009",
+    "position": 9,
+    "filepath": "src/pages/slides/Slide09Closet.tsx",
+    "title": "Your Closet + Dashboard",
+    "description": "Know what you have. Know what to wear.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567010",
+    "position": 10,
+    "filepath": "src/pages/slides/Slide10StyleGroups.tsx",
+    "title": "Style Groups",
+    "description": "Style is social. Borrow. Share. Vote.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567011",
+    "position": 11,
+    "filepath": "src/pages/slides/Slide11Ecosystem.tsx",
+    "title": "The Ecosystem",
+    "description": "Creators, makers, tailors, suppliers — all connected.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567012",
+    "position": 12,
+    "filepath": "src/pages/slides/Slide12BusinessModel.tsx",
+    "title": "Business Model",
+    "description": "How SeamXY makes money.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567013",
+    "position": 13,
+    "filepath": "src/pages/slides/Slide13Tech.tsx",
+    "title": "Tech at a Glance",
+    "description": "Built to last. Designed to scale.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567014",
+    "position": 14,
+    "filepath": "src/pages/slides/Slide14Vision.tsx",
+    "title": "Where It's Going",
+    "description": "The style layer for how people dress.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567015",
+    "position": 15,
+    "filepath": "src/pages/slides/Slide15GetInvolved.tsx",
+    "title": "Get Involved",
+    "description": "Sign up, partner, or follow.",
+    "speakerNotes": ""
+  }
+]

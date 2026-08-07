@@ -1,0 +1,28 @@
+kind = "slides"
+previewPath = "/slides/seamxy-general-deck/"
+title = "SeamXY — Overview Deck"
+description = "An all-purpose brand and product overview deck for SeamXY, suitable for press, partnerships, and general introductions. Balances editorial voice with product depth across 15 slides."
+version = "1.0.0"
+id = "artifacts/seamxy-general-deck"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/slides/seamxy-general-deck/" ]
+localPort = 23920
+
+[services.development]
+run = "pnpm --filter @workspace/seamxy-general-deck run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/seamxy-general-deck", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/seamxy-general-deck/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23920"
+BASE_PATH = "/slides/seamxy-general-deck/"
