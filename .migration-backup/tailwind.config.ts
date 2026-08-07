@@ -59,6 +59,15 @@ export default {
           "4": "hsl(var(--chart-4) / <alpha-value>)",
           "5": "hsl(var(--chart-5) / <alpha-value>)",
         },
+        /* SeamXY brand tokens */
+        navy: {
+          DEFAULT: "hsl(var(--navy) / <alpha-value>)",
+          foreground: "hsl(var(--navy-foreground) / <alpha-value>)",
+        },
+        cobalt: {
+          DEFAULT: "hsl(var(--cobalt) / <alpha-value>)",
+          foreground: "hsl(var(--cobalt-foreground) / <alpha-value>)",
+        },
         sidebar: {
           ring: "hsl(var(--sidebar-ring) / <alpha-value>)",
           DEFAULT: "hsl(var(--sidebar) / <alpha-value>)",

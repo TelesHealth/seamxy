@@ -32,7 +32,7 @@ export function Header() {
           {/* Logo */}
           <Link href="/">
             <span className="flex items-center gap-2 cursor-pointer flex-shrink-0">
-              <div className="w-8 h-8 bg-[#0B1340] rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-navy rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">S</span>
               </div>
               <img src={seamxyLogo} alt="SeamXY" className="h-5 opacity-90" />
@@ -47,7 +47,7 @@ export function Header() {
                   className={`
                     px-3 py-1.5 rounded-full text-[11px] font-500 tracking-widest cursor-pointer transition-all duration-150
                     ${isActive(item.href)
-                      ? "bg-[#0B1340] text-white"
+                      ? "bg-navy text-white"
                       : "text-foreground/60 hover:text-foreground hover:bg-black/5"
                     }
                   `}
@@ -85,7 +85,7 @@ export function Header() {
               </Link>
             )}
             <Link href="/signup">
-              <span className="bg-[#0B1340] hover:bg-[#0B1340]/90 text-white text-[11px] tracking-widest font-500 rounded-full px-5 py-2 cursor-pointer transition-colors" data-testid="button-start-styling">
+              <span className="bg-navy hover:bg-navy/90 text-white text-[11px] tracking-widest font-500 rounded-full px-5 py-2 cursor-pointer transition-colors" data-testid="button-start-styling">
                 START STYLING
               </span>
             </Link>
@@ -98,7 +98,7 @@ export function Header() {
         <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_4px_24px_rgba(0,0,0,0.08)] px-4 py-3 flex items-center justify-between">
           <Link href="/">
             <span className="flex items-center gap-2 cursor-pointer">
-              <div className="w-7 h-7 bg-[#0B1340] rounded-md flex items-center justify-center">
+              <div className="w-7 h-7 bg-navy rounded-md flex items-center justify-center">
                 <span className="text-white font-bold text-xs">S</span>
               </div>
               <img src={seamxyLogo} alt="SeamXY" className="h-4" />
@@ -106,7 +106,7 @@ export function Header() {
           </Link>
           <div className="flex items-center gap-3">
             <Link href="/signup">
-              <span className="bg-[#0B1340] text-white text-[10px] tracking-widest font-500 rounded-full px-4 py-1.5 cursor-pointer">
+              <span className="bg-navy text-white text-[10px] tracking-widest font-500 rounded-full px-4 py-1.5 cursor-pointer">
                 START STYLING
               </span>
             </Link>
@@ -127,7 +127,7 @@ export function Header() {
                     className={`
                       block px-3 py-2 rounded-xl text-[11px] font-500 tracking-widest cursor-pointer transition-all
                       ${isActive(item.href)
-                        ? "bg-[#0B1340] text-white"
+                        ? "bg-navy text-white"
                         : "text-foreground/60 hover:bg-black/5 hover:text-foreground"
                       }
                     `}

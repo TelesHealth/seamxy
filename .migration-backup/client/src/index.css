@@ -2,13 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── SeamXY Brand Tokens ── */
+/* Navy  #0B1340 → HSL 231 71% 15% */
+/* Cobalt #2236E8 → HSL 234 81% 52% */
+
 /* ── SeamXY Global Gradient Background ── */
 .seamxy-bg {
   background:
     radial-gradient(ellipse 65% 90% at -5% 50%, rgba(196, 181, 249, 0.45) 0%, transparent 65%),
     radial-gradient(ellipse 55% 65% at 55% 10%, rgba(248, 215, 185, 0.38) 0%, transparent 60%),
     radial-gradient(ellipse 55% 70% at 100% 65%, rgba(196, 220, 248, 0.42) 0%, transparent 60%),
-    #f2f0f9;
+    hsl(var(--background));
   min-height: 100vh;
 }
 
@@ -58,7 +62,18 @@
 
   --popover-border: 0 0% 86%;
 
-  --primary: 232 82% 52%;
+  /* ── SeamXY brand tokens (exact values) ── */
+  --navy: 231 71% 15%;           /* #0B1340 — dark brand navy */
+  --navy-foreground: 0 0% 100%;
+  --cobalt: 234 81% 52%;         /* #2236E8 — cobalt CTA blue */
+  --cobalt-foreground: 0 0% 100%;
+
+  /* Gradient stop colours used in .seamxy-bg */
+  --gradient-purple: 196 181 249;  /* rgb values for rgba() use */
+  --gradient-peach: 248 215 185;
+  --gradient-sky: 196 220 248;
+
+  --primary: 234 81% 52%;        /* aligned with --cobalt (#2236E8) */
 
   --primary-foreground: 0 0% 100%;
 
@@ -137,6 +152,12 @@
   --badge-outline: rgba(255,255,255, .05);
 
   --opaque-button-border-intensity: 9;  /* In terms of percentages */
+
+  /* ── SeamXY brand tokens (dark mode — same hues, slightly lighter) ── */
+  --navy: 231 71% 15%;           /* #0B1340 — unchanged in dark mode */
+  --navy-foreground: 0 0% 100%;
+  --cobalt: 234 81% 60%;         /* slightly lighter cobalt for dark backgrounds */
+  --cobalt-foreground: 0 0% 100%;
 
   /* Backgrounds applied on top of other backgrounds when hovered/active */
   --elevate-1: rgba(255,255,255, .04);

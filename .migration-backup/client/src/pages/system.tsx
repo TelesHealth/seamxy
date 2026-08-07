@@ -16,7 +16,7 @@ export default function SystemPage() {
           </p>
           <div className="flex gap-4">
             <Link href="/get-outfit-ideas">
-              <Button className="rounded-full px-7 py-5 bg-[#0B1340] hover:bg-[#0B1340]/90 text-white text-sm tracking-widest uppercase font-500">
+              <Button className="rounded-full px-7 py-5 bg-navy hover:bg-navy/90 text-white text-sm tracking-widest uppercase font-500">
                 Try the Finder
               </Button>
             </Link>
@@ -57,7 +57,7 @@ export default function SystemPage() {
         <p className="text-[10px] text-muted-foreground tracking-widest uppercase mb-1">Ready when you are</p>
         <p className="font-display text-xl font-600 text-foreground mb-3 leading-tight">Build your style profile.</p>
         <Link href="/signup">
-          <Button className="w-full rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 text-white text-xs tracking-widest uppercase py-4">
+          <Button className="w-full rounded-full bg-cobalt hover:bg-cobalt/90 text-white text-xs tracking-widest uppercase py-4">
             Request Access
           </Button>
         </Link>
