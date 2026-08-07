@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useSearch } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,6 +20,8 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [, setLocation] = useLocation();
+  const search = useSearch();
+  const returnTo = new URLSearchParams(search).get('returnTo') || '/shop';
   const { login } = useCustomerAuth();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,7 +42,7 @@ export default function Login() {
         title: 'Welcome back!',
         description: 'Successfully logged in to your account.'
       });
-      setLocation('/shop');
+      setLocation(returnTo);
     } catch (error: any) {
       toast({
         title: 'Login failed',

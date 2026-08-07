@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, Lock } from "lucide-react";
 import { StyleCTA } from "@/components/StyleCTA";
 
 import aidenPortrait from "@assets/generated_images/Aiden_minimalist_professional_stylist_568ee488.png";
@@ -109,6 +109,22 @@ interface Message {
   timestamp: Date;
 }
 
+// Simulated preview replies for guest quick-prompts
+const guestPreviewReplies: Record<string, string> = {
+  "What should I wear to a job interview?":
+    "For most interviews, a tailored blazer over a crisp shirt or blouse signals confidence without overdressing. Stick to neutrals — navy, charcoal, or white — and make sure everything is well-fitted and wrinkle-free.",
+  "Outfit ideas for a first date":
+    "Go for something that feels like a slightly elevated version of your everyday style — you want to feel like yourself, just polished. A great pair of dark jeans with a fitted top or a midi dress both work beautifully.",
+  "What works for a summer wedding?":
+    "A floral midi dress or a linen suit in a light pastel hits the perfect note. Avoid white (guest rule!), and choose breathable fabrics. Block-heeled sandals are your best friend on grass.",
+  "Help me build a capsule wardrobe":
+    "Start with five neutrals: white tee, black trousers, dark denim, a blazer, and a versatile dress or chino. From there, add 3–4 statement pieces in colours you love. Everything should mix and match.",
+  "Smart-casual for a Friday office look":
+    "Dark slim chinos + a merino crewneck + clean leather sneakers or loafers. Swap the sneakers for Chelsea boots if you want a sharper edge. Keep accessories minimal.",
+  "What to wear to a rooftop dinner?":
+    "Think elevated but effortless — a silk slip dress, wide-leg trousers with a fitted top, or linen separates. Add a light layer for when the breeze picks up after sunset.",
+};
+
 interface AiPersona {
   id: string;
   name: string;
@@ -132,6 +148,11 @@ export default function AiStylist() {
   const [selectedPersona, setSelectedPersona] = useState(personas[0]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [input, setInput] = useState("");
+
+  // Guest preview state
+  const [guestMessages, setGuestMessages] = useState<Message[]>([]);
+  const [guestTyping, setGuestTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Fetch AI personas from API
   const { data: apiPersonas = [] } = useQuery<AiPersona[]>({
@@ -185,12 +206,41 @@ export default function AiStylist() {
     }
   }, [selectedPersona.id, userId]);
 
+  const handleGuestPrompt = (prompt: string) => {
+    const userMsg: Message = { role: "user", content: prompt, timestamp: new Date() };
+    setGuestMessages([userMsg]);
+    setGuestTyping(true);
+    setTimeout(() => {
+      const replyText =
+        guestPreviewReplies[prompt] ||
+        "Great question! I'd love to help you put together the perfect look for that.";
+      const replyMsg: Message = { role: "assistant", content: replyText, timestamp: new Date() };
+      const nudgeMsg: Message = {
+        role: "assistant",
+        content: "✨ Sign in to continue this conversation and get personalised recommendations tailored to your wardrobe and style.",
+        timestamp: new Date(),
+      };
+      setGuestMessages([userMsg, replyMsg, nudgeMsg]);
+      setGuestTyping(false);
+    }, 1200);
+  };
+
   const handleSend = async (text?: string) => {
     const messageText = text || input;
-    if (!messageText.trim() || !sessionId || !userId) return;
+    if (!messageText.trim()) return;
+    if (!userId) {
+      handleGuestPrompt(messageText);
+      return;
+    }
+    if (!sessionId) return;
     setInput("");
     await sendMessageMutation.mutateAsync(messageText);
   };
+
+  // Scroll to bottom when messages update
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, guestMessages, guestTyping]);
 
   return (
     <div className="min-h-screen pb-16 sm:pb-0">
@@ -249,7 +299,7 @@ export default function AiStylist() {
                   <button
                     key={prompt}
                     onClick={() => handleSend(prompt)}
-                    disabled={!userId || !sessionId}
+                    disabled={!!userId && !sessionId}
                     className="bg-white rounded-full px-4 py-2 text-xs text-foreground/70 hover:text-foreground border border-foreground/10 hover:border-foreground/20 hover:shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     {prompt}
@@ -273,73 +323,123 @@ export default function AiStylist() {
 
                 {/* Messages */}
                 <ScrollArea className="flex-1 px-6 py-4">
-                  {messages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center py-8">
-                      <div className="w-12 h-12 rounded-full bg-[#2236E8]/10 flex items-center justify-center mb-4">
-                        <Sparkles className="w-6 h-6 text-[#2236E8]" />
-                      </div>
-                      <p className="text-sm text-foreground/50 max-w-xs">
-                        {userId
-                          ? `Hi! I'm ${selectedPersona.name}. Ask me anything about style, outfits, or what to wear.`
-                          : "Sign in to start chatting with your AI stylist."}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {messages.map((message, i) => (
-                        <div
-                          key={i}
-                          className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
-                          data-testid={`message-${i}`}
-                        >
-                          {message.role === 'assistant' && (
+                  {(() => {
+                    const displayMessages = userId ? messages : guestMessages;
+                    if (displayMessages.length === 0 && !guestTyping) {
+                      return (
+                        <div className="h-full flex flex-col items-center justify-center text-center py-8">
+                          <div className="w-12 h-12 rounded-full bg-[#2236E8]/10 flex items-center justify-center mb-4">
+                            <Sparkles className="w-6 h-6 text-[#2236E8]" />
+                          </div>
+                          <p className="text-sm text-foreground/50 max-w-xs">
+                            {userId
+                              ? `Hi! I'm ${selectedPersona.name}. Ask me anything about style, outfits, or what to wear.`
+                              : "Tap a style question above to see what your AI stylist would say."}
+                          </p>
+                        </div>
+                      );
+                    }
+                    return (
+                      <div className="space-y-4">
+                        {displayMessages.map((message, i) => {
+                          const isNudge = !userId && message.role === "assistant" && i === displayMessages.length - 1 && message.content.startsWith("✨");
+                          return (
+                            <div
+                              key={i}
+                              className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : ''}`}
+                              data-testid={`message-${i}`}
+                            >
+                              {message.role === 'assistant' && (
+                                <Avatar className="w-7 h-7 flex-shrink-0">
+                                  <AvatarImage src={selectedPersona.avatarUrl} />
+                                  <AvatarFallback>{selectedPersona.name[0]}</AvatarFallback>
+                                </Avatar>
+                              )}
+                              <div className={`flex-1 max-w-[80%] ${message.role === 'user' ? 'text-right' : ''}`}>
+                                {isNudge ? (
+                                  <div className="bg-[#0B1340] rounded-2xl px-4 py-3 text-sm text-white">
+                                    <p className="mb-3">{message.content}</p>
+                                    <a
+                                      href="/login?returnTo=/ai-stylist"
+                                      className="inline-flex items-center gap-1.5 bg-white text-[#0B1340] text-xs font-600 tracking-widest uppercase rounded-full px-4 py-2 hover:bg-white/90 transition-colors"
+                                    >
+                                      <Lock className="w-3 h-3" />
+                                      Sign in to continue
+                                    </a>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <div className={`inline-block px-4 py-3 rounded-2xl text-sm ${
+                                      message.role === 'user'
+                                        ? 'bg-[#0B1340] text-white'
+                                        : 'bg-foreground/5 text-foreground'
+                                    }`}>
+                                      {message.content}
+                                    </div>
+                                    <p className="text-[10px] text-foreground/30 mt-1">
+                                      {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {/* Typing indicator for guest preview */}
+                        {guestTyping && (
+                          <div className="flex gap-3">
                             <Avatar className="w-7 h-7 flex-shrink-0">
                               <AvatarImage src={selectedPersona.avatarUrl} />
                               <AvatarFallback>{selectedPersona.name[0]}</AvatarFallback>
                             </Avatar>
-                          )}
-                          <div className={`flex-1 max-w-[80%] ${message.role === 'user' ? 'text-right' : ''}`}>
-                            <div className={`inline-block px-4 py-3 rounded-2xl text-sm ${
-                              message.role === 'user'
-                                ? 'bg-[#0B1340] text-white'
-                                : 'bg-foreground/5 text-foreground'
-                            }`}>
-                              {message.content}
+                            <div className="bg-foreground/5 rounded-2xl px-4 py-3 flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: "0ms" }} />
+                              <span className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: "150ms" }} />
+                              <span className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-bounce" style={{ animationDelay: "300ms" }} />
                             </div>
-                            <p className="text-[10px] text-foreground/30 mt-1">
-                              {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </p>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        )}
+                        <div ref={messagesEndRef} />
+                      </div>
+                    );
+                  })()}
                 </ScrollArea>
 
                 {/* Input */}
                 <div className="px-4 py-4 border-t border-foreground/5">
-                  <div className="flex gap-2 bg-foreground/4 rounded-full px-4 py-2">
-                    <Input
-                      placeholder={userId ? `Ask ${selectedPersona.name} for style advice…` : "Sign in to chat…"}
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && !sendMessageMutation.isPending && handleSend()}
-                      disabled={sendMessageMutation.isPending || !userId}
-                      className="border-0 shadow-none bg-transparent p-0 text-sm focus-visible:ring-0 placeholder:text-foreground/30"
-                      data-testid="input-chat-message"
-                    />
-                    <button
-                      onClick={() => handleSend()}
-                      disabled={sendMessageMutation.isPending || !input.trim() || !userId}
-                      className="w-8 h-8 rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 disabled:opacity-40 transition-colors flex items-center justify-center flex-shrink-0"
-                      data-testid="button-send-message"
+                  {userId ? (
+                    <div className="flex gap-2 bg-foreground/4 rounded-full px-4 py-2">
+                      <Input
+                        placeholder={`Ask ${selectedPersona.name} for style advice…`}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && !sendMessageMutation.isPending && handleSend()}
+                        disabled={sendMessageMutation.isPending}
+                        className="border-0 shadow-none bg-transparent p-0 text-sm focus-visible:ring-0 placeholder:text-foreground/30"
+                        data-testid="input-chat-message"
+                      />
+                      <button
+                        onClick={() => handleSend()}
+                        disabled={sendMessageMutation.isPending || !input.trim()}
+                        className="w-8 h-8 rounded-full bg-[#2236E8] hover:bg-[#2236E8]/90 disabled:opacity-40 transition-colors flex items-center justify-center flex-shrink-0"
+                        data-testid="button-send-message"
+                      >
+                        {sendMessageMutation.isPending
+                          ? <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                          : <Send className="w-3.5 h-3.5 text-white" />
+                        }
+                      </button>
+                    </div>
+                  ) : (
+                    <a
+                      href="/login?returnTo=/ai-stylist"
+                      className="flex items-center justify-center gap-2 w-full bg-[#0B1340] hover:bg-[#0B1340]/90 text-white text-xs font-600 tracking-widest uppercase rounded-full px-4 py-3 transition-colors"
+                      data-testid="guest-signin-cta"
                     >
-                      {sendMessageMutation.isPending
-                        ? <div className="w-3 h-3 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        : <Send className="w-3.5 h-3.5 text-white" />
-                      }
-                    </button>
-                  </div>
+                      <Lock className="w-3.5 h-3.5" />
+                      Sign in to chat with your stylist
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -385,7 +485,7 @@ export default function AiStylist() {
                 <div className="mt-5 bg-[#0B1340] rounded-2xl p-5 text-white">
                   <p className="text-[9px] text-white/40 tracking-widest uppercase mb-2">Unlock the full experience</p>
                   <p className="font-display font-600 text-base mb-3 leading-tight">Sign in to start chatting with your personal stylist.</p>
-                  <a href="/login">
+                  <a href="/login?returnTo=/ai-stylist">
                     <Button className="w-full rounded-full bg-white text-[#0B1340] text-xs tracking-widest uppercase hover:bg-white/90">
                       Sign in
                     </Button>
