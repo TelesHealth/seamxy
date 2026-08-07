@@ -476,20 +476,21 @@ All decks use the crimson brand palette, Cormorant Garamond + Inter, and dark/wa
 
 | Variable | Used by |
 |---|---|
-| `NEON_DATABASE_URL` | API server — Neon Postgres connection |
-| `SUPABASE_DATABASE_URL` | API server — Supabase Postgres fallback |
+| `DATABASE_URL` | API server and `lib/db` — single Postgres connection string. Current host is Neon (`*.neon.tech`); the API server selects the Neon serverless driver automatically based on hostname. Any other hostname falls back to `pg` with a startup warning. |
 | `SESSION_SECRET` | express-session signing key |
 | `ANTHROPIC_API_KEY` | Claude API calls |
 | `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_REGION` / `AWS_S3_BUCKET_NAME` | S3 photo uploads |
 | `INTEGRATION_TOKEN_KEY` | Supplier OAuth token encryption |
-| `AI_INTEGRATIONS_OPENAI_API_KEY` / `AI_INTEGRATIONS_OPENAI_BASE_URL` | OpenAI-compatible proxy (optional) |
+| `AI_INTEGRATIONS_OPENAI_API_KEY` / `AI_INTEGRATIONS_OPENAI_BASE_URL` | OpenAI-compatible proxy (optional, unconfirmed if live) |
 
 ---
 
 ## 14. Known Sharp Edges
 
-- **`.migration-backup/`** is the authoritative snapshot of routes and schema. The `lib/db` package is the forward-going schema home, but migration-backup is what the running API server actually uses today.
+- **`.migration-backup/`** is an inert reference snapshot — the running API server imports schema from `@workspace/db` (`lib/db/src/schema/`), not from the backup. The backup exists for reference only and is not part of the build.
 - **Three separate auth sessions** run in parallel — a customer cookie, a supplier session, and an admin session. Middleware is not interchangeable between tracks.
 - **Try-on `.map()` loops** remain in several team-deck slide files. They render correctly but are not visually editable via the slide editor's click-to-edit. This is a known trade-off for data-driven slides.
 - **Port is env-driven** — all Vite dev servers read `process.env.PORT`. Hard-coding a port breaks the preview proxy.
 - **Orval codegen** — after any OpenAPI spec change, run `pnpm --filter @workspace/api-spec run codegen` before touching the frontend; the generated hooks and Zod types will be stale otherwise.
+- **`lib/db` uses `pg` for migrations** — `pnpm --filter @workspace/db run push` connects to Neon via standard PostgreSQL wire protocol (port 5432), not the serverless driver. This works correctly; it is not a bug, but the two clients use different drivers against the same host by design.
+- **`AI_INTEGRATIONS_OPENAI_API_KEY`** appears in the environment but has not been confirmed as a live code path. Do not assume it is active.

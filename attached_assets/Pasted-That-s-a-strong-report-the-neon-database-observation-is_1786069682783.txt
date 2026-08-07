@@ -1,0 +1,19 @@
+That's a strong report — the neon.database observation is a real catch, and the reasoning about when a single DATABASE_URL would be wrong (multiple databases, read replicas) is exactly the right way to test the recommendation rather than just agreeing with it. Approve the plan.
+
+Two things to fix in it before implementing:
+
+The hostname check is too narrow. The report itself notes Neon currently also uses *.aws.neon.tech — and endsWith('.neon.tech') does match that, so the proposed code is fine. But it won't match a bare neon.tech host, and more importantly it silently defaults to pg on any unrecognised host. Make the mismatch loud rather than silent: log at warn level when the driver falls back, including the parsed hostname. Also wrap the new URL() parse — an unparseable connection string should fail at startup with a clear message, not throw an opaque error deep in the boot sequence.
+
+The cutover has a downtime window. Code-first, then secret rename, means the server is broken between those two steps: it reads DATABASE_URL, which doesn't exist yet. Do it in three steps instead — I add DATABASE_URL in Replit alongside the existing secrets, you ship the code, then I delete the old two once the startup log confirms the right host. That way there's no window where the running config is invalid, and rollback is just reverting the code.
+
+Sequence I'd like:
+
+I add DATABASE_URL in Replit with the same value currently in SUPABASE_DATABASE_URL — tell me when you're ready and I'll do it.
+You ship the code changes to both files plus the CODEBASE.md update.
+Restart, confirm the structured startup log shows driver and host.
+Run pnpm --filter @workspace/db run push against a no-op change to confirm both clients agree.
+I delete SUPABASE_DATABASE_URL and NEON_DATABASE_URL.
+
+On the CODEBASE.md update — while you're in there, the "Known Sharp Edges" section still claims .migration-backup/ is what the running API server uses. Phase 1 disproved that. Fix it in the same commit, and flag any other item in that section you can't verify, since it's now produced two wrong findings.
+
+Go ahead when ready. After this lands, next up is Phase 3, and the question I care most about there is whether conversation_credits is actually read before the Anthropic call or only written after it.

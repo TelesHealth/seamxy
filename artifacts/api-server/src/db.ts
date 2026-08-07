@@ -1,62 +1,86 @@
-// Database configuration - supports both Neon (serverless) and regular PostgreSQL
 import { Pool as NeonPool, neonConfig } from '@neondatabase/serverless';
 import { Pool as PgPool } from 'pg';
 import { drizzle as drizzleNeon } from 'drizzle-orm/neon-serverless';
 import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import ws from "ws";
 import * as schema from "@workspace/db";
+import { logger } from "./lib/logger";
 
-// Prefer SUPABASE_DATABASE_URL if set, fall back to DATABASE_URL
-const connectionString = process.env.SUPABASE_DATABASE_URL || process.env.DATABASE_URL;
+// ── connection string ──────────────────────────────────────────────────────────
+const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
+    "DATABASE_URL is required but not set. " +
+    "Set it to your Postgres connection string before starting the server."
   );
 }
 
-// Detect if using Neon serverless or regular PostgreSQL
-const isNeon = connectionString.includes('neon.tech') || 
-               connectionString.includes('neon.database');
+// ── parse URL for driver selection and startup logging ─────────────────────────
+let hostname: string;
+try {
+  hostname = new URL(connectionString).hostname;
+} catch {
+  throw new Error(
+    `DATABASE_URL is not a valid URL. ` +
+    `Expected a connection string of the form ` +
+    `postgres://user:password@host/dbname. ` +
+    `Received: ${connectionString.slice(0, 40)}…`
+  );
+}
+
+// ── driver selection ───────────────────────────────────────────────────────────
+// Neon hostnames are *.neon.tech (including *.aws.neon.tech).
+// endsWith('.neon.tech') correctly matches all of these.
+// Any other hostname falls back to standard pg with a warning so the operator
+// knows the fallback was taken rather than discovering it from a query error.
+const isNeon = hostname.endsWith('.neon.tech');
+
+if (!isNeon) {
+  logger.warn(
+    { hostname },
+    "DATABASE_URL host is not a recognised Neon hostname " +
+    "(*.neon.tech) — falling back to standard PostgreSQL driver. " +
+    "If this is unexpected, check your DATABASE_URL."
+  );
+}
 
 export let pool: NeonPool | PgPool;
-export let db: any;
+export let db: ReturnType<typeof drizzleNeon> | ReturnType<typeof drizzlePg>;
 
 if (isNeon) {
-  // Use Neon serverless driver
-  console.log('Using Neon serverless PostgreSQL driver');
   neonConfig.webSocketConstructor = ws;
-  
-  const neonPool = new NeonPool({ 
+
+  const neonPool = new NeonPool({
     connectionString,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
   });
-  
+
+  neonPool.on('error', (err: Error) => {
+    logger.error({ err }, 'Unexpected Neon database pool error');
+  });
+
   pool = neonPool;
   db = drizzleNeon({ client: neonPool, schema });
-  
-  // Handle pool errors
-  neonPool.on('error', (err: Error) => {
-    console.error('Unexpected database pool error:', err);
-  });
 } else {
-  // Use regular PostgreSQL driver for Docker/local/VPS PostgreSQL
-  console.log('Using standard PostgreSQL driver');
-  
   const pgPool = new PgPool({
     connectionString,
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000,
   });
-  
+
+  pgPool.on('error', (err: Error) => {
+    logger.error({ err }, 'Unexpected PostgreSQL pool error');
+  });
+
   pool = pgPool;
   db = drizzlePg(pgPool, { schema });
-  
-  // Handle pool errors
-  pgPool.on('error', (err: Error) => {
-    console.error('Unexpected database pool error:', err);
-  });
 }
+
+logger.info(
+  { driver: isNeon ? 'neon-serverless' : 'pg', host: hostname },
+  'Database configured'
+);
