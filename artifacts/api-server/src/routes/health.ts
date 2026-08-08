@@ -8,4 +8,10 @@ router.get("/healthz", (_req, res) => {
   res.json(data);
 });
 
+// Deployment healthchecks probe /api directly
+router.get("/", (_req, res) => {
+  const data = HealthCheckResponse.parse({ status: "ok" });
+  res.json(data);
+});
+
 export default router;

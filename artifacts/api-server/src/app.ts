@@ -1,4 +1,6 @@
 import express, { type Express, type Request, type Response, type NextFunction } from "express";
+import path from "node:path";
+import fs from "node:fs";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import session from "express-session";
@@ -73,10 +75,45 @@ app.use("/api", router);
 // Register all legacy app routes (mounts at /api/v1/... etc)
 registerRoutes(app);
 
-// Root route
-app.get("/", (_req: Request, res: Response) => {
-  res.status(200).json({ status: "ok" });
-});
+// Serve the built React frontend when available (single-server deployments
+// where Express handles all routes, e.g. Railway/pm2 or a Vercel setup that
+// routes everything to this app). Requires the frontend to be built first
+// (root `pnpm run build` builds both). On Replit dev, the frontend runs on
+// its own Vite server, so this is a no-op fallback.
+const frontendCandidates = [
+  path.resolve(process.cwd(), "artifacts/seamxy/dist/public"),
+  path.resolve(import.meta.dirname, "../../seamxy/dist/public"),
+];
+const frontendDir = frontendCandidates.find((dir) =>
+  fs.existsSync(path.join(dir, "index.html")),
+);
+
+if (frontendDir) {
+  logger.info({ frontendDir }, "Serving frontend static files");
+  app.use(
+    express.static(frontendDir, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith("index.html")) {
+          // Never let CDNs/proxies pin an old app shell; hashed assets stay cacheable
+          res.setHeader("Cache-Control", "no-cache");
+        } else if (/\.[0-9a-f]{8,}\./i.test(path.basename(filePath)) || filePath.includes(`${path.sep}assets${path.sep}`)) {
+          res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        }
+      },
+    }),
+  );
+  // SPA fallback for non-API routes
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.method !== "GET" || req.path.startsWith("/api")) return next();
+    res.setHeader("Cache-Control", "no-cache");
+    res.sendFile(path.join(frontendDir, "index.html"));
+  });
+} else {
+  // No frontend build present — keep a simple health response at root
+  app.get("/", (_req: Request, res: Response) => {
+    res.status(200).json({ status: "ok" });
+  });
+}
 
 // Error handler
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
