@@ -627,16 +627,11 @@ Always ask clarifying questions to understand their vision before making recomme
       const [stylistProfile] = await db.insert(stylistProfiles).values({
         userId: designerAccount.id,
         handle: "isabella-luxe",
+        displayName: "Isabella Rodriguez",
         bio: "Luxury fashion consultant specializing in timeless elegance and professional wardrobes. 10+ years of experience styling executives and creative professionals.",
-        specialties: ["Professional Wear", "Luxury Fashion", "Wardrobe Planning"],
-        yearsExperience: 10,
-        hourlyRate: 150,
+        styleSpecialties: ["Professional Wear", "Luxury Fashion", "Wardrobe Planning"],
         location: "New York, NY",
-        avatar: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80",
-        portfolioImages: [
-          "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=800&q=80",
-          "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80"
-        ],
+        avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&q=80",
         requiresSubscription: false,
         supplierId: designerAccount.id
       }).onConflictDoNothing().returning();
@@ -645,22 +640,25 @@ Always ask clarifying questions to understand their vision before making recomme
         // Create AI training responses
         await db.insert(aiTrainingResponses).values([
           {
-            supplierId: designerAccount.id,
-            question: "What is your styling philosophy?",
-            response: "I believe in investment dressing - choosing timeless, high-quality pieces that elevate your wardrobe for years to come. My approach blends classic elegance with modern sophistication.",
-            section: "style_philosophy"
+            stylistId: stylistProfile.id,
+            questionId: "PHIL_01",
+            questionText: "What is your styling philosophy?",
+            answer: "I believe in investment dressing - choosing timeless, high-quality pieces that elevate your wardrobe for years to come. My approach blends classic elegance with modern sophistication.",
+            category: "philosophy"
           },
           {
-            supplierId: designerAccount.id,
-            question: "How do you work with clients?",
-            response: "I start by understanding my client's lifestyle, career goals, and personal style preferences. Then I curate a wardrobe that makes them feel confident and polished every day.",
-            section: "client_approach"
+            stylistId: stylistProfile.id,
+            questionId: "CLIENT_01",
+            questionText: "How do you work with clients?",
+            answer: "I start by understanding my client's lifestyle, career goals, and personal style preferences. Then I curate a wardrobe that makes them feel confident and polished every day.",
+            category: "client_approach"
           },
           {
-            supplierId: designerAccount.id,
-            question: "What are your specialties?",
-            response: "Professional wardrobes, luxury brands, tailored pieces, and creating cohesive capsule wardrobes. I have deep expertise with brands like Theory, Armani, and Ralph Lauren.",
-            section: "expertise"
+            stylistId: stylistProfile.id,
+            questionId: "EXP_01",
+            questionText: "What are your specialties?",
+            answer: "Professional wardrobes, luxury brands, tailored pieces, and creating cohesive capsule wardrobes. I have deep expertise with brands like Theory, Armani, and Ralph Lauren.",
+            category: "expertise"
           }
         ]).onConflictDoNothing();
 
