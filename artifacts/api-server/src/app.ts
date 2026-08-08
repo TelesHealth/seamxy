@@ -73,6 +73,11 @@ app.use("/api", router);
 // Register all legacy app routes (mounts at /api/v1/... etc)
 registerRoutes(app);
 
+// Root route
+app.get("/", (_req: Request, res: Response) => {
+  res.status(200).json({ status: "ok" });
+});
+
 // Error handler
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
   const status = err.status || err.statusCode || 500;
