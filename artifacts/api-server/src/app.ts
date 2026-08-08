@@ -80,15 +80,10 @@ registerRoutes(app);
 // routes everything to this app). Requires the frontend to be built first
 // (root `pnpm run build` builds both). On Replit dev, the frontend runs on
 // its own Vite server, so this is a no-op fallback.
-const frontendCandidates = [
-  path.resolve(process.cwd(), "artifacts/seamxy/dist/public"),
-  path.resolve(import.meta.dirname, "../../seamxy/dist/public"),
-];
-const frontendDir = frontendCandidates.find((dir) =>
-  fs.existsSync(path.join(dir, "index.html")),
-);
+const frontendDir = path.resolve(process.cwd(), "artifacts/seamxy/dist/public");
+const hasFrontendBuild = fs.existsSync(path.join(frontendDir, "index.html"));
 
-if (frontendDir) {
+if (hasFrontendBuild) {
   logger.info({ frontendDir }, "Serving frontend static files");
   app.use(
     express.static(frontendDir, {
