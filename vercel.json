@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm --filter @workspace/db run build 2>/dev/null || true && pnpm --filter @workspace/seamxy run build",
+  "outputDirectory": "artifacts/seamxy/dist/public",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://YOUR-API-BACKEND-URL/api/:path*"
+    },
+    {
+      "source": "/((?!assets/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
