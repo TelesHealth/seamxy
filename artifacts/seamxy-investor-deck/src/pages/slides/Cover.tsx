@@ -15,7 +15,7 @@ export default function Cover() {
           className="absolute inset-0"
           style={{
             background:
-              'linear-gradient(to right, #111111 0%, rgba(204,21,25,0.88) 18%, rgba(204,21,25,0.35) 55%, transparent 100%)',
+              'linear-gradient(to right, #111111 0%, rgba(11,19,64,0.88) 18%, rgba(11,19,64,0.35) 55%, transparent 100%)',
           }}
         />
       </div>
@@ -28,7 +28,7 @@ export default function Cover() {
 
       {/* Left content */}
       <div className="absolute left-0 top-0 h-full flex flex-col justify-center" style={{ paddingLeft: '7vw', paddingRight: '4vw', width: '55vw' }}>
-        {/* Crimson rule */}
+        {/* Cobalt rule */}
         <div className="bg-accent mb-[3vh]" style={{ height: '0.3vh', width: '4vw' }} />
 
         {/* Label */}
